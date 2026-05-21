@@ -1,0 +1,99 @@
+INDIVIDUAL CASE SAFETY REPORT
+
+Report ID: ICSR-2025-005
+Report Type: Spontaneous, Healthcare Professional
+Report Date: 2025-11-28
+Reporter: Dr. Watanabe, Sapporo University Hospital, Department of Dermatology
+Reporter Qualification: Physician (Dermatology Specialist)
+Country of Occurrence: Japan
+MedDRA Version: 27.0
+
+PATIENT INFORMATION
+Patient Initials: T.M.
+Age: 51 years
+Sex: Female
+Weight: 64 kg
+Height: 159 cm
+Ethnicity: Asian
+
+Medical History
+Important note for this case: this patient has an extensive medical history with multiple previously resolved drug reactions. The current adverse events must be carefully distinguished from prior unrelated events.
+
+Conditions
+- Rheumatoid arthritis, diagnosed 2015, currently in clinical remission on stable therapy
+- Hashimoto thyroiditis with primary hypothyroidism, diagnosed 2018, stable on levothyroxine
+- Generalised anxiety disorder, diagnosed 2020, well controlled
+- Essential hypertension, well controlled
+
+Negative/Excluded History
+- No history of seizure or epilepsy
+- No history of asthma
+- No previous history of Stevens-Johnson syndrome or toxic epidermal necrolysis
+- Denies chest pain, palpitations, or syncope at any time in her life
+- No family history of malignancy
+- No personal history of malignancy
+
+Past Drug Reactions (Resolved, Not the Subject of This Report)
+- 2017: Developed mild rash on the trunk approximately 10 days after starting trimethoprim-sulfamethoxazole for a urinary tract infection. The rash was assessed at the time as a probable drug eruption. The medication was discontinued and the rash resolved within one week without sequelae. The patient has subsequently avoided sulfonamide antibiotics.
+- 2019: Developed transient pruritus without rash during a course of amoxicillin. Resolved spontaneously without intervention. Causality at the time was assessed as possible.
+- 2021: Reported nausea during initial titration of methotrexate. The nausea resolved with dose adjustment and antiemetic support and is no longer experienced by the patient on her current stable dose.
+
+These past reactions have all resolved and are mentioned only for completeness. They are not the subject of the current report.
+
+SUSPECT DRUG
+Drug Name: DrugB
+Active Ingredient: Compound-B
+Indication: Acute upper respiratory tract infection (prescribed by the patient's primary care physician)
+Dosage Regimen: 500 mg twice daily for 7 days
+Route of Administration: Oral
+Therapy Start Date: 2025-11-12
+Therapy End Date: 2025-11-17 (discontinued early due to current adverse events)
+Action Taken with Drug: Drug withdrawn
+
+CONCOMITANT MEDICATIONS (At Time of Current Event)
+- Methotrexate 12.5 mg once weekly (oral), ongoing since 2017 for rheumatoid arthritis. Patient has tolerated this dose for several years without adverse events at the time of this report.
+- Folic acid 5 mg once weekly, ongoing
+- Levothyroxine 75 micrograms once daily, ongoing since 2018
+- Amlodipine 5 mg once daily, ongoing since 2022
+- Sertraline 50 mg once daily, ongoing since 2020
+
+ADVERSE EVENTS (Current Episode)
+
+Event 1: Rash (maculopapular, generalised)
+  Onset Date: 2025-11-16 (day 5 of DrugB therapy)
+  Distribution: Trunk and proximal extremities
+  Outcome: Recovered
+  Seriousness: Non-serious
+
+Event 2: Pruritus (generalised)
+  Onset Date: 2025-11-16
+  Outcome: Recovered
+  Seriousness: Non-serious
+
+Event 3: Urticaria
+  Onset Date: 2025-11-17
+  Outcome: Recovered
+  Seriousness: Non-serious
+
+CAUSALITY ASSESSMENT (For Current Events Only)
+Reporter Causality: Probable
+Company Causality: Probable
+WHO-UMC Scale: Probable
+
+NARRATIVE
+
+A 51-year-old female with rheumatoid arthritis on stable methotrexate therapy, Hashimoto thyroiditis on levothyroxine, hypertension on amlodipine, and generalised anxiety disorder on sertraline was prescribed DrugB by her primary care physician on 2025-11-12 for an acute upper respiratory tract infection. The patient took the medication as directed.
+
+It must be emphasised that this is a separate and unrelated episode from the patient's previous, fully resolved drug reactions. In 2017 she experienced a rash to trimethoprim-sulfamethoxazole, which resolved within one week of withdrawal and led to lifelong avoidance of sulfonamide antibiotics. In 2019 she experienced transient pruritus during amoxicillin therapy. Both of those events are now historical and the patient has been free of cutaneous reactions for more than four years. The current event involves a different drug (DrugB, which is structurally unrelated to either sulfonamides or aminopenicillins) and represents a new and separate clinical episode.
+
+On the fifth day of DrugB therapy (2025-11-16), the patient noticed an itchy maculopapular rash beginning on the upper trunk and rapidly spreading over several hours to involve the back, shoulders, and proximal upper arms. Pruritus was severe. The patient applied a topical emollient without benefit. The following day (2025-11-17) she additionally developed urticarial wheals on the abdomen and thighs. There was no facial or oral swelling, no breathing difficulty, no wheezing, and no hypotension. Specifically, the patient denied any sensation of throat tightness, denied chest pain, and denied palpitations. There was no fever. No mucous membrane involvement was observed. No blistering or skin sloughing was present at any point, ruling out severe cutaneous adverse reactions such as Stevens-Johnson syndrome.
+
+DrugB was discontinued on 2025-11-17. The patient was assessed in the dermatology outpatient clinic on 2025-11-18. Examination confirmed a typical maculopapular drug eruption with overlying urticarial lesions, without features suggestive of severe cutaneous reaction. She was prescribed an oral antihistamine and a moderate-potency topical corticosteroid. Concomitant methotrexate, levothyroxine, amlodipine, and sertraline were continued unchanged, as none of them had been recently initiated or dose-adjusted, and the temporal relationship clearly implicated DrugB.
+
+By 2025-11-25, the rash, urticaria, and pruritus had fully resolved. The patient remained well at follow-up on 2025-11-28. She has been counselled to avoid DrugB and structurally related agents in the future. This information has been added to her allergy record alongside the historical sulfonamide reaction.
+
+DIFFERENTIATION FROM HISTORICAL EVENTS
+This report concerns only the events of November 2025. The reactions from 2017 (sulfonamide) and 2019 (amoxicillin) are mentioned in the medical history section for completeness only. The 2021 nausea event with methotrexate resolved years ago and is not relevant to the current cutaneous presentation. No active adverse event from any historical medication is present.
+
+FOLLOW-UP
+No further follow-up required. Patient counselled on allergy avoidance.
