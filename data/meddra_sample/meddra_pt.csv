@@ -1,0 +1,55 @@
+pt_code,pt_name,soc_name
+DEMO-0001,Headache,Nervous system disorders
+DEMO-0002,Dizziness,Nervous system disorders
+DEMO-0003,Nausea,Gastrointestinal disorders
+DEMO-0004,Hepatic function abnormal,Hepatobiliary disorders
+DEMO-0005,Jaundice,Hepatobiliary disorders
+DEMO-0006,Fatigue,General disorders and administration site conditions
+DEMO-0007,Abdominal pain,Gastrointestinal disorders
+DEMO-0008,Pruritus,Skin and subcutaneous tissue disorders
+DEMO-0009,International normalised ratio increased,Investigations
+DEMO-0010,Epistaxis,Respiratory thoracic and mediastinal disorders
+DEMO-0011,Ecchymosis,Vascular disorders
+DEMO-0012,Bradycardia,Cardiac disorders
+DEMO-0013,Syncope,Nervous system disorders
+DEMO-0014,Orthostatic hypotension,Vascular disorders
+DEMO-0015,Confusional state,Psychiatric disorders
+DEMO-0016,Insomnia,Psychiatric disorders
+DEMO-0017,Diarrhoea,Gastrointestinal disorders
+DEMO-0018,Paraesthesia,Nervous system disorders
+DEMO-0019,Anhedonia,Psychiatric disorders
+DEMO-0020,Depression,Psychiatric disorders
+DEMO-0021,Rash maculo-papular,Skin and subcutaneous tissue disorders
+DEMO-0022,Urticaria,Skin and subcutaneous tissue disorders
+DEMO-0023,Vomiting,Gastrointestinal disorders
+DEMO-0024,Rash,Skin and subcutaneous tissue disorders
+DEMO-0025,Asthenia,General disorders and administration site conditions
+DEMO-0026,Back pain,Musculoskeletal and connective tissue disorders
+DEMO-0027,Arthralgia,Musculoskeletal and connective tissue disorders
+DEMO-0028,Myalgia,Musculoskeletal and connective tissue disorders
+DEMO-0029,Constipation,Gastrointestinal disorders
+DEMO-0030,Abdominal discomfort,Gastrointestinal disorders
+DEMO-0031,Hypertension,Vascular disorders
+DEMO-0032,Hypotension,Vascular disorders
+DEMO-0033,Vertigo,Ear and labyrinth disorders
+DEMO-0034,Tremor,Nervous system disorders
+DEMO-0035,Seizure,Nervous system disorders
+DEMO-0036,Loss of consciousness,Nervous system disorders
+DEMO-0037,Cardiac arrest,Cardiac disorders
+DEMO-0038,Tachycardia,Cardiac disorders
+DEMO-0039,Atrial fibrillation,Cardiac disorders
+DEMO-0040,Chest pain,General disorders and administration site conditions
+DEMO-0041,Pyrexia,General disorders and administration site conditions
+DEMO-0042,Chills,General disorders and administration site conditions
+DEMO-0043,Anxiety,Psychiatric disorders
+DEMO-0044,Liver injury,Hepatobiliary disorders
+DEMO-0045,Renal failure,Renal and urinary disorders
+DEMO-0046,Acute kidney injury,Renal and urinary disorders
+DEMO-0047,Cough,Respiratory thoracic and mediastinal disorders
+DEMO-0048,Dyspnoea,Respiratory thoracic and mediastinal disorders
+DEMO-0049,Anaphylactic reaction,Immune system disorders
+DEMO-0050,Angioedema,Immune system disorders
+DEMO-0051,Stevens-Johnson syndrome,Skin and subcutaneous tissue disorders
+DEMO-0052,Toxic epidermal necrolysis,Skin and subcutaneous tissue disorders
+DEMO-0053,Hyperglycaemia,Metabolism and nutrition disorders
+DEMO-0054,Hypoglycaemia,Metabolism and nutrition disorders
