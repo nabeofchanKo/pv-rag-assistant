@@ -1,0 +1,95 @@
+INDIVIDUAL CASE SAFETY REPORT
+
+Report ID: ICSR-2025-002
+Report Type: Spontaneous, Healthcare Professional
+Report Date: 2025-12-03
+Reporter: Dr. Yamamoto, Osaka Medical Center, Department of Hepatology
+Reporter Qualification: Physician (Specialist)
+Country of Occurrence: Japan
+MedDRA Version: 27.0
+
+PATIENT INFORMATION
+Patient Initials: M.S.
+Age: 58 years
+Sex: Male
+Weight: 82 kg
+Height: 172 cm
+Ethnicity: Asian
+Smoking Status: Former smoker (quit 2018)
+Alcohol Use: Occasional (less than 7 units per week)
+
+Medical History
+- Type 2 diabetes mellitus, diagnosed 2019, baseline HbA1c 7.8 percent
+- Dyslipidaemia, diagnosed 2020
+- Essential hypertension, diagnosed 2017
+- Chronic kidney disease, stage 2 (eGFR 72 mL/min/1.73 m2)
+- No prior history of liver disease. Baseline ALT 28 U/L, AST 24 U/L, total bilirubin 0.8 mg/dL within 30 days prior to initiation of suspect drug.
+- No known drug allergies.
+
+SUSPECT DRUG
+Drug Name: DrugY
+Active Ingredient: Compound-Y 50 mg
+Manufacturer: Pharma Sample Co., Ltd.
+Dosage Form: Tablet
+Dosage Regimen: 50 mg, oral, once daily
+Route of Administration: Oral
+Indication: Type 2 diabetes mellitus, glycaemic control add-on therapy
+Therapy Start Date: 2025-10-15
+Therapy End Date: 2025-11-22 (discontinued)
+Action Taken with Drug: Drug withdrawn
+
+CONCOMITANT MEDICATIONS
+- Metformin 1000 mg twice daily, ongoing since 2019
+- Atorvastatin 20 mg once daily at night, ongoing since 2020
+- Telmisartan 40 mg once daily, ongoing since 2017
+- Aspirin 100 mg once daily, ongoing since 2022 (low-dose for cardiovascular prevention)
+
+ADVERSE EVENTS
+Event 1: Hepatic function abnormal (drug-induced liver injury)
+  Onset Date: 2025-11-15 (approximately 30 days after DrugY initiation)
+  Date of Resolution: Ongoing at the time of this report
+  Outcome: Recovering
+  Seriousness Criteria Met: Hospitalisation (inpatient admission required for evaluation and supportive care)
+  Seriousness: Serious
+
+Event 2: Jaundice
+  Onset Date: 2025-11-18
+  Outcome: Recovering
+  Seriousness Criteria Met: Associated with the serious event above
+
+Event 3: Fatigue (severe)
+  Onset Date: 2025-11-10
+  Outcome: Recovering
+  Seriousness: Non-serious
+
+Event 4: Abdominal pain (right upper quadrant)
+  Onset Date: 2025-11-17
+  Outcome: Recovering
+  Seriousness: Non-serious
+
+Event 5: Pruritus (generalised)
+  Onset Date: 2025-11-19
+  Outcome: Recovering
+  Seriousness: Non-serious
+
+CAUSALITY ASSESSMENT
+Reporter Causality: Probable
+Company Causality: Probable
+WHO-UMC Scale: Probable
+RUCAM (Roussel Uclaf Causality Assessment Method) Score: 8 (Probable)
+
+NARRATIVE
+A 58-year-old male patient with a multi-year history of type 2 diabetes mellitus, dyslipidaemia, hypertension, and stage 2 chronic kidney disease was initiated on DrugY 50 mg once daily on 2025-10-15 as an add-on to metformin for inadequate glycaemic control. Baseline liver function tests obtained within 30 days prior to therapy initiation were within normal limits (ALT 28 U/L, AST 24 U/L, ALP 95 U/L, total bilirubin 0.8 mg/dL).
+
+Approximately three weeks after starting DrugY, the patient reported new-onset progressive fatigue and reduced exercise tolerance. He did not initially associate these symptoms with his new medication. On 2025-11-15, he developed nausea and noted darkening of his urine. By 2025-11-17 he had developed right upper quadrant abdominal discomfort, and on 2025-11-18 his wife observed scleral icterus, prompting an urgent consultation.
+
+Laboratory evaluation on the day of admission showed ALT 612 U/L, AST 487 U/L, ALP 168 U/L, total bilirubin 4.8 mg/dL (direct bilirubin 3.2 mg/dL), and INR 1.2. Hepatitis A, B, C, and E serologies were negative. Anti-nuclear antibody and anti-mitochondrial antibody were negative. Abdominal ultrasound demonstrated no biliary obstruction or focal hepatic lesion. No alcohol or herbal supplement use was reported in the preceding three months. The pattern of injury was predominantly hepatocellular (R-value 7.2).
+
+DrugY was discontinued on 2025-11-22. The patient was hospitalised for five days for observation and supportive care. Atorvastatin was temporarily held on admission as a precautionary measure but was reintroduced after liver enzymes began to decline, without further worsening. Metformin, telmisartan, and aspirin were continued throughout. Generalised pruritus developed on 2025-11-19 and was managed with antihistamines.
+
+By 2025-12-02, the patient's symptoms had substantially improved. Repeat laboratory testing showed ALT 142 U/L, AST 98 U/L, total bilirubin 2.1 mg/dL, demonstrating a downward trend. Pruritus had resolved. The patient remained off DrugY at the time of this report.
+
+The RUCAM score of 8 reflects the temporal relationship (latency of 30 days, consistent with idiosyncratic drug-induced liver injury), the dechallenge response (substantial improvement following drug withdrawal), the exclusion of alternative causes, and the absence of other plausible hepatotoxins. Concomitant atorvastatin is a known but uncommon cause of hepatotoxicity; however, the patient had tolerated atorvastatin for five years without prior abnormality, and atorvastatin was continued during recovery without further injury.
+
+FOLLOW-UP
+Follow-up scheduled for 2025-12-15 with repeat liver function tests and re-evaluation of diabetes management. Rechallenge with DrugY is not planned.

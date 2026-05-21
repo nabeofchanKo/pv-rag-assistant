@@ -1,0 +1,88 @@
+INDIVIDUAL CASE SAFETY REPORT
+
+Report ID: ICSR-2025-004
+Report Type: Spontaneous, Consumer Report (Family Member)
+Report Date: 2025-12-10
+Reporter: Family Member (Spouse of Patient)
+Reporter Qualification: Non-healthcare professional
+Country of Occurrence: Japan
+MedDRA Version: 27.0
+Note: This report was received via the manufacturer's consumer hotline. The reporter is the spouse of the patient. Medical terminology has been retained as provided by the reporter; coded MedDRA preferred terms have been assigned by the company safety physician based on the reporter's description.
+
+PATIENT INFORMATION
+Patient Initials: Y.K.
+Age: 42 years
+Sex: Female
+Weight: Not reported
+Medical History (as reported by spouse):
+- Depression, diagnosed approximately 6 years ago
+- "Sometimes has trouble sleeping but nothing major"
+- No known allergies that the spouse is aware of
+
+SUSPECT DRUG
+Drug Name: DrugA
+Indication: Major depressive disorder
+Dosage Regimen: 25 mg once daily for one week, then increased to 50 mg once daily by prescribing psychiatrist
+Route of Administration: Oral
+Therapy Start Date: 2025-10-20
+Therapy End Date: Ongoing at time of report
+Action Taken with Drug: None (patient continues medication under psychiatrist supervision)
+
+CONCOMITANT MEDICATIONS
+- An old prescription for sleep that the patient takes "once in a while when she really cannot sleep" (specific name not known to reporter)
+- A multivitamin daily
+
+ADVERSE EVENTS AS DESCRIBED BY REPORTER
+The following events have been described by the reporter using lay language. MedDRA preferred terms have been assigned by the company safety review.
+
+Reporter description: "She has been really tired all the time, like she just cannot shake it off no matter how much she sleeps. She used to be tired before because of her depression but this feels different to her. She says it is more of a physical heavy feeling, not the sad kind of tired."
+Assigned MedDRA PT: Fatigue
+  Onset: Approximately 5 days after starting DrugA
+  Outcome: Ongoing
+  Seriousness: Non-serious
+
+Reporter description: "She cannot fall asleep anymore. Even when she is exhausted she just lies there. And then when she finally falls asleep she wakes up at 3 or 4 in the morning and cannot go back. This has been happening every single night."
+Assigned MedDRA PT: Insomnia
+  Onset: Approximately one week after starting DrugA
+  Outcome: Ongoing
+  Seriousness: Non-serious
+
+Reporter description: "Her stomach has been upset on and off. Some days she runs to the bathroom, other days she feels nauseous and does not want to eat. It is not constant but it is bothering her."
+Assigned MedDRA PT (Event A): Diarrhoea
+Assigned MedDRA PT (Event B): Nausea
+  Onset: Approximately 10 days after starting DrugA
+  Outcome: Intermittent, ongoing
+  Seriousness: Non-serious
+
+Reporter description: "This is the one that worries me the most. She gets this weird feeling in her hands and feet, like they are buzzing or there are tiny insects crawling on her skin. Sometimes it is more like a tingling, sometimes more like numbness. It comes and goes. She said it feels really strange, not painful, just unsettling."
+Assigned MedDRA PT: Paraesthesia
+  Onset: Approximately 2 weeks after starting DrugA, more noticeable after dose increase to 50 mg
+  Outcome: Ongoing
+  Seriousness: Non-serious
+
+Reporter description: "She has lost interest in things she used to enjoy. She used to love her garden and now she does not even want to go outside. I know this can be part of depression but her psychiatrist said the medicine should be helping with that, not making it worse. I am worried the medicine is doing the opposite of what it should."
+Assigned MedDRA PT: Anhedonia
+Assigned MedDRA PT (related): Depression worsened
+  Onset: Approximately 3 weeks after starting DrugA
+  Outcome: Ongoing
+  Seriousness: Non-serious (under monitoring by treating psychiatrist)
+
+CAUSALITY ASSESSMENT
+Reporter Causality: Not assessed (consumer report)
+Company Causality (assessed by company safety physician): Possible for all events.
+WHO-UMC Scale: Possible. Temporal relationship is consistent, but the patient continues medication and dechallenge has not been performed. Some events (insomnia, paraesthesia, gastrointestinal symptoms) are known adverse reactions associated with this drug class. Worsening of underlying depression cannot be reliably distinguished from inadequate therapeutic response versus drug-induced effect at this time.
+
+NARRATIVE
+The patient is a 42-year-old female with a 6-year history of major depressive disorder. She was prescribed DrugA by her treating psychiatrist on 2025-10-20, starting at 25 mg once daily, with a planned dose increase to 50 mg once daily after one week if tolerated. The dose increase to 50 mg occurred on or about 2025-10-27.
+
+The report to the manufacturer's hotline was made by the patient's husband on 2025-12-10. The husband stated that his wife had been "different" since starting the new medication. He described a constellation of symptoms that had developed gradually and that he was concerned were related to the medication. The husband acknowledged that some of what he was describing might be part of his wife's underlying depression, but he stated that the timing of symptom onset relative to medication initiation, and his wife's own report that the symptoms felt qualitatively different from her usual experience of depression, prompted him to call.
+
+The patient herself was not directly interviewed for this report. The treating psychiatrist was contacted by the company safety physician on 2025-12-12 with the patient's verbal consent. The psychiatrist confirmed that the patient had reported similar symptoms during her most recent visit on 2025-12-05 and that the medication was being continued under close observation with a follow-up visit planned in two weeks. The psychiatrist agreed that the temporal relationship and symptom profile were consistent with a possible adverse drug reaction to DrugA, but emphasised that premature discontinuation of antidepressant therapy carried its own clinical risk.
+
+The patient continues to take DrugA at the time of this report. Follow-up is planned.
+
+REPORTER LITERAL QUOTES PRESERVED IN ATTACHED NOTES
+The full transcript of the consumer hotline call has been preserved in the case file. Key quotes from the reporter are reproduced above to preserve the original character of the description and to support subsequent MedDRA coding review.
+
+FOLLOW-UP
+Follow-up planned with the treating psychiatrist after the patient's next scheduled visit on 2025-12-19.
