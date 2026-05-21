@@ -1,0 +1,55 @@
+pt_code,pt_name,soc_name
+10019211,Headache,Nervous system disorders
+10013573,Dizziness,Nervous system disorders
+10028813,Nausea,Gastrointestinal disorders
+10019837,Hepatic function abnormal,Hepatobiliary disorders
+10023126,Jaundice,Hepatobiliary disorders
+10016256,Fatigue,General disorders and administration site conditions
+10000059,Abdominal pain,Gastrointestinal disorders
+10037087,Pruritus,Skin and subcutaneous tissue disorders
+10022402,International normalised ratio increased,Investigations
+10015090,Epistaxis,Respiratory thoracic and mediastinal disorders
+10014080,Ecchymosis,Vascular disorders
+10006093,Bradycardia,Cardiac disorders
+10042772,Syncope,Nervous system disorders
+10031127,Orthostatic hypotension,Vascular disorders
+10010305,Confusional state,Psychiatric disorders
+10022437,Insomnia,Psychiatric disorders
+10012735,Diarrhoea,Gastrointestinal disorders
+10033775,Paraesthesia,Nervous system disorders
+10002869,Anhedonia,Psychiatric disorders
+10012378,Depression,Psychiatric disorders
+10037868,Rash maculo-papular,Skin and subcutaneous tissue disorders
+10046735,Urticaria,Skin and subcutaneous tissue disorders
+10047700,Vomiting,Gastrointestinal disorders
+10037844,Rash,Skin and subcutaneous tissue disorders
+10005886,Asthenia,General disorders and administration site conditions
+10003988,Back pain,Musculoskeletal and connective tissue disorders
+10003239,Arthralgia,Musculoskeletal and connective tissue disorders
+10028411,Myalgia,Musculoskeletal and connective tissue disorders
+10010774,Constipation,Gastrointestinal disorders
+10000060,Abdominal discomfort,Gastrointestinal disorders
+10020772,Hypertension,Vascular disorders
+10020865,Hypotension,Vascular disorders
+10047340,Vertigo,Ear and labyrinth disorders
+10043521,Tremor,Nervous system disorders
+10039906,Seizure,Nervous system disorders
+10025482,Loss of consciousness,Nervous system disorders
+10008190,Cardiac arrest,Cardiac disorders
+10042244,Tachycardia,Cardiac disorders
+10003658,Atrial fibrillation,Cardiac disorders
+10008479,Chest pain,General disorders and administration site conditions
+10037660,Pyrexia,General disorders and administration site conditions
+10008531,Chills,General disorders and administration site conditions
+10001497,Anxiety,Psychiatric disorders
+10024690,Liver injury,Hepatobiliary disorders
+10038359,Renal failure,Renal and urinary disorders
+10023506,Acute kidney injury,Renal and urinary disorders
+10011224,Cough,Respiratory thoracic and mediastinal disorders
+10013968,Dyspnoea,Respiratory thoracic and mediastinal disorders
+10002198,Anaphylactic reaction,Immune system disorders
+10002424,Angioedema,Immune system disorders
+10042033,Stevens-Johnson syndrome,Skin and subcutaneous tissue disorders
+10044565,Toxic epidermal necrolysis,Skin and subcutaneous tissue disorders
+10020635,Hyperglycaemia,Metabolism and nutrition disorders
+10020758,Hypoglycaemia,Metabolism and nutrition disorders
