@@ -24,3 +24,16 @@ class ProcessedDocument(BaseModel):
     def full_text(self) -> str:
         """Concatenate all page texts and return as a single string."""
         return "\n\n".join(page.text for page in self.pages)
+
+class Chunk(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    document_name: str
+    chunk_index: int
+    page_number: int
+    total_chunks: int
+    char_start: int
+    char_end: int
+    text: str
+    language: str = "en"
+    created_at: datetime
