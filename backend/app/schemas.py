@@ -35,5 +35,11 @@ class Chunk(BaseModel):
     char_start: int
     char_end: int
     text: str
-    language: str = "en"
     created_at: datetime
+    language: str = "en"
+
+class EmbeddedChunk(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    chunk: Chunk
+    embedding: list[float]
