@@ -43,3 +43,10 @@ class EmbeddedChunk(BaseModel):
 
     chunk: Chunk
     embedding: list[float]
+
+class RAGResponse(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    answer: str
+    source_chunks: list[Chunk]
+    query: str
