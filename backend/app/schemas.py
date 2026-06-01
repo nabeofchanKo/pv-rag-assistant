@@ -12,6 +12,7 @@ class PageContent(BaseModel):
     char_count: int
     extraction_method: str = "text"
 
+
 class ProcessedDocument(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -24,6 +25,7 @@ class ProcessedDocument(BaseModel):
     def full_text(self) -> str:
         """Concatenate all page texts and return as a single string."""
         return "\n\n".join(page.text for page in self.pages)
+
 
 class Chunk(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -38,11 +40,13 @@ class Chunk(BaseModel):
     created_at: datetime
     language: str = "en"
 
+
 class EmbeddedChunk(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     chunk: Chunk
     embedding: list[float]
+
 
 class RAGResponse(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -50,3 +54,27 @@ class RAGResponse(BaseModel):
     answer: str
     source_chunks: list[Chunk]
     query: str
+
+
+class QueryRequest(BaseModel):
+    query: str
+    top_k: int = 3
+
+
+class SourceInfo(BaseModel):
+    document_name: str
+    page_number: int
+    chunk_index: int
+    text: str
+
+
+class QueryResponse(BaseModel):
+    answer: str
+    query: str
+    sources: list[SourceInfo]
+
+
+class UploadResponse(BaseModel):
+    document_name: str
+    chunks_added: int
+    message: str
