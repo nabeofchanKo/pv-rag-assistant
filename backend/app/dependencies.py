@@ -85,6 +85,16 @@ def get_generator_service() -> GeneratorService:
     return GeneratorService(llm=get_chat_model())
 
 
+@lru_cache
+def get_extraction_model() -> BaseChatModel:
+    """Return the model used for structured extraction (swappable via settings)."""
+    return ChatOpenAI(
+        model=settings.openai_extraction_model,
+        temperature=0.0,
+        api_key=settings.openai_api_key,
+    )
+
+
 def get_extraction_service() -> ExtractionService:
     """Structured extraction of patient + adverse events from case text."""
-    return ExtractionService(llm=get_chat_model())
+    return ExtractionService(llm=get_extraction_model())
