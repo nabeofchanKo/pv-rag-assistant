@@ -1,0 +1,7 @@
+# Prevent line-ending conversion from corrupting binary assets on checkout/clone.
+# (Without this, core.autocrlf=true can misdetect these as text and inject CRLF,
+#  breaking PDF byte offsets and image data.)
+*.pdf   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
