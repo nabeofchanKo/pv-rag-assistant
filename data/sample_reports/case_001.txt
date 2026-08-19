@@ -1,63 +1,64 @@
-INDIVIDUAL CASE SAFETY REPORT
+個別症例安全性報告
 
-Report ID: ICSR-2025-001
-Report Type: Spontaneous
-Report Date: 2025-11-15
-Reporter: Dr. Tanaka, Tokyo General Hospital
-Reporter Qualification: Physician
-Country of Occurrence: Japan
-MedDRA Version: 27.0
+報告ID：ICSR-2025-001
+報告種別：自発報告
+報告日：2025-11-15
+報告者：田中医師（東京総合病院）
+報告者資格：医師
+発生国：日本
+MedDRAバージョン：27.0
 
-PATIENT INFORMATION
-Patient Initials: K.T.
-Age: 65 years
-Sex: Female
-Weight: 58 kg
-Ethnicity: Asian
-Medical History: Essential hypertension diagnosed 10 years ago, well controlled prior to this event. No known drug allergies.
+患者情報
+患者イニシャル：K.T.
+年齢：65歳
+性別：女性
+体重：58 kg
+人種：アジア人
+既往歴・合併症：本態性高血圧（10年前に診断、本事象発現前は良好にコントロールされていた）。既知の薬剤アレルギーなし。
 
-SUSPECT DRUG
-Drug Name: DrugX
-Active Ingredient: Compound-X 10 mg
-Manufacturer: Pharma Sample Co., Ltd.
-Dosage Form: Film-coated tablet
-Dosage Regimen: 10 mg, oral, once daily in the morning
-Route of Administration: Oral
-Indication: Essential hypertension
-Therapy Start Date: 2025-11-01
-Therapy End Date: 2025-11-14 (discontinued due to adverse events)
-Action Taken with Drug: Drug withdrawn
+被疑薬
+薬剤名：DrugX
+有効成分：Compound-X 10 mg
+製造販売業者：Pharma Sample Co., Ltd.
+剤形：フィルムコーティング錠
+用法：1日1回、朝、経口投与
+用量：10 mg
+投与経路：経口
+効能・効果：本態性高血圧
+投与開始日：2025-11-01
+投与終了日：2025-11-14（有害事象のため投与中止）
+薬剤に対する処置：投与中止
 
-CONCOMITANT MEDICATIONS
-None reported at the time of the event.
+併用薬
+本事象発現時、報告された併用薬はなし。
 
-ADVERSE EVENTS
-Event 1: Headache (severe)
-  Onset Date: 2025-11-04
-  Outcome: Recovering
-  Seriousness: Non-serious
+有害事象
+事象1：頭痛（重度）
+　発現日：2025-11-04
+　転帰：軽快
+　重篤度：非重篤
 
-Event 2: Dizziness
-  Onset Date: 2025-11-04
-  Outcome: Recovering
-  Seriousness: Non-serious
+事象2：浮動性めまい
+　発現日：2025-11-04
+　転帰：軽快
+　重篤度：非重篤
 
-Event 3: Nausea
-  Onset Date: 2025-11-05
-  Outcome: Recovering
-  Seriousness: Non-serious
+事象3：悪心
+　発現日：2025-11-05
+　転帰：軽快
+　重篤度：非重篤
 
-CAUSALITY ASSESSMENT
-Reporter Causality: Possible
-Company Causality: Possible
-WHO-UMC Scale: Possible
+因果関係評価
+報告者による因果関係：可能性あり（Possible）
+企業による因果関係：可能性あり（Possible）
+WHO-UMC判定：可能性あり（Possible）
 
-NARRATIVE
-A 65-year-old Japanese female with a 10-year history of well-controlled essential hypertension was initiated on DrugX 10 mg once daily on 2025-11-01 by her primary care physician. She had previously been managed with lifestyle modification alone and had no prior history of antihypertensive pharmacotherapy. Baseline blood pressure at the time of prescription was 152/94 mmHg.
+症例経過
+本態性高血圧の10年の既往を有し、本事象発現前まで良好にコントロールされていた65歳のアジア人女性。かかりつけ医により、2025-11-01よりDrugX 10 mgの1日1回投与が開始された。それまでは生活習慣の改善のみで管理されており、降圧薬による薬物療法の既往はなかった。処方時のベースライン血圧は152/94 mmHgであった。
 
-Three days after the first dose (2025-11-04), the patient developed a severe throbbing frontal headache accompanied by dizziness on standing. The following day she additionally experienced episodes of nausea without vomiting. She did not seek immediate medical attention but contacted the prescribing physician on 2025-11-14, at which point DrugX was discontinued. No symptomatic treatment was required. By the date of this report all three symptoms had been gradually improving over approximately three days following drug withdrawal.
+初回投与から3日後（2025-11-04）、患者は重度の拍動性の前頭部頭痛を発現し、起立時のめまいを伴った。翌日にはさらに、嘔吐を伴わない悪心のエピソードを認めた。患者は直ちに医療機関を受診せず、2025-11-14に処方医へ連絡し、同日DrugXの投与が中止された。対症療法を要することはなかった。本報告時点で、3症状はいずれも投与中止後約3日間かけて徐々に軽快していた。
 
-No alternative cause was identified. The patient reported no recent dietary changes, no new medications, and no intercurrent illness. The temporal relationship between drug initiation and symptom onset supports a possible causal association with DrugX.
+他の原因は特定されなかった。患者からは、最近の食事内容の変更、新規薬剤の使用、併発疾患のいずれもないとの報告があった。薬剤の投与開始と症状発現との時間的関係は、DrugXとの因果関係が可能性あり（Possible）であることを支持するものである。
 
-FOLLOW-UP
-Follow-up planned at next scheduled visit on 2025-12-01 to confirm full recovery.
+追跡調査
+完全な回復を確認するため、次回予定受診日である2025-12-01に追跡調査を予定している。

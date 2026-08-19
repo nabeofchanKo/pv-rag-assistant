@@ -1,140 +1,140 @@
-INDIVIDUAL CASE SAFETY REPORT
+個別症例安全性報告
 
-Report ID: ICSR-2025-003
-Report Type: Spontaneous, Healthcare Professional
-Report Date: 2026-01-20
-Reporter: Dr. Suzuki, Yokohama Cardiovascular Institute
-Reporter Qualification: Physician (Cardiology Specialist)
-Country of Occurrence: Japan
-MedDRA Version: 27.0
+報告ID：ICSR-2025-003
+報告種別：自発報告、医療専門家
+報告日：2026-01-20
+報告者：横浜循環器研究所 鈴木医師
+報告者資格：医師（循環器専門医）
+発生国：日本
+MedDRAバージョン：27.0
 
-PATIENT INFORMATION
-Patient Initials: H.N.
-Age: 74 years
-Sex: Male
-Weight: 68 kg
-Height: 165 cm
-Ethnicity: Asian
+患者情報
+患者イニシャル：H.N.
+年齢：74歳
+性別：男性
+体重：68 kg
+身長：165 cm
+人種：アジア人
 
-Medical History
-- Persistent atrial fibrillation, diagnosed 2022, with CHA2DS2-VASc score of 4
-- Coronary artery disease, status post percutaneous coronary intervention with drug-eluting stent placement to left anterior descending artery, 2021
-- Heart failure with preserved ejection fraction (HFpEF), ejection fraction 55 percent
-- Essential hypertension, longstanding
-- Stage 3a chronic kidney disease (baseline eGFR 52 mL/min/1.73 m2)
-- Type 2 diabetes mellitus, well controlled
-- Mild cognitive impairment, noted 2024
+既往歴・合併症
+・持続性心房細動（2022年診断、CHA2DS2-VAScスコア4）
+・冠動脈疾患（2021年、左前下行枝への薬剤溶出性ステント留置による経皮的冠動脈インターベンション施行後）
+・左室駆出率の保たれた心不全（HFpEF、駆出率55％）
+・本態性高血圧（長期罹患）
+・慢性腎臓病ステージ3a（ベースラインeGFR 52 mL/min/1.73 m2）
+・2型糖尿病（良好にコントロール）
+・軽度認知障害（2024年に指摘）
 
-SUSPECT DRUGS
-Drug 1 (Primary Suspect): DrugZ
-Active Ingredient: Compound-Z 200 mg
-Manufacturer: Pharma Sample Co., Ltd.
-Dosage Form: Tablet
-Dosage Regimen: Initially 200 mg twice daily for 7 days, then 200 mg once daily maintenance
-Route of Administration: Oral
-Indication: Maintenance of sinus rhythm in atrial fibrillation
-Therapy Start Date: 2025-09-10
-Therapy End Date: 2025-12-28
-Action Taken with Drug: Drug withdrawn
+被疑薬
+薬剤1（主被疑薬）：DrugZ
+有効成分：Compound-Z 200 mg
+製造販売業者：Pharma Sample Co., Ltd.
+剤形：錠剤
+用法・用量：開始時 200 mg 1日2回を7日間、その後 200 mg 1日1回で維持
+投与経路：経口
+適応：心房細動における洞調律維持
+投与開始日：2025-09-10
+投与終了日：2025-12-28
+薬剤に対する処置：投与中止
 
-Drug 2 (Co-Suspect): Warfarin
-Dosage Regimen: 3 mg once daily (variable, INR-titrated)
-Route of Administration: Oral
-Indication: Stroke prevention in atrial fibrillation
-Therapy Start Date: 2022-06-01
-Therapy End Date: Ongoing (dose adjustment made)
-Action Taken with Drug: Dose reduced
+薬剤2（併合被疑薬）：ワルファリン
+用法・用量：3 mg 1日1回（INRに応じて用量調整、変動あり）
+投与経路：経口
+適応：心房細動における脳卒中予防
+投与開始日：2022-06-01
+投与終了日：継続中（用量調整実施）
+薬剤に対する処置：減量
 
-CONCOMITANT MEDICATIONS
-- Carvedilol 6.25 mg twice daily, ongoing since 2022
-- Aspirin 100 mg once daily, ongoing since 2021
-- Atorvastatin 40 mg once daily at night, ongoing since 2021
-- Furosemide 20 mg once daily, ongoing since 2024
-- Empagliflozin 10 mg once daily, ongoing since 2023
-- Donepezil 5 mg once daily, ongoing since 2024
+併用薬（継続中）
+・カルベジロール 6.25 mg 1日2回（2022年より継続）
+・アスピリン 100 mg 1日1回（2021年より継続）
+・アトルバスタチン 40 mg 1日1回 就寝前（2021年より継続）
+・フロセミド 20 mg 1日1回（2024年より継続）
+・エンパグリフロジン 10 mg 1日1回（2023年より継続）
+・ドネペジル 5 mg 1日1回（2024年より継続）
 
-ADVERSE EVENTS
+有害事象
 
-Event 1: International Normalised Ratio (INR) increased
-  Onset Date: 2025-10-12
-  Peak Value: INR 5.8 (target range 2.0 to 3.0)
-  Outcome: Recovered following dose adjustment
-  Seriousness: Non-serious
+事象1：INR増加（International normalised ratio increased）
+　発現日：2025-10-12
+　ピーク値：INR 5.8（目標範囲 2.0～3.0）
+　転帰：用量調整後に回復
+　重篤度：非重篤
 
-Event 2: Epistaxis (recurrent)
-  Onset Date: 2025-10-14
-  Outcome: Recovered
-  Seriousness: Non-serious
+事象2：鼻出血（Epistaxis、反復性）
+　発現日：2025-10-14
+　転帰：回復
+　重篤度：非重篤
 
-Event 3: Ecchymosis (extensive bruising, bilateral upper extremities)
-  Onset Date: 2025-10-15
-  Outcome: Recovered
-  Seriousness: Non-serious
+事象3：斑状出血（Ecchymosis、両側上肢の広範な皮下出血）
+　発現日：2025-10-15
+　転帰：回復
+　重篤度：非重篤
 
-Event 4: Bradycardia (symptomatic)
-  Onset Date: 2025-11-22
-  Lowest Recorded Heart Rate: 38 beats per minute
-  Outcome: Recovered following drug withdrawal
-  Seriousness Criteria Met: Hospitalisation
-  Seriousness: Serious
+事象4：徐脈（Bradycardia、症候性）
+　発現日：2025-11-22
+　最低記録心拍数：38 bpm
+　転帰：投与中止後に回復
+　重篤性の該当基準：入院
+　重篤度：重篤
 
-Event 5: Syncope
-  Onset Date: 2025-11-22
-  Outcome: Recovered
-  Seriousness Criteria Met: Hospitalisation
-  Seriousness: Serious
+事象5：失神（Syncope）
+　発現日：2025-11-22
+　転帰：回復
+　重篤性の該当基準：入院
+　重篤度：重篤
 
-Event 6: Hypotension (orthostatic)
-  Onset Date: 2025-11-23
-  Outcome: Recovered
-  Seriousness: Non-serious
+事象6：起立性低血圧（Orthostatic hypotension）
+　発現日：2025-11-23
+　転帰：回復
+　重篤度：非重篤
 
-Event 7: Confusional state
-  Onset Date: 2025-12-15
-  Outcome: Recovered
-  Seriousness: Non-serious
+事象7：錯乱状態（Confusional state）
+　発現日：2025-12-15
+　転帰：回復
+　重篤度：非重篤
 
-Event 8: Dizziness
-  Onset Date: 2025-12-15
-  Outcome: Recovered
-  Seriousness: Non-serious
+事象8：浮動性めまい（Dizziness）
+　発現日：2025-12-15
+　転帰：回復
+　重篤度：非重篤
 
-CAUSALITY ASSESSMENT
-For Events 1 through 3 (Bleeding-related):
-  Reporter Causality (DrugZ): Probable
-  Reporter Causality (Warfarin): Possible (interaction with DrugZ suspected)
-  WHO-UMC Scale: Probable for the drug-drug interaction
+因果関係評価
+事象1～3（出血関連）について：
+　報告者による因果関係（DrugZ）：ほぼ確実（Probable）
+　報告者による因果関係（ワルファリン）：可能性あり（Possible）（DrugZとの相互作用が疑われる）
+　WHO-UMC判定：薬物相互作用についてほぼ確実（Probable）
 
-For Events 4 through 6 (Cardiac/Haemodynamic):
-  Reporter Causality (DrugZ): Probable
-  WHO-UMC Scale: Probable
+事象4～6（心臓／血行動態関連）について：
+　報告者による因果関係（DrugZ）：ほぼ確実（Probable）
+　WHO-UMC判定：ほぼ確実（Probable）
 
-For Events 7 and 8 (Neurological):
-  Reporter Causality (DrugZ): Possible
-  WHO-UMC Scale: Possible
+事象7～8（神経学的）について：
+　報告者による因果関係（DrugZ）：可能性あり（Possible）
+　WHO-UMC判定：可能性あり（Possible）
 
-NARRATIVE
+症例経過
 
-A 74-year-old male patient with a long-standing history of persistent atrial fibrillation, coronary artery disease, heart failure with preserved ejection fraction, hypertension, stage 3a chronic kidney disease, type 2 diabetes mellitus, and mild cognitive impairment was managed at our institution for cardiovascular care. His atrial fibrillation had been managed with a rate-control strategy using carvedilol since 2022, with warfarin anticoagulation maintained within a target INR range of 2.0 to 3.0. INR values had been stable for the preceding 18 months at the warfarin dose of 3 mg daily.
+74歳男性。持続性心房細動、冠動脈疾患、左室駆出率の保たれた心不全、高血圧、慢性腎臓病ステージ3a、2型糖尿病、および軽度認知障害の長期にわたる既往を有し、当院にて心血管管理を受けていた。心房細動に対しては2022年よりカルベジロールによるレートコントロール（心拍数調節）を行い、ワルファリンによる抗凝固療法をINR目標範囲2.0～3.0で維持していた。ワルファリン3 mg/日の用量で、直近18か月間INR値は安定して推移していた。
 
-In September 2025, due to increasing symptomatic palpitations and reduced exercise tolerance, the decision was made to attempt a rhythm-control strategy by adding DrugZ 200 mg twice daily for an initial loading phase of 7 days, followed by a maintenance dose of 200 mg once daily. Baseline electrocardiogram showed atrial fibrillation with a controlled ventricular response of 78 beats per minute and a QTc interval of 432 ms. Liver function tests, thyroid function tests, and renal function were within his recent baseline range.
+2025年9月、症候性の動悸増強および運動耐容能の低下を認めたため、リズムコントロール（洞調律維持）戦略を試みることとし、DrugZ 200 mg 1日2回を7日間の初期負荷投与として追加し、その後維持用量として200 mg 1日1回へ移行した。ベースラインの心電図では、心室応答がコントロールされた（78 bpm）心房細動を認め、QTc間隔は432 msであった。肝機能検査、甲状腺機能検査、および腎機能は、いずれも直近のベースライン範囲内であった。
 
-Approximately one month after DrugZ initiation (2025-10-12), routine INR monitoring showed an unexpected elevation to 5.8, despite no change in warfarin dose, dietary pattern, or other concomitant medications. The patient denied any new over-the-counter medications, supplements, or herbal products. He had not experienced any febrile illness. Two days later (2025-10-14), the patient developed recurrent epistaxis requiring local pressure and an outpatient consultation. By 2025-10-15, extensive ecchymoses were noted on both forearms following minimal trauma. Warfarin was held for two days, after which the dose was reduced from 3 mg to 1.5 mg daily, and INR returned to therapeutic range within one week. The interaction between DrugZ and warfarin, mediated by cytochrome P450 inhibition (particularly CYP2C9 and CYP3A4), was suspected as the cause.
+DrugZ開始から約1か月後（2025-10-12）、定期的なINRモニタリングにて、ワルファリンの用量、食事内容、その他の併用薬に変更がないにもかかわらず、予期せぬINR上昇（5.8）を認めた。患者は新たな一般用医薬品、サプリメント、健康食品の使用を否定し、発熱性疾患の既往もなかった。2日後（2025-10-14）、反復性の鼻出血を発症し、局所圧迫および外来受診を要した。2025-10-15までに、軽微な外傷を契機として両前腕に広範な斑状出血を認めた。ワルファリンを2日間休薬した後、用量を3 mgから1.5 mg/日へ減量したところ、INRは1週間以内に治療域へ復した。本事象の原因として、シトクロムP450阻害（特にCYP2C9およびCYP3A4）を介したDrugZとワルファリンの相互作用が疑われた。
 
-The patient continued DrugZ at the maintenance dose of 200 mg once daily, with closer warfarin monitoring. On 2025-11-22, approximately 10 weeks after DrugZ initiation, the patient was brought to the emergency department by his daughter following an episode of syncope while ambulating from the bathroom. On arrival, his heart rate was 38 beats per minute and blood pressure was 92/58 mmHg. Electrocardiogram demonstrated atrial fibrillation with a significantly slowed ventricular response and a prolonged QTc interval of 498 ms (baseline 432 ms). No proarrhythmia (torsade de pointes) was observed.
+患者はより厳密なワルファリンモニタリングのもと、DrugZを維持用量200 mg 1日1回で継続した。2025-11-22、DrugZ開始から約10週後、患者は浴室からの歩行中に失神発作を起こし、娘に付き添われて救急外来を受診した。来院時、心拍数は38 bpm、血圧は92/58 mmHgであった。心電図では、心室応答が著明に低下した心房細動と、QTc間隔の延長（498 ms、ベースライン432 ms）を認めた。催不整脈作用（トルサード・ド・ポアント）は認められなかった。
 
-The patient was admitted for telemetry monitoring. Carvedilol and DrugZ were both held on admission. Over the subsequent 48 hours, ventricular rate gradually recovered to 60 to 70 beats per minute and QTc shortened to 460 ms. The patient remained hemodynamically stable thereafter. Carvedilol was reintroduced at a reduced dose of 3.125 mg twice daily without further bradycardia. The combination of DrugZ with the existing beta-blocker therapy was felt to have produced excessive negative chronotropic effect, compounded by the patient's age, reduced renal clearance, and possible drug-drug interaction affecting carvedilol metabolism. Mild orthostatic hypotension was observed during the admission and resolved by discharge.
+患者はテレメトリーモニタリング目的で入院した。入院時にカルベジロールおよびDrugZをいずれも休薬した。その後48時間で心室拍数は60～70 bpmへ徐々に回復し、QTcは460 msへ短縮した。以後、血行動態は安定して経過した。カルベジロールは3.125 mg 1日2回へ減量して再開したが、徐脈の再発は認めなかった。DrugZと既存のβ遮断薬併用療法が過度の陰性変時作用を生じたものと考えられ、これに患者の高齢、腎クリアランスの低下、およびカルベジロール代謝に影響する薬物相互作用の可能性が加わったものと推察された。入院中に軽度の起立性低血圧を認めたが、退院時までに消失した。
 
-Following hospital discharge on 2025-11-27, the patient remained off DrugZ. Discussion with the patient and his daughter included consideration of an alternative antiarrhythmic agent versus a return to a pure rate-control strategy. Given the patient's age, cognitive comorbidity, and demonstrated sensitivity to DrugZ, a rate-control strategy was elected.
+2025-11-27に退院した後、患者はDrugZを中止したまま経過した。患者およびその娘との話し合いでは、代替抗不整脈薬の使用と、純粋なレートコントロール戦略への回帰とが検討された。患者の高齢、認知機能の合併症、およびDrugZに対する明らかな感受性を踏まえ、レートコントロール戦略が選択された。
 
-On 2025-12-15, three weeks after DrugZ discontinuation, the patient's daughter reported new-onset episodes of confusion, particularly in the late afternoon and evening. The patient was described as occasionally not recognising family members and being unsure of the date. He also reported persistent mild dizziness. Although the temporal relationship to DrugZ discontinuation rather than initiation is atypical, DrugZ has a long elimination half-life (estimated at several weeks for the active metabolite), and a delayed central nervous system effect could not be excluded. The patient's pre-existing mild cognitive impairment may have been exacerbated by the recent hospitalisation and medication changes. Donepezil was continued unchanged.
+2025-12-15、DrugZ中止から3週間後、患者の娘より、特に午後遅くから夕刻にかけて出現する新規の錯乱エピソードが報告された。患者は時に家族を認識できず、日付が分からなくなることがあったとされる。また、持続する軽度の浮動性めまいも訴えた。DrugZの開始ではなく中止との時間的関連は非典型的であるものの、DrugZは消失半減期が長く（活性代謝物で数週間と推定される）、遅発性の中枢神経系への影響は否定できなかった。患者の既存の軽度認知障害が、直近の入院や薬剤変更により増悪した可能性もある。ドネペジルは変更なく継続した。
 
-By the date of this report (2026-01-20), the confusional episodes had gradually resolved over a period of approximately three weeks. Dizziness had also resolved. The patient remained off DrugZ. INR was stable on warfarin 3 mg daily (the original dose, restored after DrugZ washout). Heart rate was 68 beats per minute on carvedilol 3.125 mg twice daily. No recurrent syncope or bleeding events had been observed.
+本報告日（2026-01-20）までに、錯乱エピソードは約3週間かけて徐々に消失した。浮動性めまいも消失した。患者はDrugZを中止したままであった。ワルファリン3 mg/日（DrugZのウォッシュアウト後に復帰した当初の用量）でINRは安定していた。カルベジロール3.125 mg 1日2回で心拍数は68 bpmであった。失神や出血事象の再発は認められなかった。
 
-DRUG-DRUG INTERACTION DISCUSSION
-The DrugZ interaction with warfarin observed in this case is consistent with previously reported pharmacokinetic interactions involving cytochrome P450 enzyme inhibition. DrugZ is known to inhibit CYP2C9, the principal enzyme responsible for S-warfarin metabolism, leading to increased warfarin exposure and an elevated INR. Concurrent use should be accompanied by close INR monitoring and warfarin dose reduction, typically by 30 to 50 percent.
+薬物相互作用に関する考察（DRUG-DRUG INTERACTION DISCUSSION）
+本症例で認められたDrugZとワルファリンの相互作用は、シトクロムP450酵素阻害を介した、これまでに報告されている薬物動態学的相互作用と一致する。DrugZは、S-ワルファリンの代謝を担う主要酵素であるCYP2C9を阻害することが知られており、ワルファリン曝露量の増加とINR上昇をもたらす。併用に際しては、綿密なINRモニタリングと、通常30～50％のワルファリン減量を行うべきである。
 
-The bradycardia event reflects additive negative chronotropic effects when DrugZ is combined with beta-blockers in elderly patients with reduced clearance.
+徐脈事象は、腎クリアランスの低下した高齢患者においてDrugZをβ遮断薬と併用した際の、相加的な陰性変時作用を反映したものである。
 
-FOLLOW-UP
-Follow-up cardiology visit scheduled for 2026-02-15 with repeat ECG and clinical assessment. No rechallenge with DrugZ planned. Alternative antiarrhythmic options to be reviewed only if symptomatic palpitations recur.
+追跡調査
+2026-02-15に循環器科の追跡受診を予定しており、心電図の再検および臨床評価を行う。DrugZの再投与は予定していない。代替となる抗不整脈薬の選択肢については、症候性の動悸が再発した場合にのみ検討する。
