@@ -19,6 +19,7 @@ from typing import ClassVar
 
 from app.exceptions import UnsupportedFileTypeError
 from app.schemas import PageContent, ProcessedDocument
+from app.services.ocr import OcrEngine
 
 logger = logging.getLogger(__name__)
 
@@ -125,6 +126,33 @@ class EmailLoader(DocumentLoader):
             return re.sub(r"<[^>]+>", "", part.get_content())
 
         return ""
+
+
+class ImageLoader(DocumentLoader):
+    """Load an image (scan/photo) by OCR-transcribing it into a single page."""
+
+    supported_suffixes: ClassVar[set[str]] = {".png", ".jpg", ".jpeg"}
+
+    _MIME_TYPES: ClassVar[dict[str, str]] = {
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+    }
+
+    def __init__(self, ocr: OcrEngine, normalize: bool = True) -> None:
+        self.ocr = ocr
+        self.normalize = normalize
+
+    def load(self, path: Path) -> ProcessedDocument:
+        if not path.exists():
+            raise FileNotFoundError("File could not be found.")
+
+        image_bytes = path.read_bytes()
+        mime_type = self._MIME_TYPES[path.suffix.lower()]
+        text = self.ocr.transcribe(image_bytes, mime_type)
+        if self.normalize:
+            text = normalize_text(text)
+        return _single_page_document(path.name, text, extraction_method="ocr")
 
 
 class IngestionService:

@@ -7,7 +7,13 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from app.config import settings
 from app.services.chunking import FixedLengthChunker
 from app.services.generator import GeneratorService
-from app.services.ingestion import EmailLoader, IngestionService, TextLoader
+from app.services.ingestion import (
+    EmailLoader,
+    ImageLoader,
+    IngestionService,
+    TextLoader,
+)
+from app.services.ocr import OcrEngine, VisionLLMOcrEngine
 from app.services.pdf_processor import PDFProcessor
 from app.services.retriever import RetrieverService
 
@@ -31,10 +37,30 @@ def get_chat_model() -> BaseChatModel:
     )
 
 
+@lru_cache
+def get_vision_model() -> BaseChatModel:
+    """Return the vision-capable model used for image OCR."""
+    return ChatOpenAI(
+        model=settings.openai_vision_model,
+        temperature=0.0,
+        api_key=settings.openai_api_key,
+    )
+
+
+def get_ocr_engine() -> OcrEngine:
+    """Return the OCR engine. Swappable (Vision LLM now, local later)."""
+    return VisionLLMOcrEngine(llm=get_vision_model())
+
+
 def get_ingestion_service() -> IngestionService:
-    """Dispatch PDF / email / text inputs to the right loader."""
+    """Dispatch PDF / email / text / image inputs to the right loader."""
     return IngestionService(
-        loaders=[PDFProcessor(), EmailLoader(), TextLoader()],
+        loaders=[
+            PDFProcessor(),
+            EmailLoader(),
+            TextLoader(),
+            ImageLoader(ocr=get_ocr_engine()),
+        ],
     )
 
 
