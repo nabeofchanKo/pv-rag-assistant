@@ -40,7 +40,7 @@ class PDFProcessor:
                 for index, page in enumerate(pdf.pages, start=1):
                     text = self._extract_page_text(page)
                     if not text:
-                        logger.warning(logger.warning("Empty page detected: %s page %d", pdf_path.name, index))
+                        logger.warning("Empty page detected: %s page %d", pdf_path.name, index)
                     pages.append(PageContent(page_number=index, text=text, char_count=len(text), extraction_method=self.extraction_mode))
 
         except FileNotFoundError:
@@ -48,8 +48,8 @@ class PDFProcessor:
         
         except Exception as e:
             error_message = str(e).lower()
-            if "password" in error_message or "excrypted" in error_message:
-                raise PDFEncryptedError("PDF is excrypted.") from e
+            if "password" in error_message or "encrypted" in error_message:
+                raise PDFEncryptedError("PDF is encrypted.") from e
             else:
                 raise PDFCorruptedError("PDF is corrupted.") from e
 

@@ -1,89 +1,84 @@
+"""Store and retrieve chunks using a LangChain Chroma vector store.
+
+The vector store owns the embed + store + search steps: it is constructed with a
+LangChain ``Embeddings`` object (injected via DI), so the embedding model can be
+swapped (OpenAI now, a local model later) without touching this service.
+"""
+
 import logging
 from datetime import datetime
 
-import chromadb
+from langchain_chroma import Chroma
+from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
 
-from app.schemas import Chunk, EmbeddedChunk
+from app.schemas import Chunk
 
 logger = logging.getLogger(__name__)
 
 
 class RetrieverService:
-    """Store and retrieve chunk embeddings using ChromaDB."""
+    """Store and search chunk embeddings via a LangChain Chroma vector store."""
 
-    def __init__(self, client, collection_name: str = "pv_documents"):
-        self.client = client
-        self.collection_name = collection_name
-        self.collection = self.client.get_or_create_collection(
-            name=collection_name,
-            metadata={"hnsw:space": "cosine"},
+    def __init__(
+        self,
+        embeddings: Embeddings,
+        persist_dir: str,
+        collection_name: str = "pv_documents",
+    ) -> None:
+        self.store = Chroma(
+            collection_name=collection_name,
+            embedding_function=embeddings,
+            persist_directory=persist_dir,
+            collection_metadata={"hnsw:space": "cosine"},
         )
 
-    def add_chunks(self, embedded_chunks: list[EmbeddedChunk]) -> None:
-        """Store embedded chunks in the ChromaDB collection."""
+    def add_chunks(self, chunks: list[Chunk]) -> None:
+        """Embed and store chunks in the Chroma collection."""
 
-        if not embedded_chunks:
+        if not chunks:
             return
-        
-        ids, embeddings, documents, metadatas = [], [], [], []
 
-        for embedded in embedded_chunks:
-            chunk = embedded.chunk
-            chunk_id = f"{chunk.document_name}_{chunk.chunk_index}"
-            embedding = embedded.embedding
-            document = chunk.text
-            metadata = {
-                "document_name": chunk.document_name,
-                "chunk_index": chunk.chunk_index,
-                "page_number": chunk.page_number,
-                "total_chunks": chunk.total_chunks,
-                "char_start": chunk.char_start,
-                "char_end": chunk.char_end,
-                "language": chunk.language,
-                "created_at": chunk.created_at.isoformat(),
-            }
-
-            ids.append(chunk_id)
-            embeddings.append(embedding)
-            documents.append(document)
-            metadatas.append(metadata)
-
-        self.collection.add(
-            ids=ids,
-            embeddings=embeddings,
-            documents=documents,
-            metadatas=metadatas,
-        )
-
-        logger.info("Added %d chunks to collection", len(embedded_chunks))
-
-    def search(self, query_embedding: list[float], top_k: int = 3) -> list[Chunk]:
-        """Search and retrieve the results from ChromaDB."""
-
-        results = self.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=top_k,
-            include=["documents", "metadatas"]
-        )
-
-        documents = results["documents"][0]
-        metadatas = results["metadatas"][0]
-
-        chunks = []
-
-        for document, metadata in zip(documents, metadatas):
-            chunk = Chunk(
-                document_name=metadata["document_name"],
-                chunk_index=metadata["chunk_index"],
-                page_number=metadata["page_number"],
-                total_chunks=metadata["total_chunks"],
-                char_start=metadata["char_start"],
-                char_end=metadata["char_end"],
-                text=document,
-                language=metadata["language"],
-                created_at=datetime.fromisoformat(metadata["created_at"]),
+        documents, ids = [], []
+        for chunk in chunks:
+            ids.append(f"{chunk.document_name}_{chunk.chunk_index}")
+            documents.append(
+                Document(
+                    page_content=chunk.text,
+                    metadata={
+                        "document_name": chunk.document_name,
+                        "chunk_index": chunk.chunk_index,
+                        "page_number": chunk.page_number,
+                        "total_chunks": chunk.total_chunks,
+                        "char_start": chunk.char_start,
+                        "char_end": chunk.char_end,
+                        "language": chunk.language,
+                        "created_at": chunk.created_at.isoformat(),
+                    },
+                )
             )
 
-            chunks.append(chunk)
+        self.store.add_documents(documents=documents, ids=ids)
+        logger.info("Added %d chunks to collection", len(chunks))
 
-        return chunks
+    def search(self, query: str, top_k: int = 3) -> list[Chunk]:
+        """Embed the query and return the most similar chunks."""
+
+        results = self.store.similarity_search(query, k=top_k)
+        return [self._to_chunk(doc) for doc in results]
+
+    def _to_chunk(self, doc: Document) -> Chunk:
+        """Reconstruct the internal Chunk model from a stored Document."""
+
+        metadata = doc.metadata
+        return Chunk(
+            document_name=metadata["document_name"],
+            chunk_index=metadata["chunk_index"],
+            page_number=metadata["page_number"],
+            total_chunks=metadata["total_chunks"],
+            char_start=metadata["char_start"],
+            char_end=metadata["char_end"],
+            text=doc.page_content,
+            language=metadata["language"],
+            created_at=datetime.fromisoformat(metadata["created_at"]),
+        )

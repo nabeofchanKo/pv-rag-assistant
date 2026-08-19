@@ -1,26 +1,38 @@
 from functools import lru_cache
-import chromadb
 
-from openai import OpenAI
+from langchain_core.embeddings import Embeddings
+from langchain_core.language_models import BaseChatModel
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+
 from app.config import settings
-
-from app.services.embedding import EmbeddingService
-from app.services.generator import GeneratorService
-from app.services.retriever import RetrieverService
-from app.services.pdf_processor import PDFProcessor
 from app.services.chunking import FixedLengthChunker
+from app.services.generator import GeneratorService
+from app.services.pdf_processor import PDFProcessor
+from app.services.retriever import RetrieverService
 
 
 @lru_cache
-def get_openai_client() -> OpenAI:
-    return OpenAI(api_key=settings.openai_api_key)
+def get_embeddings() -> Embeddings:
+    """Return the embedding model. Swappable via settings.embedding_provider."""
+    return OpenAIEmbeddings(
+        model=settings.openai_embedding_model,
+        api_key=settings.openai_api_key,
+    )
+
 
 @lru_cache
-def get_chroma_client():
-    return chromadb.PersistentClient(path=settings.chroma_persist_dir)
+def get_chat_model() -> BaseChatModel:
+    """Return the chat model. Swappable via settings.chat_provider."""
+    return ChatOpenAI(
+        model=settings.openai_chat_model,
+        temperature=0.0,
+        api_key=settings.openai_api_key,
+    )
+
 
 def get_pdf_processor() -> PDFProcessor:
     return PDFProcessor()
+
 
 def get_chunker() -> FixedLengthChunker:
     return FixedLengthChunker(
@@ -28,17 +40,15 @@ def get_chunker() -> FixedLengthChunker:
         overlap=settings.chunk_overlap_tokens,
     )
 
-def get_embedding_service() -> EmbeddingService:
-    return EmbeddingService(
-        client=get_openai_client(),
-        model=settings.openai_embedding_model,
+
+@lru_cache
+def get_retriever_service() -> RetrieverService:
+    return RetrieverService(
+        embeddings=get_embeddings(),
+        persist_dir=settings.chroma_persist_dir,
+        collection_name=settings.collection_name,
     )
 
-def get_retriever_service() -> RetrieverService:
-    return RetrieverService(client=get_chroma_client())
 
 def get_generator_service() -> GeneratorService:
-    return GeneratorService(
-        client=get_openai_client(),
-        model=settings.openai_chat_model,
-    )
+    return GeneratorService(llm=get_chat_model())
