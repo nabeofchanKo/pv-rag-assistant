@@ -16,6 +16,7 @@ from app.services.ingestion import (
 )
 from app.services.ocr import OcrEngine, VisionLLMOcrEngine
 from app.services.pdf_processor import PDFProcessor
+from app.services.product_master import ProductMasterService
 from app.services.retriever import RetrieverService
 
 
@@ -98,3 +99,9 @@ def get_extraction_model() -> BaseChatModel:
 def get_extraction_service() -> ExtractionService:
     """Structured extraction of patient + adverse events from case text."""
     return ExtractionService(llm=get_extraction_model())
+
+
+@lru_cache
+def get_product_master_service() -> ProductMasterService:
+    """Own-company product matching (自社品判定) from the YAML master."""
+    return ProductMasterService(master_path=settings.product_master_path)
