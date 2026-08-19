@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     chat_provider: str = "openai"
     openai_chat_model: str = "gpt-4o-mini"
 
+    # Vision model used for image OCR (gpt-4o is stronger on handwriting; mini is cheaper)
+    openai_vision_model: str = "gpt-4o"
+
     # Vector store
     chroma_persist_dir: str = "./chroma_db"
     collection_name: str = "pv_documents"
