@@ -136,3 +136,22 @@ class CaseExtraction(BaseModel):
     adverse_events: list[AdverseEventMention] = Field(
         description="症例から抽出した有害事象の一覧（経過の記述から読み取れるものも含む）。",
     )
+
+
+# --- Phase 2 (slice 2b): own-company product matching (自社品判定) ---
+
+
+class ProductMatch(BaseModel):
+    name: str
+    matched_via: str          # the token (name / ingredient / alias) that hit the text
+    active_ingredient: str | None = None
+    notes: str | None = None
+
+
+class ProductMatchResult(BaseModel):
+    matched_products: list[ProductMatch]
+
+    @property
+    def is_company_product_present(self) -> bool:
+        """True if any own-company product was found (i.e. the case is in scope)."""
+        return len(self.matched_products) > 0

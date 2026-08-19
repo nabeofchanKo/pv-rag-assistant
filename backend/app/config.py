@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     chroma_persist_dir: str = "./chroma_db"
     collection_name: str = "pv_documents"
 
+    # Own-company product master (used for company-product matching / 自社品判定)
+    product_master_path: str = str(PROJECT_ROOT / "data" / "product_master" / "products.yaml")
+
     # Chunking
     chunk_size_tokens: int = 500
     chunk_overlap_tokens: int = 100
