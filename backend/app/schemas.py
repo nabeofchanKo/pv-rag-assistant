@@ -1,6 +1,7 @@
 """Define domain models for the PDF processing service."""
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -104,6 +105,12 @@ class Patient(BaseModel):
 class AdverseEventMention(BaseModel):
     term: str = Field(
         description="有害事象の名称。報告書の記載どおりに（例：頭痛、嘔吐、肝機能異常）。",
+    )
+    source: Literal["reported", "narrative"] = Field(
+        description=(
+            "この有害事象の出典。「有害事象」欄など明記された箇所から取った場合は "
+            '"reported"、経過（ナラティブ）の記述から読み取った場合は "narrative"。'
+        ),
     )
     onset_date: str | None = Field(
         default=None,
