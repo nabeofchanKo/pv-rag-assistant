@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 class PageContent(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -71,3 +71,61 @@ class UploadResponse(BaseModel):
     document_name: str
     chunks_added: int
     message: str
+
+
+# --- Phase 2 (slice 1): structured extraction models ---
+# Fields are extracted "as reported" (raw strings, no normalization); the Field
+# descriptions double as the extraction instructions for the LLM. A validator
+# coerces stray "null"/"none"/empty strings from the model into real None.
+
+
+def _blank_to_none(value: object) -> object:
+    if isinstance(value, str) and value.strip().lower() in {"", "null", "none"}:
+        return None
+    return value
+
+
+class Patient(BaseModel):
+    age: str | None = Field(
+        default=None,
+        description="患者の年齢。原文の表記のまま（例：58歳）。記載がなければ省略。",
+    )
+    sex: str | None = Field(
+        default=None,
+        description="患者の性別（女性／男性／不明）。記載がなければ省略。",
+    )
+
+    @field_validator("age", "sex", mode="before")
+    @classmethod
+    def _coerce_blank(cls, v: object) -> object:
+        return _blank_to_none(v)
+
+
+class AdverseEventMention(BaseModel):
+    term: str = Field(
+        description="有害事象の名称。報告書の記載どおりに（例：頭痛、嘔吐、肝機能異常）。",
+    )
+    onset_date: str | None = Field(
+        default=None,
+        description="発現日。原文の表記のまま（例：2025/08/10）。記載がなければ省略。",
+    )
+    outcome: str | None = Field(
+        default=None,
+        description="転帰（例：軽快、回復、未回復、不明）。記載がなければ省略。",
+    )
+    seriousness_reported: str | None = Field(
+        default=None,
+        description="報告書に記載された重篤度（重篤／非重篤）。自分で判定はせず、記載がある場合のみ転記。なければ省略。",
+    )
+
+    @field_validator("onset_date", "outcome", "seriousness_reported", mode="before")
+    @classmethod
+    def _coerce_blank(cls, v: object) -> object:
+        return _blank_to_none(v)
+
+
+class CaseExtraction(BaseModel):
+    patient: Patient = Field(description="患者の基本情報。")
+    adverse_events: list[AdverseEventMention] = Field(
+        description="症例から抽出した有害事象の一覧（経過の記述から読み取れるものも含む）。",
+    )
