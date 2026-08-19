@@ -7,6 +7,7 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from app.config import settings
 from app.services.chunking import FixedLengthChunker
 from app.services.generator import GeneratorService
+from app.services.ingestion import EmailLoader, IngestionService, TextLoader
 from app.services.pdf_processor import PDFProcessor
 from app.services.retriever import RetrieverService
 
@@ -30,8 +31,11 @@ def get_chat_model() -> BaseChatModel:
     )
 
 
-def get_pdf_processor() -> PDFProcessor:
-    return PDFProcessor()
+def get_ingestion_service() -> IngestionService:
+    """Dispatch PDF / email / text inputs to the right loader."""
+    return IngestionService(
+        loaders=[PDFProcessor(), EmailLoader(), TextLoader()],
+    )
 
 
 def get_chunker() -> FixedLengthChunker:
