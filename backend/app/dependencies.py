@@ -6,6 +6,7 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 from app.config import settings
 from app.services.chunking import FixedLengthChunker
+from app.services.extraction import ExtractionService
 from app.services.generator import GeneratorService
 from app.services.ingestion import (
     EmailLoader,
@@ -82,3 +83,8 @@ def get_retriever_service() -> RetrieverService:
 
 def get_generator_service() -> GeneratorService:
     return GeneratorService(llm=get_chat_model())
+
+
+def get_extraction_service() -> ExtractionService:
+    """Structured extraction of patient + adverse events from case text."""
+    return ExtractionService(llm=get_chat_model())
