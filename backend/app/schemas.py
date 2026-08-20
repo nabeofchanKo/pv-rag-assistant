@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
 class PageContent(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -151,7 +151,18 @@ class ProductMatch(BaseModel):
 class ProductMatchResult(BaseModel):
     matched_products: list[ProductMatch]
 
+    @computed_field
     @property
     def is_company_product_present(self) -> bool:
         """True if any own-company product was found (i.e. the case is in scope)."""
         return len(self.matched_products) > 0
+
+
+# --- Phase 2 (slice 2c): combined triage output ---
+
+
+class TriageResponse(BaseModel):
+    document_name: str
+    product_match: ProductMatchResult
+    extraction: CaseExtraction
+    source_text: str
