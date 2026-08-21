@@ -76,6 +76,7 @@ A few deliberate choices that shaped the implementation:
 - **Immutable domain models.** Domain objects (`Chunk`, `ProcessedDocument`, …) are frozen Pydantic models, safe to pass around and reason about.
 - **Hallucination guardrails.** Generation uses `temperature=0` and a system prompt that constrains answers to the provided context and declines when information is absent. The internal `Chunk` model maps to a separate public `SourceInfo` model so responses expose only what is needed.
 - **Source traceability.** Page numbers are preserved from extraction through to the final response, so every answer can cite its document and page.
+- **Decisions and experiments are recorded.** Significant design choices live as [Architecture Decision Records](docs/adr/) (Context / Options / Decision / Consequences), each linking to the reproducible [experiment](experiments/) that produced its evidence — e.g. the expectedness confidence gate and the MedDRA hybrid-retrieval choice.
 
 ### Project structure
 
@@ -251,6 +252,7 @@ GeneratorService    ── LCEL チェーン: prompt | ChatOpenAI(temperature=0)
 - **不変ドメインモデル。** `Chunk` / `ProcessedDocument` 等は frozen な Pydantic モデルで、安全に受け渡し・推論できます。
 - **ハルシネーション対策。** 生成は `temperature=0`、かつ「提供された文脈のみに基づき、情報が無ければ回答を控える」システムプロンプトで制約します。内部の `Chunk` モデルは公開用の `SourceInfo` モデルに変換し、APIは必要な情報のみ公開します。
 - **出典トレーサビリティ。** ページ番号を抽出から最終回答まで一貫して保持し、すべての回答が文書とページを引用できます。
+- **意思決定と実験を記録。** 重要な設計判断は [ADR（Architecture Decision Records）](docs/adr/) として残し（背景／選択肢／決定／結果）、各ADRは根拠となる再現可能な[実験記録](experiments/)にリンクします（例：既知/未知の確信度ゲート、MedDRA のハイブリッド検索採用）。
 
 ### プロジェクト構成
 
