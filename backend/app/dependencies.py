@@ -88,7 +88,7 @@ def get_generator_service() -> GeneratorService:
 
 @lru_cache
 def get_extraction_model() -> BaseChatModel:
-    """Return the model used for structured extraction (swappable via settings)."""
+    """Model for the reported-events extraction call (swappable via settings)."""
     return ChatOpenAI(
         model=settings.openai_extraction_model,
         temperature=0.0,
@@ -96,9 +96,22 @@ def get_extraction_model() -> BaseChatModel:
     )
 
 
+@lru_cache
+def get_narrative_model() -> BaseChatModel:
+    """Model for the narrative-diff call (harder semantic step; swappable)."""
+    return ChatOpenAI(
+        model=settings.openai_narrative_model,
+        temperature=0.0,
+        api_key=settings.openai_api_key,
+    )
+
+
 def get_extraction_service() -> ExtractionService:
     """Structured extraction of patient + adverse events from case text."""
-    return ExtractionService(llm=get_extraction_model())
+    return ExtractionService(
+        reported_llm=get_extraction_model(),
+        narrative_llm=get_narrative_model(),
+    )
 
 
 @lru_cache

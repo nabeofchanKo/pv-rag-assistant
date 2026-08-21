@@ -23,8 +23,13 @@ class Settings(BaseSettings):
     # Vision model used for image OCR (gpt-4o is stronger on handwriting; mini is cheaper)
     openai_vision_model: str = "gpt-4o"
 
-    # Model used for structured case extraction (narrative reading is reasoning-heavy)
-    openai_extraction_model: str = "gpt-4o-mini"
+    # Extraction is a two-call decomposition (see ExtractionService).
+    # - reported-events call: simple structured extraction -> mini is enough.
+    # - narrative-diff call: must de-duplicate rephrasings, respect negation, and
+    #   not infer. Evaluated result: mini leaks ~1 false event/case here, gpt-4o is
+    #   clean -> use gpt-4o for this step only (per-step model selection).
+    openai_extraction_model: str = "gpt-4o-mini"   # reported-events call
+    openai_narrative_model: str = "gpt-4o"          # narrative-diff call
 
     # Vector store
     chroma_persist_dir: str = "./chroma_db"

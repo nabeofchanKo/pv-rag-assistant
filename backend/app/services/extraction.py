@@ -1,57 +1,112 @@
-"""Phase 2 (slice 1): extract structured patient + adverse-event data from case text.
+"""Phase 2: structured extraction of patient + adverse events from case text.
 
-Uses the LLM's structured-output mode to fill a Pydantic schema. Extraction is
-faithful ("as reported") and makes no clinical judgments — seriousness, causality,
-expectedness, and MedDRA coding are later phases.
+Adverse-event extraction is a **two-call decomposition** to reliably avoid
+duplicates:
+  1. extract the *reported* events (from the structured "有害事象" section) + patient,
+  2. pass that reported list back to the model and extract only the *new* events
+     described in the narrative that are not already in the reported list.
 
-Drug extraction is intentionally out of scope here: drug wording varies widely by
-reporter and touches sensitive off-label questions, so drug identification will be
-handled later as controlled matching against a company product master rather than
-free-text extraction.
+A single call that tries to do both at once re-lists narrative rephrasings of
+reported events as if they were new (observed repeatedly with both gpt-4o-mini
+and gpt-4o), so the reported list is made explicit to the second call instead of
+relying on the model to de-duplicate implicitly.
+
+Extraction is faithful ("as reported") and makes no clinical judgments. Drug
+extraction is intentionally out of scope (handled by product-master matching).
 """
 
 import logging
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
+from pydantic import BaseModel
 
-from app.schemas import CaseExtraction
+from app.schemas import AdverseEventCore, AdverseEventMention, CaseExtraction, Patient
 
 logger = logging.getLogger(__name__)
 
 
-EXTRACTION_SYSTEM_PROMPT = (
-    "あなたは医薬品安全性監視（PV）の担当者です。与えられた症例テキストから、"
-    "患者情報と有害事象を抽出してください。\n"
-    "\n"
-    "【有害事象の抽出は必ず2段階で行うこと】\n"
-    "1. まず「有害事象」欄などに明記された事象を抽出し、source を \"reported\" とする。\n"
-    "2. 次に、経過（ナラティブ）を最初から丁寧に読み直し、そこに記述されているが上記リストに"
-    "無い有害事象を追加し、source を \"narrative\" とする。対象には症状・随伴事象・検査値異常・"
-    "転倒などの臨床的に有害な所見を含める。\n"
-    "   例：「本剤投与後にめまいが出現し転倒した」→ めまい と 転倒（いずれも narrative）。\n"
-    "   例：「QTc が 498 ms に延長した」→ QT延長（narrative）。\n"
-    "\n"
-    "【厳守事項】\n"
-    "・記載されている内容のみを、原文の表現のまま抽出する（正規化・言い換え・解釈をしない）。\n"
-    "・同じ事象を reported と narrative の両方に重複して挙げない。\n"
-    "・記載のない項目は省略する（推測して埋めない）。\n"
-    "・重篤度・因果関係などの判定は行わない。報告書にそう書かれている場合のみ、その記載を転記する。"
+REPORTED_SYSTEM_PROMPT = (
+    "あなたは医薬品安全性監視（PV）の担当者です。症例テキストから、患者情報と、"
+    "「有害事象」欄などに明記された有害事象のみを抽出してください。\n"
+    "・この段階では、経過（ナラティブ）にしか書かれていない事象は拾わない（後段で扱う）。\n"
+    "・各事象について、発現日・転帰・報告上の重篤度を記載どおりに転記する（無ければ省略）。\n"
+    "・患者の年齢・性別を抽出する。\n"
+    "・重篤度・因果関係などの判定は行わない（記載があれば転記のみ）。"
+)
+
+NARRATIVE_SYSTEM_PROMPT = (
+    "あなたは医薬品安全性監視（PV）の担当者です。以下は、ある症例について既に抽出済みの"
+    "『報告済み有害事象』の一覧です。\n\n"
+    "{reported_terms}\n\n"
+    "症例テキストの経過（ナラティブ）を最初から丁寧に読み、上記一覧に【含まれていない"
+    "新規の有害事象のみ】を抽出してください。\n"
+    "・経過が上記の事象を言い換え・詳述しているだけの場合は新規ではない（含めない）。"
+    "例：「拍動性の前頭部頭痛」は「頭痛」と同一、「起立時のめまい」は「めまい」と同一、"
+    "「軽度の起立性低血圧」は「起立性低血圧」と同一。\n"
+    "・新規に該当するのは、報告欄に無い症状・随伴事象・検査値異常・転倒などの有害な所見"
+    "（例：QT延長、転倒）。\n"
+    "・各事象の発現日・転帰・重篤度は記載どおりに転記する（無ければ省略）。\n"
+    "・実際に発現した事象のみを対象とする。否定・不在の記述から事象を作らない"
+    "（例：「嘔吐を伴わない悪心」→ 悪心はありだが嘔吐は無いので、嘔吐は含めない）。\n"
+    "・本文に明記されていない事象を推測・追加しない"
+    "（例：失神の記述だけから「転倒」を推測しない）。\n"
+    "・新規の事象が無ければ空のリストを返す。\n"
+    "・記載どおりの表現で抽出し、正規化・解釈はしない。"
 )
 
 
-class ExtractionService:
-    """Extract a structured CaseExtraction from free-form case text."""
+class _ReportedCase(BaseModel):
+    """Structured output for call 1 (patient + reported adverse events)."""
 
-    def __init__(self, llm: BaseChatModel) -> None:
-        self.prompt = ChatPromptTemplate.from_messages(
-            [
-                ("system", EXTRACTION_SYSTEM_PROMPT),
-                ("human", "症例テキスト:\n\n{case_text}"),
-            ]
+    patient: Patient
+    adverse_events: list[AdverseEventCore]
+
+
+class _NarrativeEvents(BaseModel):
+    """Structured output for call 2 (narrative-only new adverse events)."""
+
+    adverse_events: list[AdverseEventCore]
+
+
+class ExtractionService:
+    """Extract a CaseExtraction via a two-call (reported -> narrative) decomposition."""
+
+    def __init__(self, reported_llm: BaseChatModel, narrative_llm: BaseChatModel) -> None:
+        # The reported-events call is a simple structured extraction (mini is enough).
+        # The narrative-diff call is the hard semantic step (de-dupe rephrasings,
+        # respect negation, do not infer) and uses a stronger model.
+        self.reported_chain = (
+            ChatPromptTemplate.from_messages(
+                [("system", REPORTED_SYSTEM_PROMPT), ("human", "症例テキスト:\n\n{case_text}")]
+            )
+            | reported_llm.with_structured_output(_ReportedCase)
         )
-        # with_structured_output constrains the model to emit a valid CaseExtraction.
-        self.chain = self.prompt | llm.with_structured_output(CaseExtraction)
+        self.narrative_chain = (
+            ChatPromptTemplate.from_messages(
+                [("system", NARRATIVE_SYSTEM_PROMPT), ("human", "症例テキスト:\n\n{case_text}")]
+            )
+            | narrative_llm.with_structured_output(_NarrativeEvents)
+        )
 
     def extract(self, case_text: str) -> CaseExtraction:
-        return self.chain.invoke({"case_text": case_text})
+        # Call 1: reported events + patient.
+        reported = self.reported_chain.invoke({"case_text": case_text})
+
+        # Call 2: only narrative events NOT already in the reported list.
+        reported_terms = (
+            "\n".join(f"・{ae.term}" for ae in reported.adverse_events)
+            or "（報告済み有害事象なし）"
+        )
+        narrative = self.narrative_chain.invoke(
+            {"case_text": case_text, "reported_terms": reported_terms}
+        )
+
+        adverse_events = [
+            AdverseEventMention(source="reported", **ae.model_dump())
+            for ae in reported.adverse_events
+        ] + [
+            AdverseEventMention(source="narrative", **ae.model_dump())
+            for ae in narrative.adverse_events
+        ]
+        return CaseExtraction(patient=reported.patient, adverse_events=adverse_events)
