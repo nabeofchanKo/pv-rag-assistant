@@ -38,6 +38,14 @@ class Settings(BaseSettings):
     # Own-company product master (used for company-product matching / 自社品判定)
     product_master_path: str = str(PROJECT_ROOT / "data" / "product_master" / "products.yaml")
 
+    # Drug labels (添付文書) — separate collection, RAG source for expectedness (既知/未知).
+    drug_labels_dir: str = str(PROJECT_ROOT / "data" / "drug_labels")
+    label_collection_name: str = "drug_labels"
+    label_top_k: int = 4
+
+    # Expectedness judgment model (grounded 既知/未知 call; swappable per step).
+    openai_expectedness_model: str = "gpt-4o-mini"
+
     # Chunking
     chunk_size_tokens: int = 500
     chunk_overlap_tokens: int = 100

@@ -61,11 +61,23 @@ class RetrieverService:
         self.store.add_documents(documents=documents, ids=ids)
         logger.info("Added %d chunks to collection", len(chunks))
 
-    def search(self, query: str, top_k: int = 3) -> list[Chunk]:
-        """Embed the query and return the most similar chunks."""
+    def search(
+        self, query: str, top_k: int = 3, filter: dict | None = None
+    ) -> list[Chunk]:
+        """Embed the query and return the most similar chunks.
 
-        results = self.store.similarity_search(query, k=top_k)
+        ``filter`` is a Chroma metadata ``where`` clause (e.g.
+        ``{"document_name": "drugx_label.md"}``) used to scope the search to a
+        single document — e.g. one drug's package insert for expectedness.
+        """
+
+        results = self.store.similarity_search(query, k=top_k, filter=filter)
         return [self._to_chunk(doc) for doc in results]
+
+    def is_empty(self) -> bool:
+        """True if the collection holds no documents (used to gate one-time indexing)."""
+
+        return len(self.store.get(limit=1)["ids"]) == 0
 
     def _to_chunk(self, doc: Document) -> Chunk:
         """Reconstruct the internal Chunk model from a stored Document."""

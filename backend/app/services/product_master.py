@@ -54,6 +54,7 @@ class ProductMasterService:
                         matched_via=hit,
                         active_ingredient=product.get("active_ingredient"),
                         notes=(product.get("notes") or "").strip() or None,
+                        label_document=product.get("label_document"),
                     )
                 )
 

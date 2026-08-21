@@ -6,8 +6,10 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 from app.config import settings
 from app.services.chunking import FixedLengthChunker
+from app.services.expectedness import ExpectednessService
 from app.services.extraction import ExtractionService
 from app.services.generator import GeneratorService
+from app.services.label_index import LabelIndexService
 from app.services.ingestion import (
     EmailLoader,
     ImageLoader,
@@ -118,3 +120,45 @@ def get_extraction_service() -> ExtractionService:
 def get_product_master_service() -> ProductMasterService:
     """Own-company product matching (自社品判定) from the YAML master."""
     return ProductMasterService(master_path=settings.product_master_path)
+
+
+# --- Phase 3: expectedness (既知/未知) over drug labels ---
+
+
+@lru_cache
+def get_label_retriever_service() -> RetrieverService:
+    """Retriever over the drug-label collection (separate from case documents)."""
+    return RetrieverService(
+        embeddings=get_embeddings(),
+        persist_dir=settings.chroma_persist_dir,
+        collection_name=settings.label_collection_name,
+    )
+
+
+def get_label_index_service() -> LabelIndexService:
+    """One-time indexer for the drug-label files (run at startup)."""
+    return LabelIndexService(
+        ingestion=get_ingestion_service(),
+        chunker=get_chunker(),
+        retriever=get_label_retriever_service(),
+        labels_dir=settings.drug_labels_dir,
+    )
+
+
+@lru_cache
+def get_expectedness_model() -> BaseChatModel:
+    """Model for the grounded 既知/未知 judgment call (swappable via settings)."""
+    return ChatOpenAI(
+        model=settings.openai_expectedness_model,
+        temperature=0.0,
+        api_key=settings.openai_api_key,
+    )
+
+
+def get_expectedness_service() -> ExpectednessService:
+    """Assess expectedness of adverse events against a drug's package insert."""
+    return ExpectednessService(
+        llm=get_expectedness_model(),
+        retriever=get_label_retriever_service(),
+        top_k=settings.label_top_k,
+    )

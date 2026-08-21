@@ -149,6 +149,8 @@ class ProductMatch(BaseModel):
     matched_via: str          # the token (name / ingredient / alias) that hit the text
     active_ingredient: str | None = None
     notes: str | None = None
+    # Package-insert file (in data/drug_labels/) used as the expectedness RAG source.
+    label_document: str | None = None
 
 
 class ProductMatchResult(BaseModel):
@@ -161,11 +163,61 @@ class ProductMatchResult(BaseModel):
         return len(self.matched_products) > 0
 
 
-# --- Phase 2 (slice 2c): combined triage output ---
+# --- Phase 3 (slice 3a): expectedness (既知/未知) assessment ---
+# Judgment, NOT transcription: is each adverse event already described in the
+# suspect drug's package insert (添付文書)? Assessed by RAG over the label text,
+# kept separate from the faithful extraction above (extraction never judges).
+
+
+class ExpectednessAssessment(BaseModel):
+    term: str = Field(description="判定対象の有害事象名（抽出結果の term をそのまま用いる）。")
+    verdict: Literal["既知", "要確認", "未知", "判定不能"] = Field(
+        description=(
+            "既知＝記載あり(確信)、要確認＝該当しうる記載はあるが確信度が低く安全側で未知扱い(要HITL)、"
+            "未知＝記載なし、判定不能＝提示された記載だけでは決められない。"
+        ),
+    )
+    match_type: str | None = Field(
+        default=None,
+        description="一致の種類（直接一致／同義語／読み替え・類似／機序・文脈のみ／該当なし）。判定の根拠区分。",
+    )
+    rationale: str | None = Field(
+        default=None, description="判定の理由（記載箇所の要約など）。日本語で簡潔に。"
+    )
+    evidence_quote: str | None = Field(
+        default=None,
+        description="根拠とした添付文書中の該当箇所（引用）。既知・要確認では該当引用を保持。",
+    )
+    evidence_section: str | None = Field(
+        default=None,
+        description='該当した項目名（例："11.1 重大な副作用" / "11.2 その他の副作用" / "10. 相互作用"）。特定できれば。',
+    )
+
+    @computed_field
+    @property
+    def is_expected(self) -> bool:
+        """Only 既知 counts as expected. 要確認/未知/判定不能 must NOT be treated as
+        expected downstream — the worst case is an unexpected serious event with a
+        short reporting deadline being buried under an over-eager 既知."""
+        return self.verdict == "既知"
+
+
+class DrugExpectedness(BaseModel):
+    """Expectedness of every adverse event against one suspect drug's label."""
+
+    drug_name: str
+    label_document: str
+    assessments: list[ExpectednessAssessment]
+
+
+# --- Phase 2 (slice 2c) / Phase 3: combined triage output ---
 
 
 class TriageResponse(BaseModel):
     document_name: str
     product_match: ProductMatchResult
     extraction: CaseExtraction
+    # One entry per matched own-company product that has a package insert.
+    # Empty when no matched product has a label (expectedness not assessable).
+    expectedness: list[DrugExpectedness] = []
     source_text: str
