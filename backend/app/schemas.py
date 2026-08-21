@@ -102,15 +102,9 @@ class Patient(BaseModel):
         return _blank_to_none(v)
 
 
-class AdverseEventMention(BaseModel):
+class AdverseEventCore(BaseModel):
     term: str = Field(
         description="有害事象の名称。報告書の記載どおりに（例：頭痛、嘔吐、肝機能異常）。",
-    )
-    source: Literal["reported", "narrative"] = Field(
-        description=(
-            "この有害事象の出典。「有害事象」欄など明記された箇所から取った場合は "
-            '"reported"、経過（ナラティブ）の記述から読み取った場合は "narrative"。'
-        ),
     )
     onset_date: str | None = Field(
         default=None,
@@ -129,6 +123,15 @@ class AdverseEventMention(BaseModel):
     @classmethod
     def _coerce_blank(cls, v: object) -> object:
         return _blank_to_none(v)
+
+
+class AdverseEventMention(AdverseEventCore):
+    source: Literal["reported", "narrative"] = Field(
+        description=(
+            "この有害事象の出典。「有害事象」欄など明記された箇所から取った場合は "
+            '"reported"、経過（ナラティブ）の記述から読み取った場合は "narrative"。'
+        ),
+    )
 
 
 class CaseExtraction(BaseModel):
