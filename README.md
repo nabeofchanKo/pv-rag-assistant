@@ -147,6 +147,7 @@ Upload a PDF from `data/sample_reports/`, then ask a question about its contents
 | ------ | ------------------- | ---------------------------------------------------- |
 | `POST` | `/documents/upload` | Upload and index a PDF                               |
 | `POST` | `/query`            | Ask a question; returns an answer with cited sources |
+| `POST` | `/cases/triage`     | Triage a case: product match + extraction + expectedness (既知/未知) |
 | `GET`  | `/`                 | Health check                                         |
 
 Interactive API documentation is auto-generated at `/docs`.
@@ -163,6 +164,12 @@ The end goal is not "ask questions about a report" but a **triage / first-pass s
 - [ ] **Phase 4 — Orchestration:** connect the steps as an explainable workflow (LangGraph) with a human-in-the-loop propose → approve step.
 - [ ] **Phase 5 — Evaluation & cost/privacy:** retrieval metrics (Hit Rate@k / MRR) and answer quality (faithfulness); evaluate local embedding / generation models on cost × privacy × performance.
 - [ ] **Phase 6 — Frontend & deployment:** Next.js frontend, containerization, deploy to AWS.
+
+### Design note — expectedness (既知/未知)
+
+Expectedness (is an adverse event already described in the drug's package insert?) is implemented as **Approach A: RAG retrieval over the insert text.** The package insert is chunked and embedded; for each adverse event we retrieve the most relevant "副作用" (adverse-reaction) passages of that drug's insert and an LLM judges *listed (既知)* / *not listed (未知)* / *undetermined*, returning the cited passage as evidence. This reuses the existing retrieval stack and keeps the judgment grounded, with **未知 as the safe default** when no supporting passage is found.
+
+**Future extension — Approach C (hybrid, to A/B test):** read each insert *once* with an LLM to extract its adverse-reaction section into a structured, source-cited ADR list, cache it, then match each adverse event against that list. This trades per-query retrieval for a deterministic, auditable list (closer in spirit to the deterministic product-master matching). Worth benchmarking against Approach A on accuracy × cost once Approach A is in place.
 
 ### Known limitations (current MVP)
 
@@ -315,6 +322,7 @@ streamlit run app.py
 | -------- | -------------------- | ------------------------------------------- |
 | `POST`   | `/documents/upload`  | PDFをアップロードしてインデックス化          |
 | `POST`   | `/query`             | 質問を送信。出典付きの回答を返す             |
+| `POST`   | `/cases/triage`      | 症例をトリアージ：自社品判定＋抽出＋既知/未知判定 |
 | `GET`    | `/`                  | ヘルスチェック                              |
 
 対話的なAPIドキュメントは `/docs` に自動生成されます。
@@ -330,6 +338,12 @@ streamlit run app.py
 - [ ] **Phase 4 — オーケストレーション:** 各ステップを説明可能なワークフロー（LangGraph）として連結し、提案→承認のHITLを挟む。
 - [ ] **Phase 5 — 評価・コスト／プライバシー:** 検索評価（Hit Rate@k / MRR）と回答品質（faithfulness）を測定。ローカルの埋め込み／生成モデルを、コスト×プライバシー×性能で評価。
 - [ ] **Phase 6 — フロントエンド・デプロイ:** Next.js フロントエンド、コンテナ化、AWSへデプロイ。
+
+### 設計メモ — 既知／未知判定（expectedness）
+
+既知／未知（その有害事象が添付文書に記載済みか）は **Approach A：添付文書テキストへの RAG 検索** で実装します。添付文書をチャンク化・埋め込みし、有害事象ごとに当該薬剤の「副作用」欄の関連箇所を検索して、LLM が *記載あり（既知）／記載なし（未知）／判定不能* を判定し、根拠となる引用文を返します。既存の検索基盤を再利用し、根拠に紐づけた判定を行います。裏付けとなる記載が見つからない場合は **未知を安全側の既定値** とします。
+
+**今後の拡張 — Approach C（ハイブリッド、A/B比較の候補）:** 添付文書を **一度だけ** LLM で読み、副作用欄を出典付きの構造化 ADR リストへ抽出してキャッシュし、以後は各有害事象をそのリストと照合する方式。クエリごとの検索を、決定的で監査可能なリストに置き換える（決定的な自社品マスタ照合に思想が近い）。Approach A の実装後、精度×コストでベンチマークする価値がある。
 
 ### 既知の制約（現MVP）
 

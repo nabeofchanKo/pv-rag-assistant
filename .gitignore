@@ -228,6 +228,10 @@ backend/chroma_db/
 # Sample data PDFs (large files, optional)
 # data/sample_reports/*.pdf
 
+# Real package inserts used only as a format reference (not app data; copyright).
+# The app uses the fictional inserts in data/drug_labels/ instead.
+添付文書_sample/
+
 # Python
 __pycache__/
 *.pyc

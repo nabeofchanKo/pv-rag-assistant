@@ -7,6 +7,12 @@ API_BASE = "http://localhost:8000"
 SAMPLE_DIR = Path(__file__).resolve().parent.parent / "data" / "sample_reports"
 
 SOURCE_LABELS = {"reported": "報告済み", "narrative": "経過から読取り"}
+VERDICT_LABELS = {
+    "既知": "🟢 既知",
+    "要確認": "🟡 要確認（未知扱い）",
+    "未知": "🔴 未知",
+    "判定不能": "⚪ 判定不能",
+}
 UPLOAD_TYPES = ["pdf", "png", "jpg", "jpeg", "eml", "txt", "md"]
 
 st.set_page_config(page_title="PV Triage Assistant", layout="wide")
@@ -52,6 +58,29 @@ def render_triage(data: dict) -> None:
         for ae in ext["adverse_events"]
     ]
     st.dataframe(rows, use_container_width=True, hide_index=True)
+
+    st.subheader("④ 既知/未知（添付文書との照合）")
+    expectedness = data.get("expectedness") or []
+    if not expectedness:
+        st.info("該当する添付文書がないため、既知/未知は判定していません。")
+    else:
+        st.caption(
+            "🟡 要確認 は、読み替え・機序の言及など一致が確実でないもの。安全側で未知として扱い、"
+            "根拠を添えて人手確認（HITL）に回します（過度に既知と読み込んで報告漏れを招かないため）。"
+        )
+    for drug in expectedness:
+        st.markdown(f"**{drug['drug_name']}**（添付文書: `{drug['label_document']}`）")
+        exp_rows = [
+            {
+                "事象": a["term"],
+                "判定": VERDICT_LABELS.get(a["verdict"], a["verdict"]),
+                "一致": a.get("match_type") or "—",
+                "該当箇所": a.get("evidence_section") or "—",
+                "根拠（添付文書の記載）": a.get("evidence_quote") or (a.get("rationale") or "—"),
+            }
+            for a in drug["assessments"]
+        ]
+        st.dataframe(exp_rows, use_container_width=True, hide_index=True)
 
     with st.expander("読み取ったテキスト（出典）"):
         st.text(data["source_text"])
