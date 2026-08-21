@@ -7,6 +7,7 @@ from app.dependencies import (
     get_expectedness_service,
     get_extraction_service,
     get_ingestion_service,
+    get_meddra_coding_service,
     get_product_master_service,
 )
 from app.exceptions import IngestionError, UnsupportedFileTypeError
@@ -14,6 +15,7 @@ from app.schemas import TriageResponse
 from app.services.expectedness import ExpectednessService
 from app.services.extraction import ExtractionService
 from app.services.ingestion import IngestionService
+from app.services.meddra_coding import MeddraCodingService
 from app.services.product_master import ProductMasterService
 
 router = APIRouter()
@@ -25,11 +27,12 @@ async def triage_endpoint(
     ingestion: IngestionService = Depends(get_ingestion_service),
     extraction: ExtractionService = Depends(get_extraction_service),
     product_master: ProductMasterService = Depends(get_product_master_service),
+    meddra: MeddraCodingService = Depends(get_meddra_coding_service),
     expectedness: ExpectednessService = Depends(get_expectedness_service),
 ) -> TriageResponse:
     """Ingest a case (PDF / email / image / text) and return a triage draft:
     own-company product match + structured patient / adverse-event extraction +
-    expectedness (既知/未知) of each event against the matched drug's package insert."""
+    MedDRA PT suggestions + expectedness (既知/未知) against the matched drug's insert."""
 
     contents = await file.read()
     filename = file.filename or "uploaded"
@@ -52,9 +55,13 @@ async def triage_endpoint(
         tmp_path.unlink()      # remove the temp file
         tmp_dir.rmdir()        # remove the temp directory
 
+    terms = [ae.term for ae in case_extraction.adverse_events]
+
+    # MedDRA PT suggestion per extracted event (aligned to adverse_events order).
+    meddra_codings = meddra.code(terms) if terms else []
+
     # Expectedness: assess every extracted event against each matched own-company
     # product that has a package insert (skip products without a label).
-    terms = [ae.term for ae in case_extraction.adverse_events]
     expectedness_results = [
         expectedness.assess(p.name, p.label_document, terms)
         for p in product_match.matched_products
@@ -65,6 +72,7 @@ async def triage_endpoint(
         document_name=filename,
         product_match=product_match,
         extraction=case_extraction,
+        meddra=meddra_codings,
         expectedness=expectedness_results,
         source_text=text,
     )

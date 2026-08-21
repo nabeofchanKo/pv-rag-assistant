@@ -210,6 +210,35 @@ class DrugExpectedness(BaseModel):
     assessments: list[ExpectednessAssessment]
 
 
+# --- Phase 3 (slice 3b): MedDRA PT coding ---
+
+
+class MeddraTerm(BaseModel):
+    """One MedDRA Preferred Term row from the dictionary."""
+
+    model_config = ConfigDict(frozen=True)
+
+    pt_code: str
+    pt_name_ja: str
+    pt_name_en: str | None = None
+    soc_name_ja: str | None = None
+
+
+class MeddraCoding(BaseModel):
+    """MedDRA PT suggestion for one adverse-event term (per-AE, drug-independent)."""
+
+    term: str
+    pt_code: str | None = None
+    pt_name_ja: str | None = None
+    soc_name_ja: str | None = None
+    coded_by: Literal["完全一致", "検索+LLM", "該当なし"] = Field(
+        description="由来。完全一致＝辞書と一致し決定的、検索+LLM＝候補からLLMが選択、該当なし＝適合PTなし。",
+    )
+    rationale: str | None = None
+    # The candidates considered (fused hybrid retrieval), kept for HITL / audit.
+    candidates: list[MeddraTerm] = []
+
+
 # --- Phase 2 (slice 2c) / Phase 3: combined triage output ---
 
 
@@ -217,6 +246,8 @@ class TriageResponse(BaseModel):
     document_name: str
     product_match: ProductMatchResult
     extraction: CaseExtraction
+    # MedDRA PT suggestion per extracted adverse event (aligned to adverse_events order).
+    meddra: list[MeddraCoding] = []
     # One entry per matched own-company product that has a package insert.
     # Empty when no matched product has a label (expectedness not assessable).
     expectedness: list[DrugExpectedness] = []

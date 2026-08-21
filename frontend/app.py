@@ -46,17 +46,23 @@ def render_triage(data: dict) -> None:
     col1.metric("年齢", patient.get("age") or "—")
     col2.metric("性別", patient.get("sex") or "—")
 
-    st.subheader("③ 有害事象")
-    rows = [
-        {
-            "事象": ae["term"],
-            "出典": SOURCE_LABELS.get(ae["source"], ae["source"]),
-            "発現日": ae.get("onset_date") or "—",
-            "転帰": ae.get("outcome") or "—",
-            "報告重篤度": ae.get("seriousness_reported") or "—",
-        }
-        for ae in ext["adverse_events"]
-    ]
+    st.subheader("③ 有害事象 ＋ MedDRAコード提案")
+    meddra = data.get("meddra") or []
+    rows = []
+    for i, ae in enumerate(ext["adverse_events"]):
+        m = meddra[i] if i < len(meddra) else {}
+        rows.append(
+            {
+                "事象": ae["term"],
+                "MedDRA PT": m.get("pt_name_ja") or "—",
+                "PTコード": m.get("pt_code") or "—",
+                "コード由来": m.get("coded_by") or "—",
+                "出典": SOURCE_LABELS.get(ae["source"], ae["source"]),
+                "発現日": ae.get("onset_date") or "—",
+                "転帰": ae.get("outcome") or "—",
+                "報告重篤度": ae.get("seriousness_reported") or "—",
+            }
+        )
     st.dataframe(rows, use_container_width=True, hide_index=True)
 
     st.subheader("④ 既知/未知（添付文書との照合）")

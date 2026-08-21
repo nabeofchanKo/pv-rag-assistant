@@ -10,6 +10,9 @@ from app.services.expectedness import ExpectednessService
 from app.services.extraction import ExtractionService
 from app.services.generator import GeneratorService
 from app.services.label_index import LabelIndexService
+from app.services.meddra import MeddraDictionary
+from app.services.meddra_coding import MeddraCodingService
+from app.services.meddra_retriever import HybridMeddraRetriever
 from app.services.ingestion import (
     EmailLoader,
     ImageLoader,
@@ -161,4 +164,43 @@ def get_expectedness_service() -> ExpectednessService:
         llm=get_expectedness_model(),
         retriever=get_label_retriever_service(),
         top_k=settings.label_top_k,
+    )
+
+
+# --- Phase 3: MedDRA PT coding (hybrid retrieval + LLM select) ---
+
+
+@lru_cache
+def get_meddra_dictionary() -> MeddraDictionary:
+    """Load the MedDRA PT dictionary (+ build its char-bigram BM25 index)."""
+    return MeddraDictionary(csv_path=settings.meddra_path)
+
+
+@lru_cache
+def get_meddra_retriever() -> HybridMeddraRetriever:
+    """Hybrid MedDRA retriever (exact + BM25 ⊕ vector, RRF-fused)."""
+    return HybridMeddraRetriever(
+        dictionary=get_meddra_dictionary(),
+        embeddings=get_embeddings(),
+        persist_dir=settings.chroma_persist_dir,
+        collection_name=settings.meddra_collection_name,
+    )
+
+
+@lru_cache
+def get_meddra_model() -> BaseChatModel:
+    """Model for the MedDRA candidate-selection call (swappable via settings)."""
+    return ChatOpenAI(
+        model=settings.openai_meddra_model,
+        temperature=0.0,
+        api_key=settings.openai_api_key,
+    )
+
+
+def get_meddra_coding_service() -> MeddraCodingService:
+    """Suggest a MedDRA PT for each adverse-event term."""
+    return MeddraCodingService(
+        llm=get_meddra_model(),
+        retriever=get_meddra_retriever(),
+        top_k=settings.meddra_top_k,
     )

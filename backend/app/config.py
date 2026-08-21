@@ -46,6 +46,12 @@ class Settings(BaseSettings):
     # Expectedness judgment model (grounded 既知/未知 call; swappable per step).
     openai_expectedness_model: str = "gpt-4o-mini"
 
+    # MedDRA PT coding (hybrid retrieval: char-bigram BM25 + vector, RRF-fused).
+    meddra_path: str = str(PROJECT_ROOT / "data" / "meddra_sample" / "meddra_pt.csv")
+    meddra_collection_name: str = "meddra_pt"
+    meddra_top_k: int = 5
+    openai_meddra_model: str = "gpt-4o-mini"
+
     # Chunking
     chunk_size_tokens: int = 500
     chunk_overlap_tokens: int = 100
