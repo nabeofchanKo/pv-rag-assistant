@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.dependencies import get_label_index_service
+from app.dependencies import get_label_index_service, get_meddra_retriever
 from app.routers import cases, documents, query
 
 logger = logging.getLogger(__name__)
@@ -11,15 +11,20 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Index the drug labels (添付文書) once for expectedness (既知/未知). Idempotent:
-    # only runs when the label collection is empty. Failure is non-fatal so the
-    # rest of the API still starts (expectedness just returns 判定不能).
+    # Index the reference corpora once (idempotent: only when a collection is empty).
+    # Failures are non-fatal so the rest of the API still starts.
     try:
         added = get_label_index_service().ensure_indexed()
         if added:
             logger.info("Indexed %d drug-label chunks at startup.", added)
     except Exception:  # noqa: BLE001 - startup indexing must never crash the app
         logger.exception("Drug-label indexing failed at startup; expectedness disabled.")
+    try:
+        added = get_meddra_retriever().ensure_indexed()
+        if added:
+            logger.info("Indexed %d MedDRA PTs at startup.", added)
+    except Exception:  # noqa: BLE001
+        logger.exception("MedDRA indexing failed at startup; coding disabled.")
     yield
 
 
