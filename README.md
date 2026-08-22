@@ -148,7 +148,7 @@ Upload a PDF from `data/sample_reports/`, then ask a question about its contents
 | ------ | ------------------- | ---------------------------------------------------- |
 | `POST` | `/documents/upload` | Upload and index a PDF                               |
 | `POST` | `/query`            | Ask a question; returns an answer with cited sources |
-| `POST` | `/cases/triage`     | Triage a case: product match + extraction + MedDRA PT coding + expectedness (既知/未知) |
+| `POST` | `/cases/triage`     | Triage a case: product match + extraction + MedDRA PT coding + seriousness (ICH E2A) + expectedness (既知/未知) |
 | `GET`  | `/`                 | Health check                                         |
 
 Interactive API documentation is auto-generated at `/docs`.
@@ -324,7 +324,7 @@ streamlit run app.py
 | -------- | -------------------- | ------------------------------------------- |
 | `POST`   | `/documents/upload`  | PDFをアップロードしてインデックス化          |
 | `POST`   | `/query`             | 質問を送信。出典付きの回答を返す             |
-| `POST`   | `/cases/triage`      | 症例をトリアージ：自社品判定＋抽出＋MedDRAコード提案＋既知/未知判定 |
+| `POST`   | `/cases/triage`      | 症例をトリアージ：自社品判定＋抽出＋MedDRAコード提案＋重篤度判定（E2A）＋既知/未知判定 |
 | `GET`    | `/`                  | ヘルスチェック                              |
 
 対話的なAPIドキュメントは `/docs` に自動生成されます。

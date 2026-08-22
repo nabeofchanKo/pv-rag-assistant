@@ -10,9 +10,11 @@ from app.services.expectedness import ExpectednessService
 from app.services.extraction import ExtractionService
 from app.services.generator import GeneratorService
 from app.services.label_index import LabelIndexService
+from app.services.ime import ImeReference
 from app.services.meddra import MeddraDictionary
 from app.services.meddra_coding import MeddraCodingService
 from app.services.meddra_retriever import HybridMeddraRetriever
+from app.services.seriousness import SeriousnessService
 from app.services.ingestion import (
     EmailLoader,
     ImageLoader,
@@ -204,3 +206,27 @@ def get_meddra_coding_service() -> MeddraCodingService:
         retriever=get_meddra_retriever(),
         top_k=settings.meddra_top_k,
     )
+
+
+# --- Phase 3: seriousness assessment (企業評価 / ICH E2A) ---
+
+
+@lru_cache
+def get_ime_reference() -> ImeReference:
+    """PT-keyed important-medical-events list (E2A criterion 6, HITL-appendable)."""
+    return ImeReference(csv_path=settings.ime_path)
+
+
+@lru_cache
+def get_seriousness_model() -> BaseChatModel:
+    """Model for the E2A criteria interpretation call (swappable via settings)."""
+    return ChatOpenAI(
+        model=settings.openai_seriousness_model,
+        temperature=0.0,
+        api_key=settings.openai_api_key,
+    )
+
+
+def get_seriousness_service() -> SeriousnessService:
+    """Assess company seriousness (ICH E2A) per adverse event."""
+    return SeriousnessService(llm=get_seriousness_model(), ime=get_ime_reference())
