@@ -60,6 +60,10 @@ class Settings(BaseSettings):
     # extraction, so this step defaults to gpt-4o (per-step model selection).
     openai_seriousness_model: str = "gpt-4o"
 
+    # Causality (temporal) also needs date/narrative reasoning (onset vs
+    # administration) — gpt-4o for the same reason.
+    openai_causality_model: str = "gpt-4o"
+
     # Chunking
     chunk_size_tokens: int = 500
     chunk_overlap_tokens: int = 100

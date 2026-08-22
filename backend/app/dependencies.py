@@ -10,6 +10,7 @@ from app.services.expectedness import ExpectednessService
 from app.services.extraction import ExtractionService
 from app.services.generator import GeneratorService
 from app.services.label_index import LabelIndexService
+from app.services.causality import CausalityService
 from app.services.ime import ImeReference
 from app.services.meddra import MeddraDictionary
 from app.services.meddra_coding import MeddraCodingService
@@ -230,3 +231,21 @@ def get_seriousness_model() -> BaseChatModel:
 def get_seriousness_service() -> SeriousnessService:
     """Assess company seriousness (ICH E2A) per adverse event."""
     return SeriousnessService(llm=get_seriousness_model(), ime=get_ime_reference())
+
+
+# --- Phase 3: causality (temporal, conservative) ---
+
+
+@lru_cache
+def get_causality_model() -> BaseChatModel:
+    """Model for the temporal causality call (swappable via settings)."""
+    return ChatOpenAI(
+        model=settings.openai_causality_model,
+        temperature=0.0,
+        api_key=settings.openai_api_key,
+    )
+
+
+def get_causality_service() -> CausalityService:
+    """Assess temporal causality (conservative) per adverse event."""
+    return CausalityService(llm=get_causality_model())
