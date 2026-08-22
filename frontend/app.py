@@ -14,6 +14,7 @@ VERDICT_LABELS = {
     "判定不能": "⚪ 判定不能",
 }
 SERIOUS_LABELS = {"重篤": "🔴 重篤", "要確認": "🟡 要確認", "非重篤": "⚪ 非重篤"}
+CAUSAL_LABELS = {"否定できない": "🔴 否定できない", "否定できる": "🟢 否定できる", "評価不能": "⚪ 評価不能"}
 UPLOAD_TYPES = ["pdf", "png", "jpg", "jpeg", "eml", "txt", "md"]
 
 
@@ -126,6 +127,25 @@ def render_triage(data: dict) -> None:
             for a in drug["assessments"]
         ]
         st.dataframe(exp_rows, use_container_width=True, hide_index=True)
+
+    st.subheader("⑥ 因果関係（時間的・保守的評価）")
+    causality = data.get("causality") or []
+    if causality:
+        st.caption(
+            "トリアージの保守的評価：本剤投与後に発現＝🔴 否定できない（スコープ維持）。"
+            "投与開始前、または中止後で明らかに時間的に不整合な時のみ 🟢 否定できる。"
+        )
+    cau_rows = [
+        {
+            "事象": c["term"],
+            "因果関係": CAUSAL_LABELS.get(c["verdict"], c["verdict"]),
+            "発現時期": c.get("onset_relation") or "—",
+            "根拠": c.get("evidence_quote") or (c.get("rationale") or "—"),
+        }
+        for c in causality
+    ]
+    if cau_rows:
+        st.dataframe(cau_rows, use_container_width=True, hide_index=True)
 
     with st.expander("読み取ったテキスト（出典）"):
         st.text(data["source_text"])

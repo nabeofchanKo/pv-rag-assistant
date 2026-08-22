@@ -4,6 +4,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from app.dependencies import (
+    get_causality_service,
     get_expectedness_service,
     get_extraction_service,
     get_ingestion_service,
@@ -13,6 +14,7 @@ from app.dependencies import (
 )
 from app.exceptions import IngestionError, UnsupportedFileTypeError
 from app.schemas import TriageResponse
+from app.services.causality import CausalityService
 from app.services.expectedness import ExpectednessService
 from app.services.extraction import ExtractionService
 from app.services.ingestion import IngestionService
@@ -31,11 +33,12 @@ async def triage_endpoint(
     product_master: ProductMasterService = Depends(get_product_master_service),
     meddra: MeddraCodingService = Depends(get_meddra_coding_service),
     seriousness: SeriousnessService = Depends(get_seriousness_service),
+    causality: CausalityService = Depends(get_causality_service),
     expectedness: ExpectednessService = Depends(get_expectedness_service),
 ) -> TriageResponse:
     """Ingest a case (PDF / email / image / text) and return a triage draft:
     own-company product match + structured patient / adverse-event extraction +
-    MedDRA PT suggestions + company seriousness (ICH E2A) + expectedness (既知/未知)."""
+    MedDRA PT + seriousness (ICH E2A) + causality (temporal) + expectedness (既知/未知)."""
 
     contents = await file.read()
     filename = file.filename or "uploaded"
@@ -70,6 +73,14 @@ async def triage_endpoint(
         else []
     )
 
+    # Temporal causality (conservative) per event, anchored on the matched suspect drug(s).
+    suspect_drugs = [p.name for p in product_match.matched_products]
+    causality_results = (
+        causality.assess(text, case_extraction.adverse_events, suspect_drugs)
+        if terms
+        else []
+    )
+
     # Expectedness: assess every extracted event against each matched own-company
     # product that has a package insert (skip products without a label).
     expectedness_results = [
@@ -84,6 +95,7 @@ async def triage_endpoint(
         extraction=case_extraction,
         meddra=meddra_codings,
         seriousness=seriousness_results,
+        causality=causality_results,
         expectedness=expectedness_results,
         source_text=text,
     )

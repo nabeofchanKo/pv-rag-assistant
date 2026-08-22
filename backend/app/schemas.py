@@ -281,6 +281,37 @@ class SeriousnessAssessment(BaseModel):
         return self.verdict == "重篤"
 
 
+# --- Phase 3 (slice 3d): causality assessment (因果関係, temporal / conservative) ---
+# Triage posture (not a full causality proof): an event that occurred AFTER
+# administration defaults to 否定できない (cannot rule out); 否定できる (can rule out)
+# only on clear temporal incompatibility — onset before administration, or onset
+# after discontinuation when residual/delayed effects are also implausible.
+
+
+class CausalityAssessment(BaseModel):
+    term: str
+    verdict: Literal["否定できない", "否定できる", "評価不能"] = Field(
+        description=(
+            "否定できない＝投与後に発現し因果を否定できない(既定・保守的)、"
+            "否定できる＝明らかに時間的に不整合、評価不能＝日付不明で時間関係を確立できない。"
+        ),
+    )
+    onset_relation: str | None = Field(
+        default=None,
+        description="投与に対する発現時期（投与開始前／投与中／投与中止後／不明）。",
+    )
+    evidence_quote: str | None = Field(
+        default=None, description="投与開始日・中止日・発現日など、判定根拠の本文引用。"
+    )
+    rationale: str | None = None
+
+    @computed_field
+    @property
+    def is_excludable(self) -> bool:
+        """True only for 否定できる. 否定できない/評価不能 stay in scope (conservative)."""
+        return self.verdict == "否定できる"
+
+
 # --- Phase 2 (slice 2c) / Phase 3: combined triage output ---
 
 
@@ -292,6 +323,8 @@ class TriageResponse(BaseModel):
     meddra: list[MeddraCoding] = []
     # Company-assessed seriousness per adverse event (aligned to adverse_events order).
     seriousness: list[SeriousnessAssessment] = []
+    # Temporal causality per adverse event (conservative; aligned to adverse_events order).
+    causality: list[CausalityAssessment] = []
     # One entry per matched own-company product that has a package insert.
     # Empty when no matched product has a label (expectedness not assessable).
     expectedness: list[DrugExpectedness] = []
