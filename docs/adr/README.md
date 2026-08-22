@@ -11,6 +11,7 @@ that produced its evidence, when there is one.
 | [0001](0001-expectedness-approach-a-rag.md) | Expectedness (既知/未知) via per-AE RAG over the label (Approach A) | Accepted | design |
 | [0002](0002-expectedness-confidence-gate.md) | Confidence gate: match-type classification → deterministic verdict (既知/要確認/未知) | Accepted | [synonym tolerance](../../experiments/expectedness_synonym_tolerance.md) |
 | [0003](0003-meddra-retrieval-hybrid.md) | MedDRA PT retrieval = hybrid BM25 (char-bigram) + vector, RRF-fused (Level B) | Accepted | [retrieval comparison](../../experiments/meddra_retrieval_comparison.md) |
+| [0004](0004-seriousness-e2a-llm-plus-deterministic.md) | Seriousness (ICH E2A): LLM interprets criteria, a deterministic OR decides | Accepted | [criterion attribution](../../experiments/seriousness_attribution.md) |
 
 Evidence for evidence-backed ADRs lives under [`experiments/`](../../experiments/),
 with the reproducible script alongside each write-up.

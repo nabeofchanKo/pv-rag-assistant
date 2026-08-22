@@ -239,6 +239,48 @@ class MeddraCoding(BaseModel):
     candidates: list[MeddraTerm] = []
 
 
+# --- Phase 3 (slice 3c): seriousness assessment (企業評価 / ICH E2A) ---
+# The LLM interprets the case text for each E2A criterion (catching euphemisms like
+# 逝去→死亡, 退院未定→入院延長) and emits structured criterion hits with evidence;
+# a deterministic OR then decides 重篤/非重篤. Uncertain-only -> 要確認 (safe side,
+# HITL). This is the company frame, kept distinct from the reporter's transcribed
+# seriousness_reported so the two can be compared.
+
+SeriousnessCriterion = Literal[
+    "死亡", "生命を脅かす", "入院・入院期間の延長", "障害", "先天異常", "医学的に重要"
+]
+
+
+class SeriousnessHit(BaseModel):
+    criterion: SeriousnessCriterion = Field(description="該当したICH E2Aの重篤性基準。")
+    evidence_quote: str | None = Field(
+        default=None, description="該当の根拠とした症例テキストの引用。"
+    )
+    source: Literal["症例記述", "IME"] = Field(
+        default="症例記述",
+        description="判定の出所。症例記述＝本文から、IME＝コード化PTが医学的に重要事象リストに該当。",
+    )
+
+
+class SeriousnessAssessment(BaseModel):
+    term: str
+    verdict: Literal["重篤", "非重篤", "要確認"] = Field(
+        description="企業評価。重篤＝基準1つ以上に該当、要確認＝疑いのみ(安全側でHITL)、非重篤＝該当なし。",
+    )
+    hits: list[SeriousnessHit] = []
+    reported: str | None = Field(
+        default=None, description="報告上の重篤度（転記, seriousness_reported）。ズレ確認用。"
+    )
+    rationale: str | None = None
+
+    @computed_field
+    @property
+    def is_serious(self) -> bool:
+        """Only 重篤 counts as serious. 要確認/非重篤 must not be treated as serious —
+        but 要確認 is surfaced for HITL rather than silently dropped to 非重篤."""
+        return self.verdict == "重篤"
+
+
 # --- Phase 2 (slice 2c) / Phase 3: combined triage output ---
 
 
@@ -248,6 +290,8 @@ class TriageResponse(BaseModel):
     extraction: CaseExtraction
     # MedDRA PT suggestion per extracted adverse event (aligned to adverse_events order).
     meddra: list[MeddraCoding] = []
+    # Company-assessed seriousness per adverse event (aligned to adverse_events order).
+    seriousness: list[SeriousnessAssessment] = []
     # One entry per matched own-company product that has a package insert.
     # Empty when no matched product has a label (expectedness not assessable).
     expectedness: list[DrugExpectedness] = []

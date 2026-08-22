@@ -13,7 +13,19 @@ VERDICT_LABELS = {
     "未知": "🔴 未知",
     "判定不能": "⚪ 判定不能",
 }
+SERIOUS_LABELS = {"重篤": "🔴 重篤", "要確認": "🟡 要確認", "非重篤": "⚪ 非重篤"}
 UPLOAD_TYPES = ["pdf", "png", "jpg", "jpeg", "eml", "txt", "md"]
+
+
+def _reported_is_serious(reported):
+    """Coarse serious/non from the transcribed reporter value (非重篤 contains 重篤)."""
+    if not reported:
+        return None
+    if "非重篤" in reported:
+        return False
+    if "重篤" in reported:
+        return True
+    return None
 
 st.set_page_config(page_title="PV Triage Assistant", layout="wide")
 st.title("PV Triage Assistant")
@@ -65,7 +77,34 @@ def render_triage(data: dict) -> None:
         )
     st.dataframe(rows, use_container_width=True, hide_index=True)
 
-    st.subheader("④ 既知/未知（添付文書との照合）")
+    st.subheader("④ 重篤度（報告 vs 企業評価 / ICH E2A）")
+    seriousness = data.get("seriousness") or []
+    if seriousness:
+        st.caption(
+            "🔴 重篤 は基準1つ以上に該当、🟡 要確認 は疑いのみ（安全側でHITL）。"
+            "『⚠️ 差異』は報告上の重篤度と企業評価がずれた事象（過小報告を防ぐ着目点）。"
+        )
+    ser_rows = []
+    for s in seriousness:
+        rep = s.get("reported")
+        diff = _reported_is_serious(rep)
+        flag = "⚠️ 差異" if (diff is not None and diff != s.get("is_serious")) else ""
+        hits = s.get("hits") or []
+        ser_rows.append(
+            {
+                "事象": s["term"],
+                "報告重篤度": rep or "—",
+                "企業評価": SERIOUS_LABELS.get(s["verdict"], s["verdict"]),
+                "差異": flag,
+                "該当基準": "、".join(h["criterion"] for h in hits) or "—",
+                "根拠": next((h.get("evidence_quote") for h in hits if h.get("evidence_quote")), None)
+                or (s.get("rationale") or "—"),
+            }
+        )
+    if ser_rows:
+        st.dataframe(ser_rows, use_container_width=True, hide_index=True)
+
+    st.subheader("⑤ 既知/未知（添付文書との照合）")
     expectedness = data.get("expectedness") or []
     if not expectedness:
         st.info("該当する添付文書がないため、既知/未知は判定していません。")

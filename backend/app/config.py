@@ -52,6 +52,14 @@ class Settings(BaseSettings):
     meddra_top_k: int = 5
     openai_meddra_model: str = "gpt-4o-mini"
 
+    # Seriousness assessment (企業評価 / ICH E2A). IME = PT-keyed medically-important
+    # events list, used for criterion 6; HITL-appendable.
+    ime_path: str = str(PROJECT_ROOT / "data" / "reference" / "ime_pt.csv")
+    # Seriousness needs careful narrative attribution (which event caused the
+    # hospitalization?) — the same hard-narrative class where mini leaked in
+    # extraction, so this step defaults to gpt-4o (per-step model selection).
+    openai_seriousness_model: str = "gpt-4o"
+
     # Chunking
     chunk_size_tokens: int = 500
     chunk_overlap_tokens: int = 100
