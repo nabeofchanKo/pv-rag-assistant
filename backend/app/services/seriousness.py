@@ -129,17 +129,21 @@ class SeriousnessService:
             if h.status == "疑い"
         ]
 
-        # Deterministic criterion 6: coded PT on the IME list.
+        # Deterministic criterion 6: coded PT on the IME list. Cite the PT and its
+        # provenance (例示 / HITL昇格 <reviewer> <date> …) so the evidence explains
+        # *why* it is medically important — incl. when it came from a past review.
         if (
             coding
             and self.ime.contains(coding.pt_code)
             and not any(h.criterion == "医学的に重要" for h in confirmed)
         ):
+            quote = f"IME該当PT: {coding.pt_name_ja}（{coding.pt_code}）"
+            provenance = self.ime.note(coding.pt_code)
+            if provenance:
+                quote += f" ／ {provenance}"
             confirmed.append(
                 SeriousnessHit(
-                    criterion="医学的に重要",
-                    evidence_quote=f"IME該当PT: {coding.pt_name_ja}（{coding.pt_code}）",
-                    source="IME",
+                    criterion="医学的に重要", evidence_quote=quote, source="IME"
                 )
             )
 

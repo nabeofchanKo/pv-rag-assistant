@@ -29,6 +29,9 @@ class FakeIme:
     def contains(self, code):
         return bool(code) and code in self.codes
 
+    def note(self, code):
+        return None
+
 
 def _svc(chain, ime):
     s = SeriousnessService.__new__(SeriousnessService)

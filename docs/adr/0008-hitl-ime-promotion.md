@@ -69,3 +69,13 @@ forward-looking only).
   later concern).
 - (−) No de-promotion / review-of-the-list flow yet (a promoted PT stays). Adding a
   reference-admin surface (option 1, as a *complement*) is deferred.
+
+## Follow-up "A" (2026-08-24): cite the promotion's provenance in the evidence
+
+`ImeReference` now keeps `pt_code → note` (was a bare set), and criterion 6's
+evidence appends that provenance: e.g. `IME該当PT: 心室細動（10047290） ／ HITL昇格
+田中PV担当 2026-08-24 — …` (or `／ 例示（EMA IME 相当）` for seed PTs). So a later
+case's 重篤 verdict explains *why* the PT is important, including that it came from a
+past review — surfaced automatically in the Streamlit ④ 根拠 column (no UI change).
+This is the point-of-use trace; retrieving *similar past cases* as evidence
+("過去症例より（類似N件）") is Phase 4d's precedent RAG, a distinct mechanism.

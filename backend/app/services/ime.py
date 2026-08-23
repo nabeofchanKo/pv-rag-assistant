@@ -6,6 +6,11 @@ deterministically when the coded PT is on this list — and the list is meant to
 **appended to via HITL** (a reviewer who assesses an event as criterion-6 serious
 adds its PT; see `promote`). Missing file is non-fatal: criterion 6 then relies
 only on the LLM.
+
+Each PT carries its **provenance** (the CSV ``note``: 例示 / who-promoted-when-why),
+so criterion 6 can cite *why* the PT is on the list — e.g. "HITL昇格 田中PV担当
+2026-08-24" — making the feedback loop explainable at the point it changes a
+verdict (Phase 4c follow-up "A").
 """
 
 import csv
@@ -27,36 +32,42 @@ class ImeReference:
     def __init__(self, csv_path: str) -> None:
         self.path = Path(csv_path)
         self._lock = threading.Lock()
-        self.codes = self._load(self.path)
+        self.notes = self._load(self.path)  # pt_code -> provenance note
 
-    def _load(self, path: Path) -> set[str]:
+    def _load(self, path: Path) -> dict[str, str]:
         if not path.exists():
             logger.warning("IME reference not found: %s (criterion 6 = LLM only)", path)
-            return set()
-        codes: set[str] = set()
+            return {}
+        notes: dict[str, str] = {}
         with path.open(encoding="utf-8") as f:
             rows = (line for line in f if not line.lstrip().startswith("#"))
             for row in csv.DictReader(rows):
                 code = (row.get("pt_code") or "").strip()
                 if code:
-                    codes.add(code)
-        logger.info("Loaded %d IME PTs from %s", len(codes), path)
-        return codes
+                    notes[code] = (row.get("note") or "").strip()
+        logger.info("Loaded %d IME PTs from %s", len(notes), path)
+        return notes
 
     def contains(self, pt_code: str | None) -> bool:
-        return bool(pt_code) and pt_code in self.codes
+        return bool(pt_code) and pt_code in self.notes
+
+    def note(self, pt_code: str | None) -> str | None:
+        """Provenance for a PT (例示 / HITL昇格 <reviewer> <date> …), or None."""
+        if not pt_code:
+            return None
+        return self.notes.get(pt_code) or None
 
     def promote(self, pt_code: str, pt_name: str, note: str = "") -> bool:
-        """Add a PT to the IME list (HITL). Updates the in-memory set AND appends a
+        """Add a PT to the IME list (HITL). Updates the in-memory map AND appends a
         row to the CSV so the growth persists. Idempotent: returns True if newly
         added, False if the PT was already present (no duplicate row written)."""
         pt_code = (pt_code or "").strip()
         if not pt_code:
             return False
         with self._lock:
-            if pt_code in self.codes:
+            if pt_code in self.notes:
                 return False
-            self.codes.add(pt_code)
+            self.notes[pt_code] = note
             self._append_row(pt_code, pt_name, note)
             logger.info("Promoted PT %s (%s) to IME list", pt_code, pt_name)
             return True
