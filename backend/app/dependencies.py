@@ -18,6 +18,7 @@ from app.services.chunking import FixedLengthChunker
 from app.services.expectedness import ExpectednessService
 from app.services.extraction import ExtractionService
 from app.services.generator import GeneratorService
+from app.services.influence import InfluenceService
 from app.services.label_index import LabelIndexService
 from app.services.causality import CausalityService
 from app.services.ime import ImeReference
@@ -240,8 +241,15 @@ def get_seriousness_model() -> BaseChatModel:
 
 
 def get_seriousness_service() -> SeriousnessService:
-    """Assess company seriousness (ICH E2A) per adverse event."""
-    return SeriousnessService(llm=get_seriousness_model(), ime=get_ime_reference())
+    """Assess fresh company seriousness (ICH E2A) per adverse event (no past data —
+    IME criterion 6 is applied by the influence layer, Phase 4e)."""
+    return SeriousnessService(llm=get_seriousness_model())
+
+
+def get_influence_service() -> InfluenceService:
+    """Fold past data (IME + precedent) into verdicts, or annotate (Phase 4e).
+    Holds the shared IME singleton so promotions take effect immediately."""
+    return InfluenceService(ime=get_ime_reference())
 
 
 # --- Phase 3: causality (temporal, conservative) ---
@@ -325,5 +333,6 @@ def get_triage_graph() -> CompiledStateGraph:
         causality=get_causality_service(),
         expectedness=get_expectedness_service(),
         precedent=get_precedent_service(),
+        influence=get_influence_service(),
         checkpointer=get_checkpointer(),
     )

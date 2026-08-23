@@ -38,6 +38,8 @@ def _content_fields(values: dict) -> dict:
         causality=values.get("causality", []),
         expectedness=values.get("expectedness", []),
         precedent=values.get("precedent", []),
+        influence_mode=values.get("influence_mode", "applied"),
+        influence=values.get("influence", []),
         source_text=values.get("text", ""),
     )
 
@@ -68,6 +70,7 @@ def _result(thread_id: str, values: dict) -> TriageResult:
 async def triage_endpoint(
     file: UploadFile = File(...),
     auto_approve: bool = False,
+    influence: str = "applied",
     ingestion: IngestionService = Depends(get_ingestion_service),
     graph: CompiledStateGraph = Depends(get_triage_graph),
 ) -> TriageDraft | TriageResult:
@@ -101,7 +104,12 @@ async def triage_endpoint(
 
     thread_id = str(uuid.uuid4())
     graph.invoke(
-        {"text": text, "document_name": filename, "auto_approve": auto_approve},
+        {
+            "text": text,
+            "document_name": filename,
+            "auto_approve": auto_approve,
+            "influence_mode": "advisory" if influence == "advisory" else "applied",
+        },
         _config(thread_id),
     )
     values = graph.get_state(_config(thread_id)).values
