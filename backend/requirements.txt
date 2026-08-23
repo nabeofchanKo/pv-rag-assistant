@@ -6,7 +6,7 @@ langchain-chroma>=1.1.0
 
 # Pipeline orchestration (LangGraph) — Phase 4 triage graph + HITL
 langgraph>=1.0.0
-# langgraph-checkpoint-sqlite  # add in Phase 4b for persistent HITL interrupt/resume
+langgraph-checkpoint-sqlite>=3.0.0  # persistent HITL interrupt/resume checkpointer
 
 # Vector store, PDF parsing, tokenization
 chromadb>=1.5.0

@@ -225,6 +225,10 @@ __marimo__/
 chroma_db/
 backend/chroma_db/
 
+# LangGraph HITL checkpointer (Phase 4b) — runtime state, not source
+backend/checkpoints/
+*.sqlite
+
 # Sample data PDFs (large files, optional)
 # data/sample_reports/*.pdf
 

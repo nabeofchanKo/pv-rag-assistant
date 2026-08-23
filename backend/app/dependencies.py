@@ -1,9 +1,17 @@
+import inspect
+import sqlite3
 from functools import lru_cache
+from pathlib import Path
 
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph.state import CompiledStateGraph
+from pydantic import BaseModel
+
+from app import schemas
 
 from app.config import settings
 from app.services.chunking import FixedLengthChunker
@@ -253,12 +261,45 @@ def get_causality_service() -> CausalityService:
     return CausalityService(llm=get_causality_model())
 
 
-# --- Phase 4a: LangGraph orchestration of the triage pipeline ---
+# --- Phase 4a/4b: LangGraph orchestration of the triage pipeline ---
+
+
+def _schema_serde() -> JsonPlusSerializer:
+    """Serializer that explicitly allow-lists our Pydantic schema models.
+
+    The triage state holds Pydantic objects (ProductMatchResult, CaseExtraction,
+    the assessments, ReviewOutcome, …). LangGraph will block deserializing
+    unregistered types from a checkpoint in a future version, so register every
+    model defined in ``app.schemas`` up front (future-proof + silences warnings).
+    """
+    models = [
+        obj
+        for _, obj in inspect.getmembers(schemas, inspect.isclass)
+        if issubclass(obj, BaseModel) and obj.__module__ == schemas.__name__
+    ]
+    return JsonPlusSerializer(allowed_msgpack_modules=models)
+
+
+@lru_cache
+def get_checkpointer() -> SqliteSaver:
+    """Persistent LangGraph checkpointer for the HITL interrupt/resume flow.
+
+    A single SQLite connection (check_same_thread=False so LangGraph's parallel
+    fan-out threads may share it; SqliteSaver serializes access with its own
+    lock). Persists paused triage drafts across restarts.
+    """
+    db_path = Path(settings.checkpoint_db_path)
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(db_path), check_same_thread=False)
+    saver = SqliteSaver(conn, serde=_schema_serde())
+    saver.setup()
+    return saver
 
 
 @lru_cache
 def get_triage_graph() -> CompiledStateGraph:
-    """Build + compile the triage graph once, wiring the six services together.
+    """Build + compile the triage graph once, wiring the six services together
+    plus the SqliteSaver checkpointer (needed for the HITL review interrupt).
 
     Cached so the graph is compiled a single time and reused across requests.
     """
@@ -269,4 +310,5 @@ def get_triage_graph() -> CompiledStateGraph:
         seriousness=get_seriousness_service(),
         causality=get_causality_service(),
         expectedness=get_expectedness_service(),
+        checkpointer=get_checkpointer(),
     )
