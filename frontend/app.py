@@ -48,14 +48,18 @@ st.title("PV Triage Assistant")
 triage_tab, rag_tab = st.tabs(["🩺 症例トリアージ", "🔎 RAG Q&A"])
 
 
-def post_triage(filename: str, content: bytes):
+def post_triage(filename: str, content: bytes, influence: str = "applied"):
     with st.spinner("解析中..."):
-        return requests.post(f"{API_BASE}/cases/triage", files={"file": (filename, content)})
+        return requests.post(
+            f"{API_BASE}/cases/triage",
+            params={"influence": influence},
+            files={"file": (filename, content)},
+        )
 
 
-def start_triage(filename: str, content: bytes) -> None:
+def start_triage(filename: str, content: bytes, influence: str = "applied") -> None:
     """Start a triage run; stash the returned draft (awaiting review) in state."""
-    resp = post_triage(filename, content)
+    resp = post_triage(filename, content, influence)
     if resp.status_code != 200:
         st.session_state.pop("case", None)
         st.error(f"エラー ({resp.status_code}): {resp.text}")
@@ -205,6 +209,50 @@ def render_triage(data: dict) -> None:
                 }
             )
         st.dataframe(prec_rows, use_container_width=True, hide_index=True)
+
+    mode = data.get("influence_mode", "applied")
+    influence = data.get("influence") or []
+    SRC = {"IME": "以前のFB(IME)", "precedent": "過去症例"}
+    if mode == "applied":
+        st.markdown(f"**過去データの反映**（モード: 🟢 反映）")
+        applied_items = [i for i in influence if i.get("applied")]
+        if applied_items:
+            st.caption("過去データにより、以下を安全側に調整しました（監査対象）。")
+            st.dataframe(
+                [
+                    {
+                        "事象": i["term"],
+                        "軸": AXIS_LABELS.get(i["axis"], i["axis"]),
+                        "由来": SRC.get(i["source"], i["source"]),
+                        "変更": f'{i.get("from_verdict")}→{i.get("to_verdict")}',
+                        "内容": i["note"],
+                    }
+                    for i in applied_items
+                ],
+                use_container_width=True,
+                hide_index=True,
+            )
+        else:
+            st.caption("今回、過去データによる調整はありませんでした。")
+    else:
+        st.markdown(f"**過去データ（参考）**（モード: ⚪ 参考・判定は今回の症例のみ）")
+        if influence:
+            st.caption("以下は参考情報です。今回の判定には反映していません。")
+            st.dataframe(
+                [
+                    {
+                        "事象": i["term"],
+                        "軸": AXIS_LABELS.get(i["axis"], i["axis"]),
+                        "由来": SRC.get(i["source"], i["source"]),
+                        "メモ": i["note"],
+                    }
+                    for i in influence
+                ],
+                use_container_width=True,
+                hide_index=True,
+            )
+        else:
+            st.caption("参考にできる過去データはありませんでした。")
 
     with st.expander("読み取ったテキスト（出典）"):
         st.text(data["source_text"])
@@ -417,9 +465,18 @@ with triage_tab:
         "6項目のトリアージ案を生成し、人手レビュー（承認/修正）に回します。"
     )
 
+    mode_label = st.radio(
+        "過去データ（過去症例・以前のFB）の扱い",
+        ["反映（判定に織り込む）", "参考（メモのみ・今回の症例だけで判定）"],
+        horizontal=True,
+        key="influence_mode",
+        help="反映：IME昇格→重篤（確定）、過去症例→安全側で要確認に引き上げ。参考：判定は変えず過去はメモ表示。",
+    )
+    influence = "advisory" if mode_label.startswith("参考") else "applied"
+
     case_file = st.file_uploader("症例ファイルを選択", type=UPLOAD_TYPES, key="triage_upload")
     if case_file is not None and st.button("トリアージ実行", type="primary"):
-        start_triage(case_file.name, case_file.getvalue())
+        start_triage(case_file.name, case_file.getvalue(), influence)
 
     st.markdown("**同梱サンプルで試す**（アップロード不要）")
     samples = sorted(
@@ -428,7 +485,7 @@ with triage_tab:
     if samples:
         sample = st.selectbox("サンプル症例", samples, key="triage_sample")
         if st.button("サンプルでトリアージ", key="triage_sample_btn"):
-            start_triage(sample, (SAMPLE_DIR / sample).read_bytes())
+            start_triage(sample, (SAMPLE_DIR / sample).read_bytes(), influence)
 
     if "case" in st.session_state:
         st.divider()
