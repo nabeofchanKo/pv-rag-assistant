@@ -3,6 +3,7 @@ from functools import lru_cache
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langgraph.graph.state import CompiledStateGraph
 
 from app.config import settings
 from app.services.chunking import FixedLengthChunker
@@ -26,6 +27,7 @@ from app.services.ocr import OcrEngine, VisionLLMOcrEngine
 from app.services.pdf_processor import PDFProcessor
 from app.services.product_master import ProductMasterService
 from app.services.retriever import RetrieverService
+from app.services.triage_graph import build_triage_graph
 
 
 @lru_cache
@@ -249,3 +251,22 @@ def get_causality_model() -> BaseChatModel:
 def get_causality_service() -> CausalityService:
     """Assess temporal causality (conservative) per adverse event."""
     return CausalityService(llm=get_causality_model())
+
+
+# --- Phase 4a: LangGraph orchestration of the triage pipeline ---
+
+
+@lru_cache
+def get_triage_graph() -> CompiledStateGraph:
+    """Build + compile the triage graph once, wiring the six services together.
+
+    Cached so the graph is compiled a single time and reused across requests.
+    """
+    return build_triage_graph(
+        product_master=get_product_master_service(),
+        extraction=get_extraction_service(),
+        meddra=get_meddra_coding_service(),
+        seriousness=get_seriousness_service(),
+        causality=get_causality_service(),
+        expectedness=get_expectedness_service(),
+    )

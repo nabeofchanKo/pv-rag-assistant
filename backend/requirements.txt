@@ -4,6 +4,10 @@ langchain-openai>=1.5.0
 langchain-text-splitters>=1.1.0
 langchain-chroma>=1.1.0
 
+# Pipeline orchestration (LangGraph) — Phase 4 triage graph + HITL
+langgraph>=1.0.0
+# langgraph-checkpoint-sqlite  # add in Phase 4b for persistent HITL interrupt/resume
+
 # Vector store, PDF parsing, tokenization
 chromadb>=1.5.0
 pdfplumber>=0.11.0
