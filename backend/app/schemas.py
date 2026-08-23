@@ -362,6 +362,17 @@ class VerdictOverride(BaseModel):
     rationale: str | None = Field(default=None, description="上書きの理由（日本語で簡潔に）。")
 
 
+class ImePromotion(BaseModel):
+    """A reviewer's request to add a MedDRA PT to the IME list (Phase 4c).
+
+    Promoting a PT makes future events coded to it fire E2A criterion 6 (医学的に
+    重要) automatically — the reviewer's judgment fed back into later accuracy."""
+
+    pt_code: str = Field(description="昇格するPTのMedDRAコード（コード化済みの事象のみ）。")
+    pt_name: str = Field(description="PT名（監査・CSV記録用）。")
+    rationale: str | None = Field(default=None, description="昇格の理由（日本語で簡潔に）。")
+
+
 class ReviewDecision(BaseModel):
     """The reviewer's decision — the body of POST /cases/{thread_id}/approve and
     the resume payload handed back into the graph."""
@@ -371,6 +382,10 @@ class ReviewDecision(BaseModel):
     note: str | None = Field(default=None, description="全体所見（任意）。")
     overrides: list[VerdictOverride] = Field(
         default_factory=list, description="承認時に適用する判定の上書き（0件可）。"
+    )
+    ime_promotions: list[ImePromotion] = Field(
+        default_factory=list,
+        description="承認時にIMEリストへ昇格するPT（今後の症例のcriterion 6に反映）。0件可。",
     )
 
 
@@ -385,6 +400,19 @@ class OverrideRecord(BaseModel):
     rationale: str | None = None
 
 
+class ImePromotionRecord(BaseModel):
+    """Audit entry for a PT promoted to the IME list during a review (Phase 4c)."""
+
+    pt_code: str
+    pt_name: str
+    reviewer: str
+    promoted_at: datetime
+    rationale: str | None = None
+    status: Literal["追加", "既存"] = Field(
+        description="追加＝新規にIMEへ登録、既存＝すでに登録済み（重複追記なし）。"
+    )
+
+
 class ReviewOutcome(BaseModel):
     """The finalized review — attached to the approved/rejected result."""
 
@@ -392,6 +420,7 @@ class ReviewOutcome(BaseModel):
     reviewer: str
     note: str | None = None
     overrides: list[OverrideRecord] = []
+    ime_promotions: list[ImePromotionRecord] = []
     reviewed_at: datetime
 
 

@@ -52,6 +52,7 @@ from app.schemas import (
     CausalityAssessment,
     DrugExpectedness,
     Escalation,
+    ImePromotionRecord,
     MeddraCoding,
     OverrideRecord,
     ProductMatchResult,
@@ -307,11 +308,16 @@ def build_triage_graph(
         decision = state.get("review") or {"action": "approve", "reviewer": "auto"}
         action = decision.get("action", "approve")
         reviewer = decision.get("reviewer", "auto")
+        # IME promotions are performed + resolved in the router (a reference-side
+        # effect); finalize only records them in the audit trail.
+        promotions = [
+            ImePromotionRecord(**r) for r in decision.get("ime_promotion_records", [])
+        ]
 
         if action == "reject":
             outcome = ReviewOutcome(
                 status="rejected", reviewer=reviewer, note=decision.get("note"),
-                overrides=[], reviewed_at=datetime.now(),
+                overrides=[], ime_promotions=promotions, reviewed_at=datetime.now(),
             )
             return {"status": "rejected", "review_outcome": outcome}
 
@@ -323,7 +329,7 @@ def build_triage_graph(
         )
         outcome = ReviewOutcome(
             status="approved", reviewer=reviewer, note=decision.get("note"),
-            overrides=records, reviewed_at=datetime.now(),
+            overrides=records, ime_promotions=promotions, reviewed_at=datetime.now(),
         )
         return {
             "seriousness": seriousness_f,

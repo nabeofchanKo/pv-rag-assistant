@@ -15,6 +15,7 @@ that produced its evidence, when there is one.
 | [0005](0005-causality-conservative-temporal.md) | Causality: conservative temporal triage (否定できない by default) | Accepted | [temporal causality](../../experiments/causality_temporal.md) |
 | [0006](0006-langgraph-orchestration.md) | Triage orchestration via a workflow-type LangGraph StateGraph (fan-out DAG) | Accepted | design + parity tests |
 | [0007](0007-hitl-approval-interrupt.md) | HITL approval via LangGraph interrupt/resume + SqliteSaver (propose→approve, audited) | Accepted | design + interrupt/resume tests + live E2E |
+| [0008](0008-hitl-ime-promotion.md) | HITL that feeds accuracy: promote a PT to the IME list from a review (forward-looking) | Accepted | design + tests + live E2E |
 
 Evidence for evidence-backed ADRs lives under [`experiments/`](../../experiments/),
 with the reproducible script alongside each write-up.
