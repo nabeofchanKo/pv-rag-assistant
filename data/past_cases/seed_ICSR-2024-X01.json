@@ -1,0 +1,24 @@
+{
+  "case_id": "ICSR-2024-X01",
+  "date": "2024-09-30",
+  "drugs": ["DrugX"],
+  "reviewer": "PVレビュー（過去・シード）",
+  "events": [
+    {
+      "term": "回転性めまい",
+      "pt_code": "10047340",
+      "pt_name": "回転性めまい",
+      "seriousness": "非重篤",
+      "causality": "否定できない",
+      "expectedness": {"DrugX": "要確認"}
+    },
+    {
+      "term": "低血圧",
+      "pt_code": "10020865",
+      "pt_name": "低血圧",
+      "seriousness": "非重篤",
+      "causality": "否定できない",
+      "expectedness": {"DrugX": "既知"}
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "case_id": "ICSR-2024-Z01",
+  "date": "2024-11-20",
+  "drugs": ["DrugZ"],
+  "reviewer": "PVレビュー（過去・シード）",
+  "events": [
+    {
+      "term": "鼻出血",
+      "pt_code": "10015090",
+      "pt_name": "鼻出血",
+      "seriousness": "重篤",
+      "causality": "否定できない",
+      "expectedness": {"DrugZ": "既知"}
+    },
+    {
+      "term": "斑状出血",
+      "pt_code": "10014080",
+      "pt_name": "斑状出血",
+      "seriousness": "非重篤",
+      "causality": "否定できない",
+      "expectedness": {"DrugZ": "既知"}
+    }
+  ]
+}

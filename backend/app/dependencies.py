@@ -34,6 +34,7 @@ from app.services.ingestion import (
 from app.services.ocr import OcrEngine, VisionLLMOcrEngine
 from app.services.pdf_processor import PDFProcessor
 from app.services.product_master import ProductMasterService
+from app.services.precedent import PrecedentService
 from app.services.retriever import RetrieverService
 from app.services.triage_graph import build_triage_graph
 
@@ -261,6 +262,19 @@ def get_causality_service() -> CausalityService:
     return CausalityService(llm=get_causality_model())
 
 
+# --- Phase 4d: past-case precedent (structured per-(drug, PT) lookup) ---
+
+
+@lru_cache
+def get_precedent_service() -> PrecedentService:
+    """Past-case precedent index (seed + runtime), shared as a singleton so a
+    just-approved case becomes precedent for the next triage in-process."""
+    return PrecedentService(
+        seed_dir=settings.past_cases_seed_dir,
+        runtime_dir=settings.past_cases_runtime_dir,
+    )
+
+
 # --- Phase 4a/4b: LangGraph orchestration of the triage pipeline ---
 
 
@@ -310,5 +324,6 @@ def get_triage_graph() -> CompiledStateGraph:
         seriousness=get_seriousness_service(),
         causality=get_causality_service(),
         expectedness=get_expectedness_service(),
+        precedent=get_precedent_service(),
         checkpointer=get_checkpointer(),
     )

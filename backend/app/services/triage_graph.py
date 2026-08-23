@@ -52,6 +52,7 @@ from app.schemas import (
     CausalityAssessment,
     DrugExpectedness,
     Escalation,
+    EventPrecedent,
     ImePromotionRecord,
     MeddraCoding,
     OverrideRecord,
@@ -63,6 +64,7 @@ from app.services.causality import CausalityService
 from app.services.expectedness import ExpectednessService
 from app.services.extraction import ExtractionService
 from app.services.meddra_coding import MeddraCodingService
+from app.services.precedent import PrecedentService
 from app.services.product_master import ProductMasterService
 from app.services.seriousness import SeriousnessService
 
@@ -94,6 +96,7 @@ class TriageState(TypedDict, total=False):
     seriousness: list[SeriousnessAssessment]
     causality: list[CausalityAssessment]
     expectedness: list[DrugExpectedness]
+    precedent: list[EventPrecedent]  # Phase 4d: past-case precedent (advisory)
     # --- HITL (Phase 4b) ---
     review: dict  # the reviewer's ReviewDecision (dump), handed back via resume
     status: str  # "approved" | "rejected"
@@ -107,13 +110,15 @@ def compute_escalations(
     seriousness: list[SeriousnessAssessment],
     causality: list[CausalityAssessment],
     expectedness: list[DrugExpectedness],
+    precedent: list[EventPrecedent] | None = None,
 ) -> list[Escalation]:
-    """The safe-side uncertain bands a reviewer should decide on.
+    """The items a reviewer should decide on: the safe-side uncertain bands, plus
+    (Phase 4d) events where the draft disagrees with past-case precedent.
 
-    These are the states we deliberately built as HITL hooks: 要確認 (seriousness
-    / expectedness) and 評価不能 (causality). 否定できない is the conservative default
-    for most events, so it is reviewable but not flagged here as "needs a
-    decision" — that would flag nearly everything and drown the real signal.
+    Uncertain bands are the HITL hooks we built: 要確認 (seriousness / expectedness)
+    and 評価不能 (causality). 否定できない is the conservative default for most events,
+    so it is reviewable but not flagged (that would drown the signal). Precedent
+    conflicts surface inconsistency vs prior approved cases.
     """
     out: list[Escalation] = []
     for s in seriousness:
@@ -148,6 +153,22 @@ def compute_escalations(
                         reason="既知/未知が確定できず安全側で要確認（HITL判断が必要）",
                     )
                 )
+    # Phase 4d: flag events whose current verdict differs from precedent majority.
+    ser_now = {s.term: s.verdict for s in seriousness}
+    cau_now = {c.term: c.verdict for c in causality}
+    for ep in precedent or []:
+        for axis in ep.conflicts:
+            counts = ep.seriousness if axis == "seriousness" else ep.causality
+            summary = "／".join(f"{v}{n}件" for v, n in counts.items())
+            current = ser_now.get(ep.term) if axis == "seriousness" else cau_now.get(ep.term)
+            out.append(
+                Escalation(
+                    axis=axis,
+                    term=ep.term,
+                    verdict=current or "—",
+                    reason=f"過去症例と不一致（今回: {current}／過去 {ep.n_cases}件: {summary}）",
+                )
+            )
     return out
 
 
@@ -241,6 +262,7 @@ def build_triage_graph(
     seriousness: SeriousnessService,
     causality: CausalityService,
     expectedness: ExpectednessService,
+    precedent: PrecedentService,
     checkpointer: BaseCheckpointSaver | None = None,
 ) -> CompiledStateGraph:
     """Assemble and compile the triage graph from the six evaluation services.
@@ -286,6 +308,22 @@ def build_triage_graph(
         ]
         return {"expectedness": results}
 
+    def precedent_node(state: TriageState) -> dict:
+        pm = state.get("product_match")
+        drugs = [p.name for p in pm.matched_products] if pm else []
+        meddra = state.get("meddra", [])
+        if not meddra:
+            return {"precedent": []}
+        return {
+            "precedent": precedent.summarize(
+                drugs,
+                meddra,
+                state.get("seriousness", []),
+                state.get("causality", []),
+                state.get("expectedness", []),
+            )
+        }
+
     def human_review_node(state: TriageState) -> dict:
         """Pause for a human reviewer (unless auto_approve). Kept side-effect free
         before ``interrupt`` because the node re-runs from the top on resume."""
@@ -295,6 +333,7 @@ def build_triage_graph(
             state.get("seriousness", []),
             state.get("causality", []),
             state.get("expectedness", []),
+            state.get("precedent", []),
         )
         decision = interrupt(
             {
@@ -346,6 +385,7 @@ def build_triage_graph(
     graph.add_node("seriousness", seriousness_node)
     graph.add_node("causality", causality_node)
     graph.add_node("expectedness", expectedness_node)
+    graph.add_node("precedent", precedent_node)
     graph.add_node("human_review", human_review_node)
     graph.add_node("finalize", finalize_node)
 
@@ -358,8 +398,10 @@ def build_triage_graph(
     # causality / expectedness join on both product_match AND extraction.
     graph.add_edge(["product_match", "extraction"], "causality")
     graph.add_edge(["product_match", "extraction"], "expectedness")
-    # All three assessment branches join at the human-review gate.
-    graph.add_edge(["seriousness", "causality", "expectedness"], "human_review")
+    # All three assessment branches join at the precedent lookup (needs the
+    # verdicts + coded PTs), which then feeds the human-review gate.
+    graph.add_edge(["seriousness", "causality", "expectedness"], "precedent")
+    graph.add_edge("precedent", "human_review")
     graph.add_edge("human_review", "finalize")
     graph.add_edge("finalize", END)
 

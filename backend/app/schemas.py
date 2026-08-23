@@ -328,7 +328,56 @@ class TriageResponse(BaseModel):
     # One entry per matched own-company product that has a package insert.
     # Empty when no matched product has a label (expectedness not assessable).
     expectedness: list[DrugExpectedness] = []
+    # Per-adverse-event precedent from past approved cases (Phase 4d; advisory).
+    precedent: list["EventPrecedent"] = []
     source_text: str
+
+
+# --- Phase 4d: past-case precedent (structured per-(drug, PT) lookup) ---
+# Advisory only: precedent surfaces how similar past cases were judged (and flags
+# where the current draft disagrees) for cross-case consistency. It NEVER changes
+# a verdict automatically — the human decides (unlike the IME list, which fires
+# criterion 6 deterministically). See ADR 0009.
+
+
+class EventPrecedent(BaseModel):
+    """How past approved cases judged this event's PT, aligned to adverse_events."""
+
+    term: str
+    pt_code: str | None = None
+    n_cases: int = 0
+    seriousness: dict[str, int] = {}   # past verdict -> count
+    causality: dict[str, int] = {}
+    expectedness: dict[str, int] = {}
+    case_ids: list[str] = []
+    # Axes ("seriousness" / "causality") where the current draft verdict differs
+    # from the precedent majority.
+    conflicts: list[str] = []
+
+
+class PastCaseEvent(BaseModel):
+    """One event of a stored past case (a compact, decision-relevant summary)."""
+
+    term: str
+    pt_code: str | None = None
+    pt_name: str | None = None
+    seriousness: str | None = None
+    causality: str | None = None
+    expectedness: dict[str, str] = {}   # drug -> verdict
+
+
+class PastCaseRecord(BaseModel):
+    """A finalized (approved) case persisted as precedent for future triage."""
+
+    case_id: str
+    date: str | None = None
+    drugs: list[str] = []
+    reviewer: str | None = None
+    events: list[PastCaseEvent] = []
+
+
+# TriageResponse forward-references EventPrecedent (defined just above); resolve it.
+TriageResponse.model_rebuild()
 
 
 # --- Phase 4b: HITL approval (propose → approve) over the triage graph ---

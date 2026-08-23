@@ -14,6 +14,7 @@ from app.schemas import (
     CaseExtraction,
     CausalityAssessment,
     DrugExpectedness,
+    EventPrecedent,
     ExpectednessAssessment,
     MeddraCoding,
     Patient,
@@ -86,11 +87,20 @@ class FakeExpectedness:
         )
 
 
+class FakePrecedent:
+    def __init__(self, result=None):
+        self.result = result or []
+
+    def summarize(self, drugs, meddra, seriousness, causality, expectedness):
+        return self.result
+
+
 def _ae(term):
     return AdverseEventMention(term=term, source="reported")
 
 
-def _build(product_master, extraction, seriousness, causality, expectedness=None, checkpointer=None):
+def _build(product_master, extraction, seriousness, causality, expectedness=None,
+           precedent=None, checkpointer=None):
     return build_triage_graph(
         product_master=product_master,
         extraction=extraction,
@@ -98,6 +108,7 @@ def _build(product_master, extraction, seriousness, causality, expectedness=None
         seriousness=seriousness,
         causality=causality,
         expectedness=expectedness or FakeExpectedness(),
+        precedent=precedent or FakePrecedent(),
         checkpointer=checkpointer,
     )
 
@@ -164,13 +175,14 @@ def test_expectedness_skips_products_without_a_label():
 # --- 4b HITL: interrupt / resume ---
 
 
-def _hitl(seriousness=None, causality=None, expectedness=None, events=None):
+def _hitl(seriousness=None, causality=None, expectedness=None, precedent=None, events=None):
     return _build(
         FakeProductMaster(_drugx()),
         FakeExtraction(events or [_ae("頭痛")]),
         seriousness or FakeSeriousness(),
         causality or FakeCausality(),
         expectedness=expectedness,
+        precedent=precedent,
         checkpointer=MemorySaver(),
     )
 
@@ -208,6 +220,25 @@ def test_resume_approve_applies_override_and_records_audit():
     rec = vals["review_outcome"].overrides[0]
     assert (rec.original_verdict, rec.new_verdict, rec.rationale) == ("要確認", "重篤", "入院あり")
     assert vals["review_outcome"].reviewer == "nabe"
+
+
+def test_precedent_conflict_surfaces_as_escalation():
+    ep = EventPrecedent(
+        term="頭痛", pt_code="10019211", n_cases=2,
+        seriousness={"重篤": 2}, conflicts=["seriousness"], case_ids=["A", "B"],
+    )
+    graph = _hitl(seriousness=FakeSeriousness("非重篤"), precedent=FakePrecedent([ep]))
+    cfg = {"configurable": {"thread_id": "t_prec"}}
+
+    out = graph.invoke({"text": "t", "document_name": "c.txt"}, cfg)
+
+    payload = out["__interrupt__"][0].value
+    assert any(
+        e["axis"] == "seriousness" and "過去症例と不一致" in e["reason"]
+        for e in payload["escalations"]
+    )
+    snap = graph.get_state(cfg)
+    assert snap.values["precedent"][0].conflicts == ["seriousness"]
 
 
 def test_resume_records_ime_promotions_in_outcome():

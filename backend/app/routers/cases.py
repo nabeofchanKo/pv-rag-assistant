@@ -10,12 +10,14 @@ from langgraph.types import Command
 from app.dependencies import (
     get_ime_reference,
     get_ingestion_service,
+    get_precedent_service,
     get_triage_graph,
 )
 from app.exceptions import IngestionError, UnsupportedFileTypeError
 from app.schemas import ImePromotionRecord, ReviewDecision, TriageDraft, TriageResult
 from app.services.ime import ImeReference
 from app.services.ingestion import IngestionService
+from app.services.precedent import PrecedentService, record_from_result
 from app.services.triage_graph import ALLOWED_VERDICTS, compute_escalations
 
 router = APIRouter()
@@ -35,6 +37,7 @@ def _content_fields(values: dict) -> dict:
         seriousness=values.get("seriousness", []),
         causality=values.get("causality", []),
         expectedness=values.get("expectedness", []),
+        precedent=values.get("precedent", []),
         source_text=values.get("text", ""),
     )
 
@@ -46,6 +49,7 @@ def _draft(thread_id: str, values: dict) -> TriageDraft:
             values.get("seriousness", []),
             values.get("causality", []),
             values.get("expectedness", []),
+            values.get("precedent", []),
         ),
         **_content_fields(values),
     )
@@ -129,6 +133,7 @@ async def approve_case(
     decision: ReviewDecision,
     graph: CompiledStateGraph = Depends(get_triage_graph),
     ime: ImeReference = Depends(get_ime_reference),
+    precedent: PrecedentService = Depends(get_precedent_service),
 ) -> TriageResult:
     """Resume a paused triage run with the reviewer's decision.
 
@@ -185,4 +190,10 @@ async def approve_case(
 
     graph.invoke(Command(resume=payload), _config(thread_id))
     values = graph.get_state(_config(thread_id)).values
-    return _result(thread_id, values)
+    result = _result(thread_id, values)
+
+    # An approved case becomes precedent for future triage (Phase 4d).
+    if result.status == "approved":
+        precedent.save(record_from_result(result))
+
+    return result
