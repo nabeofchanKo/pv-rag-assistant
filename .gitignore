@@ -229,6 +229,9 @@ backend/chroma_db/
 backend/checkpoints/
 *.sqlite
 
+# Past-case precedent store (Phase 4d) — runtime auto-saved approvals (seeds are tracked)
+backend/past_cases/
+
 # Sample data PDFs (large files, optional)
 # data/sample_reports/*.pdf
 

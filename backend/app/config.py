@@ -69,6 +69,11 @@ class Settings(BaseSettings):
     # paused state across restarts so a review can be resumed later.
     checkpoint_db_path: str = str(PROJECT_ROOT / "backend" / "checkpoints" / "triage.sqlite")
 
+    # Phase 4d: past-case precedent store (structured per-(drug, PT) lookup).
+    # Seed = curated tracked examples; runtime = approved cases auto-saved here.
+    past_cases_seed_dir: str = str(PROJECT_ROOT / "data" / "past_cases")
+    past_cases_runtime_dir: str = str(PROJECT_ROOT / "backend" / "past_cases")
+
     # Chunking
     chunk_size_tokens: int = 500
     chunk_overlap_tokens: int = 100
