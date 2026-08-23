@@ -1,14 +1,20 @@
 import tempfile
 import uuid
+from datetime import datetime
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Command
 
-from app.dependencies import get_ingestion_service, get_triage_graph
+from app.dependencies import (
+    get_ime_reference,
+    get_ingestion_service,
+    get_triage_graph,
+)
 from app.exceptions import IngestionError, UnsupportedFileTypeError
-from app.schemas import ReviewDecision, TriageDraft, TriageResult
+from app.schemas import ImePromotionRecord, ReviewDecision, TriageDraft, TriageResult
+from app.services.ime import ImeReference
 from app.services.ingestion import IngestionService
 from app.services.triage_graph import ALLOWED_VERDICTS, compute_escalations
 
@@ -122,11 +128,14 @@ async def approve_case(
     thread_id: str,
     decision: ReviewDecision,
     graph: CompiledStateGraph = Depends(get_triage_graph),
+    ime: ImeReference = Depends(get_ime_reference),
 ) -> TriageResult:
     """Resume a paused triage run with the reviewer's decision.
 
     On ``approve`` the reviewer's verdict overrides are applied and an audit
-    trail (original → new verdict) is recorded; on ``reject`` the draft is left
+    trail (original → new verdict) is recorded; any IME promotions grow the
+    important-medical-events list so future cases with that PT fire E2A
+    criterion 6 automatically (Phase 4c). On ``reject`` the draft is left
     unchanged and marked rejected. Returns the finalized result."""
     snapshot = graph.get_state(_config(thread_id))
     if not snapshot.values:
@@ -147,7 +156,33 @@ async def approve_case(
                 status_code=422,
                 detail=f"{ov.axis} の判定は {sorted(allowed)} のいずれか（受領: {ov.new_verdict}）",
             )
+    # Validate IME promotions (need a real coded PT to key criterion 6 on).
+    for p in decision.ime_promotions:
+        if not p.pt_code.strip():
+            raise HTTPException(
+                status_code=422, detail="IME昇格には pt_code（コード化済みPT）が必要です。"
+            )
 
-    graph.invoke(Command(resume=decision.model_dump()), _config(thread_id))
+    # Perform the IME promotions (approve only) — a reference-side effect done at
+    # the boundary, then recorded in the audit trail via the resume payload.
+    payload = decision.model_dump()
+    promotion_records: list[ImePromotionRecord] = []
+    if decision.action == "approve":
+        when = datetime.now()
+        for p in decision.ime_promotions:
+            note = f"HITL昇格 {decision.reviewer} {when:%Y-%m-%d}"
+            if p.rationale:
+                note += f" — {p.rationale}"
+            added = ime.promote(p.pt_code, p.pt_name, note)
+            promotion_records.append(
+                ImePromotionRecord(
+                    pt_code=p.pt_code, pt_name=p.pt_name, reviewer=decision.reviewer,
+                    promoted_at=when, rationale=p.rationale,
+                    status="追加" if added else "既存",
+                )
+            )
+    payload["ime_promotion_records"] = [r.model_dump() for r in promotion_records]
+
+    graph.invoke(Command(resume=payload), _config(thread_id))
     values = graph.get_state(_config(thread_id)).values
     return _result(thread_id, values)

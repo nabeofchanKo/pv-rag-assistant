@@ -210,6 +210,32 @@ def test_resume_approve_applies_override_and_records_audit():
     assert vals["review_outcome"].reviewer == "nabe"
 
 
+def test_resume_records_ime_promotions_in_outcome():
+    graph = _hitl(seriousness=FakeSeriousness("要確認"))
+    cfg = {"configurable": {"thread_id": "t_ime"}}
+    graph.invoke({"text": "t", "document_name": "c.txt"}, cfg)
+
+    # the router resolves promotions into records; simulate that resume payload.
+    payload = {
+        "action": "approve",
+        "reviewer": "nabe",
+        "overrides": [],
+        "ime_promotion_records": [
+            {
+                "pt_code": "10002198", "pt_name": "アナフィラキシー反応", "reviewer": "nabe",
+                "promoted_at": "2026-08-24T00:00:00", "rationale": "重要", "status": "追加",
+            }
+        ],
+    }
+    graph.invoke(Command(resume=payload), cfg)
+    vals = graph.get_state(cfg).values
+
+    assert vals["status"] == "approved"
+    proms = vals["review_outcome"].ime_promotions
+    assert len(proms) == 1
+    assert proms[0].pt_code == "10002198" and proms[0].status == "追加"
+
+
 def test_resume_reject_leaves_verdicts_and_marks_rejected():
     graph = _hitl(seriousness=FakeSeriousness("要確認"))
     cfg = {"configurable": {"thread_id": "t3"}}
