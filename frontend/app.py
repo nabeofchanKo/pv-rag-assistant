@@ -17,6 +17,12 @@ SERIOUS_LABELS = {"重篤": "🔴 重篤", "要確認": "🟡 要確認", "非�
 CAUSAL_LABELS = {"否定できない": "🔴 否定できない", "否定できる": "🟢 否定できる", "評価不能": "⚪ 評価不能"}
 UPLOAD_TYPES = ["pdf", "png", "jpg", "jpeg", "eml", "txt", "md"]
 
+# Allowed verdicts per review axis (mirror of the backend ALLOWED_VERDICTS).
+SER_OPTIONS = ["重篤", "非重篤", "要確認"]
+CAU_OPTIONS = ["否定できない", "否定できる", "評価不能"]
+EXP_OPTIONS = ["既知", "要確認", "未知", "判定不能"]
+AXIS_LABELS = {"seriousness": "重篤度", "causality": "因果関係", "expectedness": "既知/未知"}
+
 
 def _reported_is_serious(reported):
     """Coarse serious/non from the transcribed reporter value (非重篤 contains 重篤)."""
@@ -28,6 +34,7 @@ def _reported_is_serious(reported):
         return True
     return None
 
+
 st.set_page_config(page_title="PV Triage Assistant", layout="wide")
 st.title("PV Triage Assistant")
 
@@ -37,6 +44,26 @@ triage_tab, rag_tab = st.tabs(["🩺 症例トリアージ", "🔎 RAG Q&A"])
 def post_triage(filename: str, content: bytes):
     with st.spinner("解析中..."):
         return requests.post(f"{API_BASE}/cases/triage", files={"file": (filename, content)})
+
+
+def start_triage(filename: str, content: bytes) -> None:
+    """Start a triage run; stash the returned draft (awaiting review) in state."""
+    resp = post_triage(filename, content)
+    if resp.status_code != 200:
+        st.session_state.pop("case", None)
+        st.error(f"エラー ({resp.status_code}): {resp.text}")
+    else:
+        st.session_state["case"] = resp.json()
+
+
+def submit_decision(thread_id: str, decision: dict) -> None:
+    with st.spinner("確定中..."):
+        r = requests.post(f"{API_BASE}/cases/{thread_id}/approve", json=decision)
+    if r.status_code != 200:
+        st.error(f"エラー ({r.status_code}): {r.text}")
+    else:
+        st.session_state["case"] = r.json()
+        st.rerun()
 
 
 def render_triage(data: dict) -> None:
@@ -151,21 +178,161 @@ def render_triage(data: dict) -> None:
         st.text(data["source_text"])
 
 
+def _override_editor(axis: str, items: list, options: list, key: str) -> list:
+    """One editable table for a per-AE axis; return the rows the reviewer changed."""
+    if not items:
+        return []
+    st.caption(AXIS_LABELS[axis])
+    rows = [{"事象": x["term"], "現在": x["verdict"], "変更後": x["verdict"], "理由": ""} for x in items]
+    edited = st.data_editor(
+        rows,
+        key=key,
+        hide_index=True,
+        use_container_width=True,
+        column_config={
+            "変更後": st.column_config.SelectboxColumn("変更後", options=options, required=True),
+            "理由": st.column_config.TextColumn("変更理由"),
+        },
+        disabled=["事象", "現在"],
+    )
+    out = []
+    for r in edited:
+        if r["変更後"] != r["現在"]:
+            out.append(
+                {"axis": axis, "term": r["事象"], "new_verdict": r["変更後"],
+                 "rationale": r["理由"] or None}
+            )
+    return out
+
+
+def _expectedness_override_editor(drugs: list, key: str) -> list:
+    out = []
+    for di, drug in enumerate(drugs):
+        items = drug.get("assessments") or []
+        if not items:
+            continue
+        st.caption(f"{AXIS_LABELS['expectedness']}（{drug['drug_name']}）")
+        rows = [{"事象": a["term"], "現在": a["verdict"], "変更後": a["verdict"], "理由": ""} for a in items]
+        edited = st.data_editor(
+            rows,
+            key=f"{key}_{di}",
+            hide_index=True,
+            use_container_width=True,
+            column_config={
+                "変更後": st.column_config.SelectboxColumn("変更後", options=EXP_OPTIONS, required=True),
+                "理由": st.column_config.TextColumn("変更理由"),
+            },
+            disabled=["事象", "現在"],
+        )
+        for r in edited:
+            if r["変更後"] != r["現在"]:
+                out.append(
+                    {"axis": "expectedness", "term": r["事象"], "drug_name": drug["drug_name"],
+                     "new_verdict": r["変更後"], "rationale": r["理由"] or None}
+                )
+    return out
+
+
+def render_review(case: dict) -> None:
+    """The Phase 4b HITL gate: review the draft, override verdicts, approve/reject."""
+    st.divider()
+    st.subheader("⑦ レビュー・承認（HITL）")
+    status = case.get("status")
+
+    if status in ("approved", "rejected"):
+        review = case.get("review") or {}
+        who, when = review.get("reviewer", "—"), review.get("reviewed_at", "")
+        if status == "approved":
+            st.success(f"✅ 承認済み — 担当: {who} / {when}")
+        else:
+            st.error(f"⛔ 却下 — 担当: {who} / {when}")
+        if review.get("note"):
+            st.caption(f"所見: {review['note']}")
+        overrides = review.get("overrides") or []
+        if overrides:
+            st.markdown("**人手による上書き（監査証跡）**")
+            st.dataframe(
+                [
+                    {
+                        "軸": AXIS_LABELS.get(o["axis"], o["axis"]),
+                        "事象": o["term"],
+                        "製品": o.get("drug_name") or "—",
+                        "元の判定": o["original_verdict"],
+                        "変更後": o["new_verdict"],
+                        "理由": o.get("rationale") or "—",
+                    }
+                    for o in overrides
+                ],
+                use_container_width=True,
+                hide_index=True,
+            )
+        else:
+            st.caption("上書きなし（ドラフトのまま承認）。")
+        if st.button("別の症例をレビューする"):
+            st.session_state.pop("case", None)
+            st.rerun()
+        return
+
+    # awaiting_review
+    escalations = case.get("escalations") or []
+    if escalations:
+        st.warning("安全側で『要確認 / 評価不能』の項目があります。判断のうえ承認してください。")
+        st.dataframe(
+            [
+                {
+                    "軸": AXIS_LABELS.get(e["axis"], e["axis"]),
+                    "事象": e["term"],
+                    "製品": e.get("drug_name") or "—",
+                    "判定": e["verdict"],
+                    "理由": e["reason"],
+                }
+                for e in escalations
+            ],
+            use_container_width=True,
+            hide_index=True,
+        )
+    else:
+        st.info("安全側の要確認項目はありません。内容を確認して承認してください。")
+
+    reviewer = st.text_input("レビュー担当者名（必須）", key="reviewer")
+    note = st.text_area("全体所見（任意）", key="review_note")
+
+    st.markdown("**判定の上書き（任意）** — 「変更後」を変えるとその項目が上書きされます。")
+    overrides = []
+    overrides += _override_editor("seriousness", case.get("seriousness") or [], SER_OPTIONS, "ov_ser")
+    overrides += _override_editor("causality", case.get("causality") or [], CAU_OPTIONS, "ov_cau")
+    overrides += _expectedness_override_editor(case.get("expectedness") or [], "ov_exp")
+
+    thread_id = case["thread_id"]
+    col1, col2 = st.columns(2)
+    if col1.button("承認する", type="primary"):
+        if not reviewer:
+            st.error("レビュー担当者名は必須です。")
+        else:
+            submit_decision(
+                thread_id,
+                {"action": "approve", "reviewer": reviewer, "note": note or None, "overrides": overrides},
+            )
+    if col2.button("却下する"):
+        if not reviewer:
+            st.error("レビュー担当者名は必須です。")
+        else:
+            submit_decision(
+                thread_id,
+                {"action": "reject", "reviewer": reviewer, "note": note or None, "overrides": []},
+            )
+
+
 with triage_tab:
     st.caption(
         "有害事象報告（PDF / 画像スキャン / メール / テキスト）をアップロードすると、"
-        "自社品判定と患者・有害事象の抽出案を返します。"
+        "6項目のトリアージ案を生成し、人手レビュー（承認/修正）に回します。"
     )
 
     case_file = st.file_uploader("症例ファイルを選択", type=UPLOAD_TYPES, key="triage_upload")
     if case_file is not None and st.button("トリアージ実行", type="primary"):
-        resp = post_triage(case_file.name, case_file.getvalue())
-        if resp.status_code != 200:
-            st.error(f"エラー ({resp.status_code}): {resp.text}")
-        else:
-            render_triage(resp.json())
+        start_triage(case_file.name, case_file.getvalue())
 
-    st.divider()
     st.markdown("**同梱サンプルで試す**（アップロード不要）")
     samples = sorted(
         p.name for p in SAMPLE_DIR.glob("*") if p.suffix.lower().lstrip(".") in UPLOAD_TYPES
@@ -173,11 +340,12 @@ with triage_tab:
     if samples:
         sample = st.selectbox("サンプル症例", samples, key="triage_sample")
         if st.button("サンプルでトリアージ", key="triage_sample_btn"):
-            resp = post_triage(sample, (SAMPLE_DIR / sample).read_bytes())
-            if resp.status_code != 200:
-                st.error(f"エラー ({resp.status_code}): {resp.text}")
-            else:
-                render_triage(resp.json())
+            start_triage(sample, (SAMPLE_DIR / sample).read_bytes())
+
+    if "case" in st.session_state:
+        st.divider()
+        render_triage(st.session_state["case"])
+        render_review(st.session_state["case"])
 
 
 with rag_tab:
