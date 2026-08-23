@@ -233,6 +233,42 @@ def _expectedness_override_editor(drugs: list, key: str) -> list:
     return out
 
 
+def _ime_promotion_editor(case: dict, key: str) -> list:
+    """Checkbox table over events with a coded PT; return the PTs to promote."""
+    seen, rows = set(), []
+    for m in case.get("meddra") or []:
+        code = m.get("pt_code")
+        if not code or code in seen:
+            continue
+        seen.add(code)
+        rows.append(
+            {"事象": m["term"], "PT名": m.get("pt_name_ja") or "—", "PTコード": code,
+             "IMEに追加": False, "理由": ""}
+        )
+    if not rows:
+        return []
+    st.markdown(
+        "**IMEリストへの昇格（任意）** — 「医学的に重要」と判断したPTを追加すると、"
+        "今後の症例で同じPTの事象が自動的に重篤（criterion 6）になります。"
+    )
+    edited = st.data_editor(
+        rows,
+        key=key,
+        hide_index=True,
+        use_container_width=True,
+        column_config={
+            "IMEに追加": st.column_config.CheckboxColumn("IMEに追加", default=False),
+            "理由": st.column_config.TextColumn("昇格理由"),
+        },
+        disabled=["事象", "PT名", "PTコード"],
+    )
+    return [
+        {"pt_code": r["PTコード"], "pt_name": r["PT名"], "rationale": r["理由"] or None}
+        for r in edited
+        if r["IMEに追加"]
+    ]
+
+
 def render_review(case: dict) -> None:
     """The Phase 4b HITL gate: review the draft, override verdicts, approve/reject."""
     st.divider()
@@ -268,6 +304,22 @@ def render_review(case: dict) -> None:
             )
         else:
             st.caption("上書きなし（ドラフトのまま承認）。")
+        promotions = review.get("ime_promotions") or []
+        if promotions:
+            st.markdown("**IMEリストへ昇格したPT（今後の症例に反映）**")
+            st.dataframe(
+                [
+                    {
+                        "PT名": p["pt_name"],
+                        "PTコード": p["pt_code"],
+                        "状態": p["status"],
+                        "理由": p.get("rationale") or "—",
+                    }
+                    for p in promotions
+                ],
+                use_container_width=True,
+                hide_index=True,
+            )
         if st.button("別の症例をレビューする"):
             st.session_state.pop("case", None)
             st.rerun()
@@ -303,6 +355,8 @@ def render_review(case: dict) -> None:
     overrides += _override_editor("causality", case.get("causality") or [], CAU_OPTIONS, "ov_cau")
     overrides += _expectedness_override_editor(case.get("expectedness") or [], "ov_exp")
 
+    promotions = _ime_promotion_editor(case, "ov_ime")
+
     thread_id = case["thread_id"]
     col1, col2 = st.columns(2)
     if col1.button("承認する", type="primary"):
@@ -311,7 +365,8 @@ def render_review(case: dict) -> None:
         else:
             submit_decision(
                 thread_id,
-                {"action": "approve", "reviewer": reviewer, "note": note or None, "overrides": overrides},
+                {"action": "approve", "reviewer": reviewer, "note": note or None,
+                 "overrides": overrides, "ime_promotions": promotions},
             )
     if col2.button("却下する"):
         if not reviewer:
@@ -319,7 +374,8 @@ def render_review(case: dict) -> None:
         else:
             submit_decision(
                 thread_id,
-                {"action": "reject", "reviewer": reviewer, "note": note or None, "overrides": []},
+                {"action": "reject", "reviewer": reviewer, "note": note or None,
+                 "overrides": [], "ime_promotions": []},
             )
 
 
