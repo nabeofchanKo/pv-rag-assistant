@@ -13,6 +13,7 @@ that produced its evidence, when there is one.
 | [0003](0003-meddra-retrieval-hybrid.md) | MedDRA PT retrieval = hybrid BM25 (char-bigram) + vector, RRF-fused (Level B) | Accepted | [retrieval comparison](../../experiments/meddra_retrieval_comparison.md) |
 | [0004](0004-seriousness-e2a-llm-plus-deterministic.md) | Seriousness (ICH E2A): LLM interprets criteria, a deterministic OR decides | Accepted | [criterion attribution](../../experiments/seriousness_attribution.md) |
 | [0005](0005-causality-conservative-temporal.md) | Causality: conservative temporal triage (否定できない by default) | Accepted | [temporal causality](../../experiments/causality_temporal.md) |
+| [0006](0006-langgraph-orchestration.md) | Triage orchestration via a workflow-type LangGraph StateGraph (fan-out DAG) | Accepted | design + parity tests |
 
 Evidence for evidence-backed ADRs lives under [`experiments/`](../../experiments/),
 with the reproducible script alongside each write-up.
