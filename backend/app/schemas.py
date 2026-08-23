@@ -329,3 +329,83 @@ class TriageResponse(BaseModel):
     # Empty when no matched product has a label (expectedness not assessable).
     expectedness: list[DrugExpectedness] = []
     source_text: str
+
+
+# --- Phase 4b: HITL approval (propose → approve) over the triage graph ---
+# The graph produces a triage draft, pauses at a human-review interrupt, and a
+# reviewer approves (optionally overriding the per-AE judgment verdicts) or
+# rejects. Every override keeps the original value, so the record is auditable —
+# essential in a regulated (safety-reporting) workflow.
+
+ReviewAxis = Literal["seriousness", "causality", "expectedness"]
+
+
+class Escalation(BaseModel):
+    """A draft item the reviewer should look at (safe-side uncertain bands)."""
+
+    axis: ReviewAxis
+    term: str
+    drug_name: str | None = None  # set for expectedness (which label)
+    verdict: str
+    reason: str
+
+
+class VerdictOverride(BaseModel):
+    """A reviewer's override of one per-AE verdict (submitted with /approve)."""
+
+    axis: ReviewAxis
+    term: str
+    drug_name: str | None = Field(
+        default=None, description="expectedness の上書き時のみ必須（どの添付文書か）。"
+    )
+    new_verdict: str = Field(description="上書き後の判定。対象軸の許容値のいずれか。")
+    rationale: str | None = Field(default=None, description="上書きの理由（日本語で簡潔に）。")
+
+
+class ReviewDecision(BaseModel):
+    """The reviewer's decision — the body of POST /cases/{thread_id}/approve and
+    the resume payload handed back into the graph."""
+
+    action: Literal["approve", "reject"]
+    reviewer: str = Field(description="レビュー担当者の識別子（監査用）。")
+    note: str | None = Field(default=None, description="全体所見（任意）。")
+    overrides: list[VerdictOverride] = Field(
+        default_factory=list, description="承認時に適用する判定の上書き（0件可）。"
+    )
+
+
+class OverrideRecord(BaseModel):
+    """Audit entry: what a reviewer changed, keeping the original verdict."""
+
+    axis: ReviewAxis
+    term: str
+    drug_name: str | None = None
+    original_verdict: str
+    new_verdict: str
+    rationale: str | None = None
+
+
+class ReviewOutcome(BaseModel):
+    """The finalized review — attached to the approved/rejected result."""
+
+    status: Literal["approved", "rejected"]
+    reviewer: str
+    note: str | None = None
+    overrides: list[OverrideRecord] = []
+    reviewed_at: datetime
+
+
+class TriageDraft(TriageResponse):
+    """Start response: the full triage draft, paused for human review."""
+
+    thread_id: str
+    status: Literal["awaiting_review"] = "awaiting_review"
+    escalations: list[Escalation] = []
+
+
+class TriageResult(TriageResponse):
+    """Approve/reject response: the finalized triage with its audit trail."""
+
+    thread_id: str
+    status: Literal["approved", "rejected"]
+    review: ReviewOutcome

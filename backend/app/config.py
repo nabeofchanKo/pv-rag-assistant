@@ -64,6 +64,11 @@ class Settings(BaseSettings):
     # administration) — gpt-4o for the same reason.
     openai_causality_model: str = "gpt-4o"
 
+    # Phase 4b HITL: LangGraph checkpointer. The triage graph pauses at a human
+    # review step (interrupt) and resumes on approval; SqliteSaver persists the
+    # paused state across restarts so a review can be resumed later.
+    checkpoint_db_path: str = str(PROJECT_ROOT / "backend" / "checkpoints" / "triage.sqlite")
+
     # Chunking
     chunk_size_tokens: int = 500
     chunk_overlap_tokens: int = 100

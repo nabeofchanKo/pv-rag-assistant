@@ -1,29 +1,75 @@
 import tempfile
+import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from langgraph.graph.state import CompiledStateGraph
+from langgraph.types import Command
 
 from app.dependencies import get_ingestion_service, get_triage_graph
 from app.exceptions import IngestionError, UnsupportedFileTypeError
-from app.schemas import TriageResponse
+from app.schemas import ReviewDecision, TriageDraft, TriageResult
 from app.services.ingestion import IngestionService
+from app.services.triage_graph import ALLOWED_VERDICTS, compute_escalations
 
 router = APIRouter()
 
 
-@router.post("/cases/triage", response_model=TriageResponse)
+def _config(thread_id: str) -> dict:
+    return {"configurable": {"thread_id": thread_id}}
+
+
+def _content_fields(values: dict) -> dict:
+    """The shared TriageResponse fields, read from a graph state snapshot."""
+    return dict(
+        document_name=values.get("document_name", ""),
+        product_match=values["product_match"],
+        extraction=values["extraction"],
+        meddra=values.get("meddra", []),
+        seriousness=values.get("seriousness", []),
+        causality=values.get("causality", []),
+        expectedness=values.get("expectedness", []),
+        source_text=values.get("text", ""),
+    )
+
+
+def _draft(thread_id: str, values: dict) -> TriageDraft:
+    return TriageDraft(
+        thread_id=thread_id,
+        escalations=compute_escalations(
+            values.get("seriousness", []),
+            values.get("causality", []),
+            values.get("expectedness", []),
+        ),
+        **_content_fields(values),
+    )
+
+
+def _result(thread_id: str, values: dict) -> TriageResult:
+    return TriageResult(
+        thread_id=thread_id,
+        status=values["status"],
+        review=values["review_outcome"],
+        **_content_fields(values),
+    )
+
+
+@router.post("/cases/triage", response_model=None)
 async def triage_endpoint(
     file: UploadFile = File(...),
+    auto_approve: bool = False,
     ingestion: IngestionService = Depends(get_ingestion_service),
     graph: CompiledStateGraph = Depends(get_triage_graph),
-) -> TriageResponse:
-    """Ingest a case (PDF / email / image / text) and return a triage draft:
-    own-company product match + structured patient / adverse-event extraction +
-    MedDRA PT + seriousness (ICH E2A) + causality (temporal) + expectedness (既知/未知).
+) -> TriageDraft | TriageResult:
+    """Ingest a case (PDF / email / image / text) and start a triage run.
 
-    Ingestion (file → text) and HTTP error mapping stay here at the boundary;
-    the six evaluation steps run inside the LangGraph triage graph (Phase 4a)."""
+    The six evaluation steps run inside the LangGraph triage graph, which then
+    pauses at a human-review gate and returns a **draft** (status
+    ``awaiting_review``) plus a ``thread_id`` — approve/reject it via
+    ``POST /cases/{thread_id}/approve``. Pass ``?auto_approve=true`` to skip the
+    human gate and run straight through (non-HITL / batch use).
+
+    Ingestion (file → text) and HTTP error mapping stay here at the boundary."""
 
     contents = await file.read()
     filename = file.filename or "uploaded"
@@ -43,17 +89,65 @@ async def triage_endpoint(
         tmp_path.unlink()      # remove the temp file
         tmp_dir.rmdir()        # remove the temp directory
 
-    # Run the orchestrated triage pipeline (product match → extraction → MedDRA →
-    # seriousness / causality / expectedness) and assemble the response.
-    final = graph.invoke({"text": text, "document_name": filename})
-
-    return TriageResponse(
-        document_name=filename,
-        product_match=final["product_match"],
-        extraction=final["extraction"],
-        meddra=final.get("meddra", []),
-        seriousness=final.get("seriousness", []),
-        causality=final.get("causality", []),
-        expectedness=final.get("expectedness", []),
-        source_text=text,
+    thread_id = str(uuid.uuid4())
+    graph.invoke(
+        {"text": text, "document_name": filename, "auto_approve": auto_approve},
+        _config(thread_id),
     )
+    values = graph.get_state(_config(thread_id)).values
+
+    if values.get("status"):  # auto_approve ran the review gate straight through
+        return _result(thread_id, values)
+    return _draft(thread_id, values)
+
+
+@router.get("/cases/{thread_id}", response_model=None)
+async def get_case(
+    thread_id: str,
+    graph: CompiledStateGraph = Depends(get_triage_graph),
+) -> TriageDraft | TriageResult:
+    """Reload a triage run by thread id — its draft (awaiting review) or its
+    finalized result. Backed by the checkpointer, so it survives restarts."""
+    snapshot = graph.get_state(_config(thread_id))
+    values = snapshot.values
+    if not values:
+        raise HTTPException(status_code=404, detail=f"unknown thread_id: {thread_id}")
+    if values.get("status"):
+        return _result(thread_id, values)
+    return _draft(thread_id, values)
+
+
+@router.post("/cases/{thread_id}/approve", response_model=None)
+async def approve_case(
+    thread_id: str,
+    decision: ReviewDecision,
+    graph: CompiledStateGraph = Depends(get_triage_graph),
+) -> TriageResult:
+    """Resume a paused triage run with the reviewer's decision.
+
+    On ``approve`` the reviewer's verdict overrides are applied and an audit
+    trail (original → new verdict) is recorded; on ``reject`` the draft is left
+    unchanged and marked rejected. Returns the finalized result."""
+    snapshot = graph.get_state(_config(thread_id))
+    if not snapshot.values:
+        raise HTTPException(status_code=404, detail=f"unknown thread_id: {thread_id}")
+    if not snapshot.next:  # already finalized (no pending human_review task)
+        raise HTTPException(
+            status_code=409,
+            detail=f"thread {thread_id} is already {snapshot.values.get('status')}",
+        )
+
+    # Validate overrides against the allowed verdicts for each axis.
+    for ov in decision.overrides:
+        allowed = ALLOWED_VERDICTS.get(ov.axis)
+        if allowed is None:
+            raise HTTPException(status_code=422, detail=f"unknown axis: {ov.axis}")
+        if ov.new_verdict not in allowed:
+            raise HTTPException(
+                status_code=422,
+                detail=f"{ov.axis} の判定は {sorted(allowed)} のいずれか（受領: {ov.new_verdict}）",
+            )
+
+    graph.invoke(Command(resume=decision.model_dump()), _config(thread_id))
+    values = graph.get_state(_config(thread_id)).values
+    return _result(thread_id, values)

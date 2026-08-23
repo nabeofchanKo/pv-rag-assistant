@@ -14,6 +14,7 @@ that produced its evidence, when there is one.
 | [0004](0004-seriousness-e2a-llm-plus-deterministic.md) | Seriousness (ICH E2A): LLM interprets criteria, a deterministic OR decides | Accepted | [criterion attribution](../../experiments/seriousness_attribution.md) |
 | [0005](0005-causality-conservative-temporal.md) | Causality: conservative temporal triage (否定できない by default) | Accepted | [temporal causality](../../experiments/causality_temporal.md) |
 | [0006](0006-langgraph-orchestration.md) | Triage orchestration via a workflow-type LangGraph StateGraph (fan-out DAG) | Accepted | design + parity tests |
+| [0007](0007-hitl-approval-interrupt.md) | HITL approval via LangGraph interrupt/resume + SqliteSaver (propose→approve, audited) | Accepted | design + interrupt/resume tests + live E2E |
 
 Evidence for evidence-backed ADRs lives under [`experiments/`](../../experiments/),
 with the reproducible script alongside each write-up.
