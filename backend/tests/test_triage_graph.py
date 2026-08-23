@@ -49,19 +49,26 @@ class FakeExtraction:
 
 
 class FakeMeddra:
+    def __init__(self, codes=None):
+        self.codes = codes or {}
+
     def code(self, terms):
-        return [MeddraCoding(term=t, coded_by="該当なし") for t in terms]
+        return [
+            MeddraCoding(
+                term=t, pt_code=self.codes.get(t), pt_name_ja=t,
+                coded_by="完全一致" if self.codes.get(t) else "該当なし",
+            )
+            for t in terms
+        ]
 
 
 class FakeSeriousness:
-    """Records what it was handed; returns a fixed verdict for every event."""
+    """Fresh judgment: returns a fixed verdict for every event (no past data)."""
 
     def __init__(self, verdict="非重篤"):
         self.verdict = verdict
-        self.seen_codings = None
 
-    def assess(self, text, events, codings):
-        self.seen_codings = codings
+    def assess(self, text, events):
         return [SeriousnessAssessment(term=ae.term, verdict=self.verdict) for ae in events]
 
 
@@ -95,20 +102,28 @@ class FakePrecedent:
         return self.result
 
 
+class FakeInfluence:
+    """Pass-through influence layer (no past-data effects) for wiring tests."""
+
+    def apply(self, mode, meddra, seriousness, causality, expectedness, precedent):
+        return seriousness, causality, expectedness, [], mode
+
+
 def _ae(term):
     return AdverseEventMention(term=term, source="reported")
 
 
 def _build(product_master, extraction, seriousness, causality, expectedness=None,
-           precedent=None, checkpointer=None):
+           precedent=None, influence=None, meddra=None, checkpointer=None):
     return build_triage_graph(
         product_master=product_master,
         extraction=extraction,
-        meddra=FakeMeddra(),
+        meddra=meddra or FakeMeddra(),
         seriousness=seriousness,
         causality=causality,
         expectedness=expectedness or FakeExpectedness(),
         precedent=precedent or FakePrecedent(),
+        influence=influence or FakeInfluence(),
         checkpointer=checkpointer,
     )
 
@@ -138,14 +153,12 @@ def test_full_pipeline_populates_every_branch():
     assert final["status"] == "approved"
 
 
-def test_seriousness_receives_coded_pts_and_causality_receives_suspect_drugs():
-    seriousness, causality = FakeSeriousness(), FakeCausality()
-    graph = _build(FakeProductMaster(_drugx()), FakeExtraction([_ae("頭痛")]), seriousness, causality)
+def test_causality_receives_suspect_drugs():
+    causality = FakeCausality()
+    graph = _build(FakeProductMaster(_drugx()), FakeExtraction([_ae("頭痛")]), FakeSeriousness(), causality)
 
     graph.invoke({"text": "t", "document_name": "c.txt", "auto_approve": True})
 
-    assert seriousness.seen_codings is not None
-    assert [m.term for m in seriousness.seen_codings] == ["頭痛"]
     assert causality.seen_drugs == ["DrugX"]
 
 
@@ -175,7 +188,8 @@ def test_expectedness_skips_products_without_a_label():
 # --- 4b HITL: interrupt / resume ---
 
 
-def _hitl(seriousness=None, causality=None, expectedness=None, precedent=None, events=None):
+def _hitl(seriousness=None, causality=None, expectedness=None, precedent=None,
+          influence=None, events=None):
     return _build(
         FakeProductMaster(_drugx()),
         FakeExtraction(events or [_ae("頭痛")]),
@@ -183,6 +197,7 @@ def _hitl(seriousness=None, causality=None, expectedness=None, precedent=None, e
         causality or FakeCausality(),
         expectedness=expectedness,
         precedent=precedent,
+        influence=influence,
         checkpointer=MemorySaver(),
     )
 
@@ -220,6 +235,34 @@ def test_resume_approve_applies_override_and_records_audit():
     rec = vals["review_outcome"].overrides[0]
     assert (rec.original_verdict, rec.new_verdict, rec.rationale) == ("要確認", "重篤", "入院あり")
     assert vals["review_outcome"].reviewer == "nabe"
+
+
+def test_influence_mode_applied_vs_advisory_changes_the_verdict():
+    from app.services.influence import InfluenceService
+
+    class FakeIme2:
+        def contains(self, code):
+            return code == "10002198"
+
+        def note(self, code):
+            return "例示" if code == "10002198" else None
+
+    meddra = FakeMeddra({"アナフィラキシー反応": "10002198"})
+    events = [_ae("アナフィラキシー反応")]
+
+    applied = _build(
+        FakeProductMaster(_drugx()), FakeExtraction(events), FakeSeriousness("非重篤"),
+        FakeCausality(), meddra=meddra, influence=InfluenceService(FakeIme2()),
+    ).invoke({"text": "t", "document_name": "c", "auto_approve": True, "influence_mode": "applied"})
+    assert applied["seriousness"][0].verdict == "重篤"  # IME criterion 6 applied
+    assert any(it.source == "IME" and it.applied for it in applied["influence"])
+
+    advisory = _build(
+        FakeProductMaster(_drugx()), FakeExtraction(events), FakeSeriousness("非重篤"),
+        FakeCausality(), meddra=meddra, influence=InfluenceService(FakeIme2()),
+    ).invoke({"text": "t", "document_name": "c", "auto_approve": True, "influence_mode": "advisory"})
+    assert advisory["seriousness"][0].verdict == "非重篤"  # left fresh
+    assert any(it.source == "IME" and not it.applied for it in advisory["influence"])
 
 
 def test_precedent_conflict_surfaces_as_escalation():

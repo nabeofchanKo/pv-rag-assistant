@@ -54,6 +54,7 @@ from app.schemas import (
     Escalation,
     EventPrecedent,
     ImePromotionRecord,
+    InfluenceItem,
     MeddraCoding,
     OverrideRecord,
     ProductMatchResult,
@@ -63,6 +64,7 @@ from app.schemas import (
 from app.services.causality import CausalityService
 from app.services.expectedness import ExpectednessService
 from app.services.extraction import ExtractionService
+from app.services.influence import InfluenceService
 from app.services.meddra_coding import MeddraCodingService
 from app.services.precedent import PrecedentService
 from app.services.product_master import ProductMasterService
@@ -89,6 +91,7 @@ class TriageState(TypedDict, total=False):
     text: str
     document_name: str
     auto_approve: bool  # skip the human-review interrupt (non-HITL / batch)
+    influence_mode: str  # Phase 4e: "applied" (default) | "advisory"
     # --- per-node outputs ---
     product_match: ProductMatchResult
     extraction: CaseExtraction
@@ -97,6 +100,7 @@ class TriageState(TypedDict, total=False):
     causality: list[CausalityAssessment]
     expectedness: list[DrugExpectedness]
     precedent: list[EventPrecedent]  # Phase 4d: past-case precedent (advisory)
+    influence: list[InfluenceItem]  # Phase 4e: past-data effects (applied/notes)
     # --- HITL (Phase 4b) ---
     review: dict  # the reviewer's ReviewDecision (dump), handed back via resume
     status: str  # "approved" | "rejected"
@@ -263,6 +267,7 @@ def build_triage_graph(
     causality: CausalityService,
     expectedness: ExpectednessService,
     precedent: PrecedentService,
+    influence: InfluenceService,
     checkpointer: BaseCheckpointSaver | None = None,
 ) -> CompiledStateGraph:
     """Assemble and compile the triage graph from the six evaluation services.
@@ -284,11 +289,8 @@ def build_triage_graph(
 
     def seriousness_node(state: TriageState) -> dict:
         events = state["extraction"].adverse_events
-        results = (
-            seriousness.assess(state["text"], events, state["meddra"])
-            if events
-            else []
-        )
+        # Fresh judgment only; IME criterion 6 is applied by the influence node.
+        results = seriousness.assess(state["text"], events) if events else []
         return {"seriousness": results}
 
     def causality_node(state: TriageState) -> dict:
@@ -322,6 +324,26 @@ def build_triage_graph(
                 state.get("causality", []),
                 state.get("expectedness", []),
             )
+        }
+
+    def influence_node(state: TriageState) -> dict:
+        """Fold past data (IME + precedent) into the verdicts, or annotate — per
+        ``influence_mode`` (default 'applied'). Runs after precedent so it has both
+        the fresh verdicts and the precedent counts."""
+        ser, cau, exp, items, mode = influence.apply(
+            state.get("influence_mode", "applied"),
+            state.get("meddra", []),
+            state.get("seriousness", []),
+            state.get("causality", []),
+            state.get("expectedness", []),
+            state.get("precedent", []),
+        )
+        return {
+            "seriousness": ser,
+            "causality": cau,
+            "expectedness": exp,
+            "influence": items,
+            "influence_mode": mode,
         }
 
     def human_review_node(state: TriageState) -> dict:
@@ -386,6 +408,7 @@ def build_triage_graph(
     graph.add_node("causality", causality_node)
     graph.add_node("expectedness", expectedness_node)
     graph.add_node("precedent", precedent_node)
+    graph.add_node("influence", influence_node)
     graph.add_node("human_review", human_review_node)
     graph.add_node("finalize", finalize_node)
 
@@ -399,9 +422,11 @@ def build_triage_graph(
     graph.add_edge(["product_match", "extraction"], "causality")
     graph.add_edge(["product_match", "extraction"], "expectedness")
     # All three assessment branches join at the precedent lookup (needs the
-    # verdicts + coded PTs), which then feeds the human-review gate.
+    # verdicts + coded PTs); the influence layer then folds past data in (or
+    # annotates), and the human-review gate follows.
     graph.add_edge(["seriousness", "causality", "expectedness"], "precedent")
-    graph.add_edge("precedent", "human_review")
+    graph.add_edge("precedent", "influence")
+    graph.add_edge("influence", "human_review")
     graph.add_edge("human_review", "finalize")
     graph.add_edge("finalize", END)
 

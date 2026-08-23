@@ -330,6 +330,10 @@ class TriageResponse(BaseModel):
     expectedness: list[DrugExpectedness] = []
     # Per-adverse-event precedent from past approved cases (Phase 4d; advisory).
     precedent: list["EventPrecedent"] = []
+    # Phase 4e: whether past data (IME + precedent) was folded into the verdicts
+    # ("applied") or only shown as notes ("advisory"), and the resulting effects.
+    influence_mode: str = "applied"
+    influence: list["InfluenceItem"] = []
     source_text: str
 
 
@@ -376,7 +380,28 @@ class PastCaseRecord(BaseModel):
     events: list[PastCaseEvent] = []
 
 
-# TriageResponse forward-references EventPrecedent (defined just above); resolve it.
+# --- Phase 4e: past-data influence mode (applied / advisory) ---
+# One toggle unifies both past-data sources — the IME list (past feedback) and
+# past-case precedent. "applied" folds them into the verdicts (IME → criterion 6
+# = 重篤 deterministically, since it's an explicit prior human decision; precedent
+# → a safe-side nudge to 要確認 only, never a downgrade). "advisory" leaves the
+# fresh verdicts untouched and records the same signals as notes. See ADR 0010.
+
+
+class InfluenceItem(BaseModel):
+    """One past-data effect on an event — an applied adjustment or an advisory note."""
+
+    axis: str  # "seriousness" | "causality" | "expectedness"
+    term: str
+    source: str  # "IME" | "precedent"
+    applied: bool  # True = changed the verdict; False = advisory note only
+    from_verdict: str | None = None  # set when applied
+    to_verdict: str | None = None  # set when applied
+    note: str
+
+
+# TriageResponse forward-references EventPrecedent / InfluenceItem (defined above
+# and below); resolve them once both exist.
 TriageResponse.model_rebuild()
 
 

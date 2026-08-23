@@ -54,3 +54,13 @@ case_003 correct except one accepted residual.
   surfaced as a reporter-vs-company ⚠️差異 for HITL, rather than risking an under-call
   (user decision, consistent with ADR 0002's safe-side philosophy).
 - IME + 要確認 are the hooks the HITL/precedent loop (Phase 4) will grow into.
+
+## Follow-up (2026-08-24, Phase 4e): criterion 6 IME application moved out
+
+The criterion-6-from-IME rule above no longer fires **inside** `SeriousnessService`.
+To support a past-data ON/OFF mode (ADR 0010), seriousness now emits the **fresh**
+verdict only (LLM criteria + deterministic OR), and IME criterion 6 is applied by
+the **influence layer** in `applied` mode (still deterministic, still 重篤, now with
+the PT's provenance). The role split and the safe-side rule are unchanged — only the
+*place* IME is applied moved, so "fresh" and "history-adjusted" verdicts stay
+comparable.

@@ -8,10 +8,14 @@ Split by role, not by criterion (see ADR 0004):
   ("any criterion → serious"), which is where auditability belongs. The verdict is
   traceable to *which criterion* and *which quote*.
 
-Criterion 6 (医学的に重要) additionally fires deterministically when the event's
-coded MedDRA PT is on the IME list. Uncertain-only signals → 要確認 (safe side, HITL)
-rather than silently 非重篤 — the worst case is under-calling a serious event.
-Assessed seriousness is kept separate from the reporter's transcribed value.
+Uncertain-only signals → 要確認 (safe side, HITL) rather than silently 非重篤 — the
+worst case is under-calling a serious event. Assessed seriousness is kept separate
+from the reporter's transcribed value.
+
+This service produces the **fresh, current-case** judgment only. Past-data effects
+— criterion 6 firing from the IME list, and past-case precedent nudges — are
+applied by the influence layer (see services/influence.py, ADR 0010), so the two
+can be toggled on/off for comparison. IME used to fire here (ADR 0004); that moved.
 """
 
 import logging
@@ -23,12 +27,10 @@ from pydantic import BaseModel, Field
 
 from app.schemas import (
     AdverseEventMention,
-    MeddraCoding,
     SeriousnessAssessment,
     SeriousnessCriterion,
     SeriousnessHit,
 )
-from app.services.ime import ImeReference
 
 logger = logging.getLogger(__name__)
 
@@ -77,10 +79,11 @@ class _SeriousnessJudgment(BaseModel):
 
 
 class SeriousnessService:
-    """Assess company seriousness per adverse event (LLM criteria + deterministic OR)."""
+    """Assess fresh (current-case) seriousness per adverse event: the LLM flags
+    E2A criteria, a deterministic OR turns them into the verdict. Past-data
+    effects (IME criterion 6, precedent) are applied later by the influence layer."""
 
-    def __init__(self, llm: BaseChatModel, ime: ImeReference) -> None:
-        self.ime = ime
+    def __init__(self, llm: BaseChatModel) -> None:
         self.chain = (
             ChatPromptTemplate.from_messages(
                 [
@@ -95,21 +98,13 @@ class SeriousnessService:
         self,
         case_text: str,
         adverse_events: list[AdverseEventMention],
-        codings: list[MeddraCoding] | None = None,
     ) -> list[SeriousnessAssessment]:
-        codings = codings or []
-        return [
-            self._assess_one(
-                case_text, ae, codings[i] if i < len(codings) else None
-            )
-            for i, ae in enumerate(adverse_events)
-        ]
+        return [self._assess_one(case_text, ae) for ae in adverse_events]
 
     def _assess_one(
         self,
         case_text: str,
         ae: AdverseEventMention,
-        coding: MeddraCoding | None,
     ) -> SeriousnessAssessment:
         judgment: _SeriousnessJudgment = self.chain.invoke(
             {"case_text": case_text, "term": ae.term}
@@ -128,24 +123,6 @@ class SeriousnessService:
             for h in judgment.hits
             if h.status == "疑い"
         ]
-
-        # Deterministic criterion 6: coded PT on the IME list. Cite the PT and its
-        # provenance (例示 / HITL昇格 <reviewer> <date> …) so the evidence explains
-        # *why* it is medically important — incl. when it came from a past review.
-        if (
-            coding
-            and self.ime.contains(coding.pt_code)
-            and not any(h.criterion == "医学的に重要" for h in confirmed)
-        ):
-            quote = f"IME該当PT: {coding.pt_name_ja}（{coding.pt_code}）"
-            provenance = self.ime.note(coding.pt_code)
-            if provenance:
-                quote += f" ／ {provenance}"
-            confirmed.append(
-                SeriousnessHit(
-                    criterion="医学的に重要", evidence_quote=quote, source="IME"
-                )
-            )
 
         if confirmed:
             verdict, hits = "重篤", confirmed

@@ -1,16 +1,14 @@
-"""Tests for IME promotion (Phase 4c) — the HITL-feeds-accuracy loop.
+"""Tests for IME promotion mechanics (Phase 4c).
 
-`ImeReference.promote` grows the important-medical-events list (in-memory + CSV),
-and the payoff test proves the point of Phase 4c: after a reviewer promotes a PT,
-the *next* seriousness assessment of an event coded to that PT fires E2A
-criterion 6 automatically. No LLM (fakes only).
+`ImeReference.promote` grows the important-medical-events list (in-memory + CSV,
+idempotent, with provenance in the note). The payoff — a promoted PT firing E2A
+criterion 6 on the next assessment — now lives in the influence layer and is
+covered by test_influence.py (Phase 4e). No LLM (fakes only).
 """
 
 import csv
 
-from app.schemas import AdverseEventMention, MeddraCoding
 from app.services.ime import ImeReference
-from app.services.seriousness import SeriousnessService, _SeriousnessJudgment
 
 
 def _write_csv(path, rows=()):
@@ -55,65 +53,12 @@ def test_promote_blank_code_is_noop(tmp_path):
     assert ime.promote("  ", "x") is False
 
 
-class _NoHitChain:
-    """Stands in for the LLM: never finds a criterion, so only IME can flag it."""
-
-    def invoke(self, inputs):
-        return _SeriousnessJudgment(hits=[])
-
-
-def _seriousness(ime):
-    svc = SeriousnessService.__new__(SeriousnessService)
-    svc.ime = ime
-    svc.chain = _NoHitChain()
-    return svc
-
-
-def test_promotion_feeds_the_next_seriousness_assessment(tmp_path):
-    csvp = tmp_path / "ime.csv"
-    _write_csv(csvp)  # empty list to start
-    ime = ImeReference(str(csvp))
-    svc = _seriousness(ime)
-
-    ae = AdverseEventMention(term="心室細動", source="reported")
-    coding = MeddraCoding(term="心室細動", pt_code="10047290", pt_name_ja="心室細動", coded_by="完全一致")
-
-    before = svc.assess("...", [ae], [coding])[0]
-    assert before.verdict == "非重篤"  # LLM finds nothing, PT not yet on IME
-
-    ime.promote("10047290", "心室細動", "HITL昇格 nabe 2026-08-24")
-
-    after = svc.assess("...", [ae], [coding])[0]
-    assert after.verdict == "重篤"  # same input, now serious via criterion 6
-    assert any(h.source == "IME" and h.criterion == "医学的に重要" for h in after.hits)
-
-
-def test_promotion_provenance_is_cited_in_the_evidence(tmp_path):
-    """Phase 4c 'A': the criterion-6 evidence explains WHY the PT is on the list
-    (who promoted it, when) — not just that it is."""
-    csvp = tmp_path / "ime.csv"
-    _write_csv(csvp)
-    ime = ImeReference(str(csvp))
-    svc = _seriousness(ime)
-    ime.promote("10047290", "心室細動", "HITL昇格 田中PV担当 2026-08-24 — 医学的に重要と判断")
-
-    coding = MeddraCoding(term="心室細動", pt_code="10047290", pt_name_ja="心室細動", coded_by="完全一致")
-    r = svc.assess("...", [AdverseEventMention(term="心室細動", source="reported")], [coding])[0]
-
-    ime_hit = next(h for h in r.hits if h.source == "IME")
-    assert "心室細動" in ime_hit.evidence_quote
-    assert "HITL昇格 田中PV担当 2026-08-24" in ime_hit.evidence_quote  # provenance surfaced
-
-
-def test_seed_pt_provenance_also_surfaces(tmp_path):
+def test_note_returns_provenance(tmp_path):
     csvp = tmp_path / "ime.csv"
     _write_csv(csvp, [("10002198", "アナフィラキシー反応", "例示（EMA IME 相当）")])
     ime = ImeReference(str(csvp))
-    svc = _seriousness(ime)
+    assert ime.note("10002198") == "例示（EMA IME 相当）"
+    assert ime.note("00000000") is None
 
-    coding = MeddraCoding(term="アナフィラキシー反応", pt_code="10002198",
-                          pt_name_ja="アナフィラキシー反応", coded_by="完全一致")
-    r = svc.assess("...", [AdverseEventMention(term="アナフィラキシー反応", source="reported")], [coding])[0]
-
-    ime_hit = next(h for h in r.hits if h.source == "IME")
-    assert "例示（EMA IME 相当）" in ime_hit.evidence_quote
+    ime.promote("10047290", "心室細動", "HITL昇格 田中PV担当 2026-08-24")
+    assert ime.note("10047290") == "HITL昇格 田中PV担当 2026-08-24"
