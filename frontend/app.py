@@ -24,6 +24,13 @@ EXP_OPTIONS = ["既知", "要確認", "未知", "判定不能"]
 AXIS_LABELS = {"seriousness": "重篤度", "causality": "因果関係", "expectedness": "既知/未知"}
 
 
+def _counts(d: dict | None) -> str:
+    """Render a verdict->count dict as '重篤2／非重篤1' (or '—' when empty)."""
+    if not d:
+        return "—"
+    return "／".join(f"{k}{v}" for k, v in d.items())
+
+
 def _reported_is_serious(reported):
     """Coarse serious/non from the transcribed reporter value (非重篤 contains 重篤)."""
     if not reported:
@@ -174,6 +181,31 @@ def render_triage(data: dict) -> None:
     if cau_rows:
         st.dataframe(cau_rows, use_container_width=True, hide_index=True)
 
+    st.subheader("⑦ 過去症例の判例（一貫性）")
+    precedent = [p for p in (data.get("precedent") or []) if p.get("n_cases")]
+    if not precedent:
+        st.info("同一MedDRA PTの過去承認症例は見つかりませんでした。")
+    else:
+        st.caption(
+            "過去に承認された症例で同じMedDRA PTがどう判定されたか（参考情報・自動では判定を変えません）。"
+            "⚠️ は今回のドラフトと過去の多数派が不一致で、レビュー要注意です。"
+        )
+        prec_rows = []
+        for p in precedent:
+            conflict_axes = "・".join(AXIS_LABELS.get(a, a) for a in p.get("conflicts") or [])
+            prec_rows.append(
+                {
+                    "事象": p["term"],
+                    "過去件数": p["n_cases"],
+                    "重篤度(過去)": _counts(p.get("seriousness")),
+                    "因果(過去)": _counts(p.get("causality")),
+                    "既知/未知(過去)": _counts(p.get("expectedness")),
+                    "不一致": f"⚠️ {conflict_axes}" if conflict_axes else "",
+                    "参照症例": "、".join(p.get("case_ids") or []),
+                }
+            )
+        st.dataframe(prec_rows, use_container_width=True, hide_index=True)
+
     with st.expander("読み取ったテキスト（出典）"):
         st.text(data["source_text"])
 
@@ -272,7 +304,7 @@ def _ime_promotion_editor(case: dict, key: str) -> list:
 def render_review(case: dict) -> None:
     """The Phase 4b HITL gate: review the draft, override verdicts, approve/reject."""
     st.divider()
-    st.subheader("⑦ レビュー・承認（HITL）")
+    st.subheader("⑧ レビュー・承認（HITL）")
     status = case.get("status")
 
     if status in ("approved", "rejected"):
