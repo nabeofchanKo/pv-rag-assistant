@@ -125,6 +125,11 @@ class PrecedentService:
         """One EventPrecedent per adverse event (aligned to adverse_events order)."""
         ser_now = {s.term: s.verdict for s in seriousness}
         cau_now = {c.term: c.verdict for c in causality}
+        # current expectedness verdicts per term (across matched own-company drugs)
+        exp_now: dict[str, set[str]] = {}
+        for de in expectedness:
+            for a in de.assessments:
+                exp_now.setdefault(a.term, set()).add(a.verdict)
 
         out: list[EventPrecedent] = []
         for coding in meddra:
@@ -151,6 +156,12 @@ class PrecedentService:
                 conflicts.append("seriousness")
             if cau_counts and _majority(cau_counts) != cau_now.get(coding.term):
                 conflicts.append("causality")
+            # expectedness: conflict only when the case actually assessed this
+            # term's expectedness and the precedent majority isn't among the
+            # current verdicts (drug-agnostic; own-company drug is usually singular).
+            cur_exp = exp_now.get(coding.term)
+            if exp_counts and cur_exp and _majority(exp_counts) not in cur_exp:
+                conflicts.append("expectedness")
 
             out.append(
                 EventPrecedent(

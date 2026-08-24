@@ -157,18 +157,29 @@ def compute_escalations(
                         reason="既知/未知が確定できず安全側で要確認（HITL判断が必要）",
                     )
                 )
-    # Phase 4d: flag events whose current verdict differs from precedent majority.
+    # Phase 4d/4e: flag events whose current verdict differs from precedent majority.
     ser_now = {s.term: s.verdict for s in seriousness}
     cau_now = {c.term: c.verdict for c in causality}
+    exp_now: dict[str, tuple[str | None, str | None]] = {}
+    for de in expectedness:
+        for a in de.assessments:
+            exp_now.setdefault(a.term, (de.drug_name, a.verdict))
     for ep in precedent or []:
         for axis in ep.conflicts:
-            counts = ep.seriousness if axis == "seriousness" else ep.causality
+            drug_name = None
+            if axis == "seriousness":
+                counts, current = ep.seriousness, ser_now.get(ep.term)
+            elif axis == "causality":
+                counts, current = ep.causality, cau_now.get(ep.term)
+            else:  # expectedness (drug-specific)
+                counts = ep.expectedness
+                drug_name, current = exp_now.get(ep.term, (None, None))
             summary = "／".join(f"{v}{n}件" for v, n in counts.items())
-            current = ser_now.get(ep.term) if axis == "seriousness" else cau_now.get(ep.term)
             out.append(
                 Escalation(
                     axis=axis,
                     term=ep.term,
+                    drug_name=drug_name,
                     verdict=current or "—",
                     reason=f"過去症例と不一致（今回: {current}／過去 {ep.n_cases}件: {summary}）",
                 )

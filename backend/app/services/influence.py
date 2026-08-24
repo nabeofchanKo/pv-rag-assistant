@@ -32,6 +32,8 @@ from app.services.ime import ImeReference
 
 # Higher = more serious / more safety-relevant to report.
 _SER_SEVERITY = {"非重篤": 0, "要確認": 1, "重篤": 2}
+# Higher = more safety-relevant to report (未知 = unexpected → expedited).
+_EXP_SEVERITY = {"既知": 0, "要確認": 1, "判定不能": 1, "未知": 2}
 
 
 def _fmt_counts(d: dict[str, int]) -> str:
@@ -130,7 +132,30 @@ class InfluenceService:
                 )
                 cau[i] = c.model_copy(update={"verdict": "否定できない"})
 
-        return ser, cau, expectedness, items, mode
+        # 4) expectedness (past cases) -> safe-side nudge 既知 -> 要確認 only, per drug.
+        exp = list(expectedness)
+        for j, de in enumerate(exp):
+            assessments = list(de.assessments)
+            changed = False
+            for k, a in enumerate(assessments):
+                ep = prec_by_term.get(a.term)
+                if not ep or not ep.expectedness or _EXP_SEVERITY.get(a.verdict, 0) >= 1:
+                    continue
+                majority = max(ep.expectedness, key=ep.expectedness.get)
+                if _EXP_SEVERITY.get(majority, 0) > _EXP_SEVERITY.get(a.verdict, 0):
+                    items.append(
+                        InfluenceItem(
+                            axis="expectedness", term=a.term, source="precedent", applied=True,
+                            drug_name=de.drug_name, from_verdict=a.verdict, to_verdict="要確認",
+                            note=f"{de.drug_name}: 過去症例では {_fmt_counts(ep.expectedness)} → 安全側で要確認",
+                        )
+                    )
+                    assessments[k] = a.model_copy(update={"verdict": "要確認"})
+                    changed = True
+            if changed:
+                exp[j] = de.model_copy(update={"assessments": assessments})
+
+        return ser, cau, exp, items, mode
 
     def _notes(
         self,
@@ -163,5 +188,11 @@ class InfluenceService:
                     InfluenceItem(axis="causality", term=ep.term, source="precedent",
                                   applied=False,
                                   note=f"過去症例の因果: {_fmt_counts(ep.causality)}")
+                )
+            if ep.n_cases and ep.expectedness:
+                items.append(
+                    InfluenceItem(axis="expectedness", term=ep.term, source="precedent",
+                                  applied=False,
+                                  note=f"過去症例の既知/未知: {_fmt_counts(ep.expectedness)}")
                 )
         return items

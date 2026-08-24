@@ -7,7 +7,9 @@ Advisory: verdicts unchanged, the same signals recorded as notes. No LLM.
 
 from app.schemas import (
     CausalityAssessment,
+    DrugExpectedness,
     EventPrecedent,
+    ExpectednessAssessment,
     MeddraCoding,
     SeriousnessAssessment,
 )
@@ -35,6 +37,13 @@ def _s(term, v):
 
 def _c(term, v):
     return CausalityAssessment(term=term, verdict=v)
+
+
+def _de(drug, term, v):
+    return DrugExpectedness(
+        drug_name=drug, label_document=f"{drug}.md",
+        assessments=[ExpectednessAssessment(term=term, verdict=v)],
+    )
 
 
 def test_applied_ime_fires_criterion6_to_serious_with_provenance():
@@ -84,6 +93,45 @@ def test_applied_causality_kept_in_scope():
     )
     assert cau[0].verdict == "否定できない"
     assert any(it.axis == "causality" and it.to_verdict == "否定できない" for it in items)
+
+
+def test_applied_expectedness_nudges_known_to_review():
+    ep = EventPrecedent(term="鼻出血", pt_code="10015090", n_cases=2,
+                        expectedness={"未知": 2}, case_ids=["A", "B"])
+    inf = InfluenceService(FakeIme())
+    _, _, exp, items, _ = inf.apply(
+        "applied", [_m("鼻出血", "10015090")], [_s("鼻出血", "非重篤")],
+        [_c("鼻出血", "否定できない")], [_de("DrugZ", "鼻出血", "既知")], [ep],
+    )
+    assert exp[0].assessments[0].verdict == "要確認"  # 既知 nudged up, capped
+    assert any(
+        it.axis == "expectedness" and it.applied and it.to_verdict == "要確認"
+        and it.drug_name == "DrugZ" for it in items
+    )
+
+
+def test_applied_expectedness_never_downgrades():
+    ep = EventPrecedent(term="鼻出血", pt_code="10015090", n_cases=2,
+                        expectedness={"既知": 2}, case_ids=["A", "B"])
+    inf = InfluenceService(FakeIme())
+    _, _, exp, items, _ = inf.apply(
+        "applied", [_m("鼻出血", "10015090")], [_s("鼻出血", "非重篤")],
+        [_c("鼻出血", "否定できない")], [_de("DrugZ", "鼻出血", "未知")], [ep],
+    )
+    assert exp[0].assessments[0].verdict == "未知"  # not pulled down toward 既知
+    assert not any(it.axis == "expectedness" and it.applied for it in items)
+
+
+def test_advisory_expectedness_note_only():
+    ep = EventPrecedent(term="鼻出血", pt_code="10015090", n_cases=2,
+                        expectedness={"未知": 2}, case_ids=["A", "B"])
+    inf = InfluenceService(FakeIme())
+    _, _, exp, items, _ = inf.apply(
+        "advisory", [_m("鼻出血", "10015090")], [_s("鼻出血", "非重篤")],
+        [_c("鼻出血", "否定できない")], [_de("DrugZ", "鼻出血", "既知")], [ep],
+    )
+    assert exp[0].assessments[0].verdict == "既知"  # unchanged
+    assert any(it.axis == "expectedness" and not it.applied for it in items)
 
 
 def test_advisory_leaves_verdicts_and_only_notes():

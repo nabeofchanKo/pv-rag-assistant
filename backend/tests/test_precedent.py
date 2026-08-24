@@ -10,12 +10,19 @@ import json
 
 from app.schemas import (
     CausalityAssessment,
+    DrugExpectedness,
+    ExpectednessAssessment,
     MeddraCoding,
     PastCaseEvent,
     PastCaseRecord,
     SeriousnessAssessment,
 )
 from app.services.precedent import PrecedentService
+
+
+def _exp(drug, term, v):
+    return DrugExpectedness(drug_name=drug, label_document=f"{drug}.md",
+                            assessments=[ExpectednessAssessment(term=term, verdict=v)])
 
 
 def _seed(tmp_path):
@@ -67,6 +74,29 @@ def test_conflict_flagged_when_current_differs(tmp_path):
 
     assert "seriousness" in ep.conflicts
     assert ep.seriousness == {"重篤": 2}
+
+
+def test_expectedness_conflict_flagged_when_current_differs(tmp_path):
+    svc = _seed(tmp_path)  # seed: DrugZ 鼻出血 expectedness 既知 x2
+    ep = svc.summarize(
+        ["DrugZ"], [_meddra("鼻出血", "10015090")],
+        [SeriousnessAssessment(term="鼻出血", verdict="重篤")],
+        [CausalityAssessment(term="鼻出血", verdict="否定できない")],
+        [_exp("DrugZ", "鼻出血", "未知")],  # current 未知 vs precedent majority 既知
+    )[0]
+    assert "expectedness" in ep.conflicts
+    assert ep.expectedness == {"既知": 2}
+
+
+def test_expectedness_no_conflict_when_agree(tmp_path):
+    svc = _seed(tmp_path)
+    ep = svc.summarize(
+        ["DrugZ"], [_meddra("鼻出血", "10015090")],
+        [SeriousnessAssessment(term="鼻出血", verdict="重篤")],
+        [CausalityAssessment(term="鼻出血", verdict="否定できない")],
+        [_exp("DrugZ", "鼻出血", "既知")],
+    )[0]
+    assert "expectedness" not in ep.conflicts
 
 
 def test_no_pt_or_no_match_yields_empty_precedent(tmp_path):
