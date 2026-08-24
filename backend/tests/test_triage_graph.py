@@ -25,6 +25,7 @@ from app.schemas import (
     VerdictOverride,
 )
 from app.services.triage_graph import (
+    apply_extraction_edits,
     apply_overrides,
     build_triage_graph,
     compute_escalations,
@@ -340,6 +341,71 @@ def test_compute_escalations_flags_only_uncertain_bands():
     flagged = {(e.axis, e.term) for e in esc}
 
     assert flagged == {("seriousness", "a"), ("causality", "a"), ("expectedness", "a")}
+
+
+def _ext(terms):
+    return CaseExtraction(
+        patient=Patient(),
+        adverse_events=[AdverseEventMention(term=t, source="reported") for t in terms],
+    )
+
+
+def test_extraction_edit_remove_drops_from_all_lists():
+    ext = _ext(["頭痛", "そう痒症"])
+    med = [MeddraCoding(term="頭痛", coded_by="該当なし"), MeddraCoding(term="そう痒症", coded_by="該当なし")]
+    ser = [SeriousnessAssessment(term="頭痛", verdict="非重篤"), SeriousnessAssessment(term="そう痒症", verdict="非重篤")]
+    cau = [CausalityAssessment(term="頭痛", verdict="否定できない"), CausalityAssessment(term="そう痒症", verdict="否定できない")]
+
+    e, m, s, c, x, p, i, rec = apply_extraction_edits(
+        extraction=ext, meddra=med, seriousness=ser, causality=cau, expectedness=[],
+        precedent=[], influence=[], removed=["そう痒症"], added=[], recoded=[],
+    )
+    assert [a.term for a in e.adverse_events] == ["頭痛"]
+    assert [z.term for z in m] == ["頭痛"] and [z.term for z in s] == ["頭痛"] and [z.term for z in c] == ["頭痛"]
+    assert rec[0].kind == "removed" and rec[0].term == "そう痒症"
+
+
+def test_extraction_edit_recode_replaces_pt_manually():
+    ext = _ext(["肝機能異常"])
+    med = [MeddraCoding(term="肝機能異常", pt_code="10019837", pt_name_ja="肝機能異常", coded_by="完全一致")]
+    _, m, *_rest, rec = apply_extraction_edits(
+        extraction=ext, meddra=med, seriousness=[], causality=[], expectedness=[],
+        precedent=[], influence=[], removed=[], added=[],
+        recoded=[{"term": "肝機能異常", "pt_code": "10072268", "pt_name": "薬物性肝障害"}],
+    )
+    assert m[0].pt_code == "10072268" and m[0].pt_name_ja == "薬物性肝障害" and m[0].coded_by == "手動"
+    assert any(r.kind == "recoded" for r in rec)
+
+
+def test_extraction_edit_add_appends_with_manual_verdicts():
+    ext = _ext(["頭痛"])
+    e, m, s, c, *_rest, rec = apply_extraction_edits(
+        extraction=ext, meddra=[MeddraCoding(term="頭痛", coded_by="該当なし")],
+        seriousness=[SeriousnessAssessment(term="頭痛", verdict="非重篤")],
+        causality=[CausalityAssessment(term="頭痛", verdict="否定できない")],
+        expectedness=[], precedent=[], influence=[], removed=[], recoded=[],
+        added=[{"term": "発疹", "pt_code": "10037844", "pt_name": "発疹",
+                "seriousness": "要確認", "causality": "否定できない"}],
+    )
+    assert [a.term for a in e.adverse_events] == ["頭痛", "発疹"]
+    assert m[-1].term == "発疹" and m[-1].coded_by == "手動" and m[-1].pt_code == "10037844"
+    assert s[-1].term == "発疹" and s[-1].verdict == "要確認"
+    assert c[-1].term == "発疹"
+    assert any(r.kind == "added" and r.term == "発疹" for r in rec)
+
+
+def test_resume_with_extraction_remove_edit_reaches_final():
+    graph = _hitl(events=[_ae("頭痛"), _ae("そう痒症")])
+    cfg = {"configurable": {"thread_id": "t_edit"}}
+    graph.invoke({"text": "t", "document_name": "c.txt"}, cfg)
+
+    decision = ReviewDecision(action="approve", reviewer="nabe", removed_terms=["そう痒症"])
+    graph.invoke(Command(resume=decision.model_dump()), cfg)
+    vals = graph.get_state(cfg).values
+
+    assert [a.term for a in vals["extraction"].adverse_events] == ["頭痛"]
+    assert [s.term for s in vals["seriousness"]] == ["頭痛"]
+    assert vals["review_outcome"].extraction_edits[0].kind == "removed"
 
 
 def test_apply_overrides_expectedness_is_nested_and_audited():
