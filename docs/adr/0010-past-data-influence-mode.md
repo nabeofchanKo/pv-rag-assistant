@@ -48,7 +48,18 @@ nudge only for precedent; default = applied).
 - **Per-request toggle** `POST /cases/triage?influence=applied|advisory` (default
   applied) + a Streamlit switch, so the same case can be run both ways.
 - **Scope:** seriousness (IME + precedent) and causality (precedent). Expectedness
-  influence is deferred (its precedent conflict isn't built yet).
+  influence added in a follow-up (see below).
+
+### Follow-up (2026-08-25): expectedness (既知/未知) now covered
+
+Precedent conflict + influence now include expectedness, closing the last judgment
+axis. Reporting severity: 既知(0) < 要確認 < 判定不能 < 未知(2) (未知 = unexpected →
+expedited). applied nudges a fresh **既知 → 要確認** only when the past majority is
+stricter, per (drug, PT); **never a downgrade** (未知 stays), capped at 要確認 (not
+auto-未知). advisory adds an expectedness note. Precedent expectedness is
+drug-agnostic-aggregated in `EventPrecedent`, and a conflict fires only when the
+case actually assessed that term's expectedness — fine while the own-company
+suspect drug is singular per case (a per-drug precedent index is a later refinement).
 
 ## Consequences
 

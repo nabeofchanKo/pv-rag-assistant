@@ -395,6 +395,7 @@ class InfluenceItem(BaseModel):
     term: str
     source: str  # "IME" | "precedent"
     applied: bool  # True = changed the verdict; False = advisory note only
+    drug_name: str | None = None  # set for expectedness (which label)
     from_verdict: str | None = None  # set when applied
     to_verdict: str | None = None  # set when applied
     note: str
