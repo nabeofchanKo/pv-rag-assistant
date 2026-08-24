@@ -231,8 +231,8 @@ class MeddraCoding(BaseModel):
     pt_code: str | None = None
     pt_name_ja: str | None = None
     soc_name_ja: str | None = None
-    coded_by: Literal["完全一致", "検索+LLM", "該当なし"] = Field(
-        description="由来。完全一致＝辞書と一致し決定的、検索+LLM＝候補からLLMが選択、該当なし＝適合PTなし。",
+    coded_by: Literal["完全一致", "検索+LLM", "該当なし", "手動"] = Field(
+        description="由来。完全一致＝辞書と一致し決定的、検索+LLM＝候補からLLMが選択、該当なし＝適合PTなし、手動＝レビュアーが付与/修正。",
     )
     rationale: str | None = None
     # The candidates considered (fused hybrid retrieval), kept for HITL / audit.
@@ -448,6 +448,24 @@ class ImePromotion(BaseModel):
     rationale: str | None = Field(default=None, description="昇格の理由（日本語で簡潔に）。")
 
 
+class AddedEvent(BaseModel):
+    """A reviewer-added adverse event (manual — no machine re-assessment; Phase 4f)."""
+
+    term: str
+    pt_code: str | None = None
+    pt_name: str | None = None
+    seriousness: str = Field(default="要確認", description="重篤度（既定は安全側の要確認）。")
+    causality: str = Field(default="否定できない", description="因果（既定は保守的な否定できない）。")
+
+
+class RecodedEvent(BaseModel):
+    """A reviewer's MedDRA PT correction for an existing event (Phase 4f)."""
+
+    term: str
+    pt_code: str
+    pt_name: str
+
+
 class ReviewDecision(BaseModel):
     """The reviewer's decision — the body of POST /cases/{thread_id}/approve and
     the resume payload handed back into the graph."""
@@ -461,6 +479,16 @@ class ReviewDecision(BaseModel):
     ime_promotions: list[ImePromotion] = Field(
         default_factory=list,
         description="承認時にIMEリストへ昇格するPT（今後の症例のcriterion 6に反映）。0件可。",
+    )
+    # Phase 4f: extraction edits (manual; applied deterministically, no re-run).
+    removed_terms: list[str] = Field(
+        default_factory=list, description="誤抽出として削除する有害事象の term。"
+    )
+    added_events: list[AddedEvent] = Field(
+        default_factory=list, description="見落としとして追加する有害事象（判定は手入力）。"
+    )
+    recoded: list[RecodedEvent] = Field(
+        default_factory=list, description="MedDRA PT を修正する事象。"
     )
 
 
@@ -488,6 +516,14 @@ class ImePromotionRecord(BaseModel):
     )
 
 
+class ExtractionEditRecord(BaseModel):
+    """Audit entry for a reviewer's extraction edit (removed/added/recoded)."""
+
+    kind: Literal["removed", "added", "recoded"]
+    term: str
+    detail: str | None = None
+
+
 class ReviewOutcome(BaseModel):
     """The finalized review — attached to the approved/rejected result."""
 
@@ -496,6 +532,7 @@ class ReviewOutcome(BaseModel):
     note: str | None = None
     overrides: list[OverrideRecord] = []
     ime_promotions: list[ImePromotionRecord] = []
+    extraction_edits: list[ExtractionEditRecord] = []
     reviewed_at: datetime
 
 

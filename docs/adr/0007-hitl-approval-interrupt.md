@@ -76,3 +76,18 @@ Adopt **option 3**.
   allow-list. Accepted (small, centralized in `dependencies`).
 - (−) `auto_approve` is a second path through the review gate; kept minimal (one
   conditional) and covered by tests.
+
+## Follow-up (2026-08-25, Phase 4f): reviewer can edit the extraction
+
+The review now also edits the extraction, not just the verdicts: **remove** a
+false-positive event, **re-code** its MedDRA PT (coded_by=手動), or **add** a missed
+event with manually-supplied verdicts (default safe-side 要確認 / 否定できない). Chosen
+"manual, no machine re-assessment" (the user's call) — added events get the
+reviewer's verdicts, not a re-run of the pipeline; the graph does not loop. Applied
+deterministically in `finalize` via `apply_extraction_edits` **before** the verdict
+overrides (an override can target an added event), restructuring every aligned list
+(extraction / meddra / seriousness / causality / expectedness) and dropping removed
+terms from precedent + influence too. Non-destructive audit: `ReviewOutcome.
+extraction_edits` (kind removed/added/recoded + detail). `ReviewDecision` gains
+`removed_terms` / `added_events` / `recoded`; the router validates added-event
+verdicts (422). Machine-assisted add (re-run the single-event pipeline) is deferred.

@@ -48,11 +48,13 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import interrupt
 
 from app.schemas import (
+    AdverseEventMention,
     CaseExtraction,
     CausalityAssessment,
     DrugExpectedness,
     Escalation,
     EventPrecedent,
+    ExtractionEditRecord,
     ImePromotionRecord,
     InfluenceItem,
     MeddraCoding,
@@ -269,6 +271,78 @@ def apply_overrides(
     return seriousness, causality, expectedness, records
 
 
+def apply_extraction_edits(
+    *,
+    extraction: CaseExtraction,
+    meddra: list[MeddraCoding],
+    seriousness: list[SeriousnessAssessment],
+    causality: list[CausalityAssessment],
+    expectedness: list[DrugExpectedness],
+    precedent: list[EventPrecedent],
+    influence: list[InfluenceItem],
+    removed: list[str],
+    added: list[dict],
+    recoded: list[dict],
+) -> tuple:
+    """Apply a reviewer's manual extraction edits (Phase 4f) — remove false
+    positives, re-code a MedDRA PT, add a missed event with manual verdicts. No
+    machine re-assessment; non-destructive audit records are returned. Returns
+    (extraction, meddra, seriousness, causality, expectedness, precedent,
+    influence, records)."""
+    records: list[ExtractionEditRecord] = []
+
+    # 1) REMOVE — drop the term from every aligned list.
+    removed_set = {t for t in removed if t}
+    if removed_set:
+        for t in sorted(removed_set):
+            records.append(ExtractionEditRecord(kind="removed", term=t))
+        extraction = extraction.model_copy(update={
+            "adverse_events": [ae for ae in extraction.adverse_events if ae.term not in removed_set]
+        })
+        meddra = [m for m in meddra if m.term not in removed_set]
+        seriousness = [s for s in seriousness if s.term not in removed_set]
+        causality = [c for c in causality if c.term not in removed_set]
+        expectedness = [
+            de.model_copy(update={"assessments": [a for a in de.assessments if a.term not in removed_set]})
+            for de in expectedness
+        ]
+        precedent = [p for p in precedent if p.term not in removed_set]
+        influence = [i for i in influence if i.term not in removed_set]
+
+    # 2) RECODE — replace the MedDRA PT for an existing event (coded_by=手動).
+    meddra = list(meddra)
+    for rc in recoded:
+        term, code, name = rc.get("term"), rc.get("pt_code"), rc.get("pt_name")
+        for idx, m in enumerate(meddra):
+            if m.term == term:
+                records.append(ExtractionEditRecord(
+                    kind="recoded", term=term, detail=f"{m.pt_code or '—'}→{code}（{name}）"))
+                meddra[idx] = m.model_copy(update={
+                    "pt_code": code, "pt_name_ja": name, "coded_by": "手動"})
+                break
+
+    # 3) ADD — append a reviewer-supplied event with manual verdicts (no re-run).
+    for ev in added:
+        term = ev.get("term")
+        if not term:
+            continue
+        sv = ev.get("seriousness") or "要確認"
+        cv = ev.get("causality") or "否定できない"
+        extraction = extraction.model_copy(update={
+            "adverse_events": list(extraction.adverse_events)
+            + [AdverseEventMention(term=term, source="reported")]
+        })
+        meddra = meddra + [MeddraCoding(
+            term=term, pt_code=ev.get("pt_code"), pt_name_ja=ev.get("pt_name"),
+            coded_by="手動" if ev.get("pt_code") else "該当なし")]
+        seriousness = seriousness + [SeriousnessAssessment(term=term, verdict=sv, rationale="レビュアー追加")]
+        causality = causality + [CausalityAssessment(term=term, verdict=cv, rationale="レビュアー追加")]
+        records.append(ExtractionEditRecord(kind="added", term=term, detail=f"重篤度={sv}／因果={cv}"))
+
+    return (extraction, meddra, seriousness, causality, expectedness,
+            precedent, influence, records)
+
+
 def build_triage_graph(
     *,
     product_master: ProductMasterService,
@@ -389,24 +463,42 @@ def build_triage_graph(
         if action == "reject":
             outcome = ReviewOutcome(
                 status="rejected", reviewer=reviewer, note=decision.get("note"),
-                overrides=[], ime_promotions=promotions, reviewed_at=datetime.now(),
+                overrides=[], ime_promotions=promotions, extraction_edits=[],
+                reviewed_at=datetime.now(),
             )
             return {"status": "rejected", "review_outcome": outcome}
 
-        seriousness_f, causality_f, expectedness_f, records = apply_overrides(
+        # 1) extraction edits (remove / recode / add) restructure the aligned lists;
+        ext, med, ser0, cau0, exp0, prec0, infl0, edit_records = apply_extraction_edits(
+            extraction=state["extraction"],
+            meddra=state.get("meddra", []),
             seriousness=state.get("seriousness", []),
             causality=state.get("causality", []),
             expectedness=state.get("expectedness", []),
+            precedent=state.get("precedent", []),
+            influence=state.get("influence", []),
+            removed=decision.get("removed_terms", []),
+            added=decision.get("added_events", []),
+            recoded=decision.get("recoded", []),
+        )
+        # 2) then verdict overrides apply on the edited set.
+        seriousness_f, causality_f, expectedness_f, records = apply_overrides(
+            seriousness=ser0, causality=cau0, expectedness=exp0,
             overrides=decision.get("overrides", []),
         )
         outcome = ReviewOutcome(
             status="approved", reviewer=reviewer, note=decision.get("note"),
-            overrides=records, ime_promotions=promotions, reviewed_at=datetime.now(),
+            overrides=records, ime_promotions=promotions, extraction_edits=edit_records,
+            reviewed_at=datetime.now(),
         )
         return {
+            "extraction": ext,
+            "meddra": med,
             "seriousness": seriousness_f,
             "causality": causality_f,
             "expectedness": expectedness_f,
+            "precedent": prec0,
+            "influence": infl0,
             "status": "approved",
             "review_outcome": outcome,
         }

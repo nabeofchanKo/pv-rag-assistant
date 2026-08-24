@@ -175,6 +175,12 @@ async def approve_case(
             raise HTTPException(
                 status_code=422, detail="IME昇格には pt_code（コード化済みPT）が必要です。"
             )
+    # Validate manual added-event verdicts against the allowed values.
+    for ev in decision.added_events:
+        if ev.seriousness not in ALLOWED_VERDICTS["seriousness"]:
+            raise HTTPException(status_code=422, detail=f"追加事象の重篤度が不正: {ev.seriousness}")
+        if ev.causality not in ALLOWED_VERDICTS["causality"]:
+            raise HTTPException(status_code=422, detail=f"追加事象の因果が不正: {ev.causality}")
 
     # Perform the IME promotions (approve only) — a reference-side effect done at
     # the boundary, then recorded in the audit trail via the resume payload.
