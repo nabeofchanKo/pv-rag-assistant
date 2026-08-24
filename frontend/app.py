@@ -349,6 +349,69 @@ def _ime_promotion_editor(case: dict, key: str) -> list:
     ]
 
 
+def _extraction_editor(case: dict, key: str):
+    """Editable table over extracted events: remove (checkbox) + fix MedDRA PT.
+    Returns (removed_terms, recoded)."""
+    aes = case["extraction"]["adverse_events"]
+    med = {m["term"]: m for m in (case.get("meddra") or [])}
+    rows = [
+        {
+            "事象": ae["term"],
+            "削除": False,
+            "PTコード": (med.get(ae["term"], {}).get("pt_code") or ""),
+            "PT名": (med.get(ae["term"], {}).get("pt_name_ja") or ""),
+        }
+        for ae in aes
+    ]
+    if not rows:
+        return [], []
+    st.caption("誤抽出は「削除」にチェック。MedDRAが違う場合は PTコード / PT名 を直接修正。")
+    edited = st.data_editor(
+        rows, key=key, hide_index=True, use_container_width=True,
+        column_config={
+            "削除": st.column_config.CheckboxColumn("削除", default=False),
+            "PTコード": st.column_config.TextColumn("PTコード"),
+            "PT名": st.column_config.TextColumn("PT名"),
+        },
+        disabled=["事象"],
+    )
+    removed, recoded = [], []
+    for r, orig in zip(edited, rows):
+        if r["削除"]:
+            removed.append(r["事象"])
+            continue
+        if (r["PTコード"] or "") != (orig["PTコード"] or "") and (r["PTコード"] or "").strip():
+            recoded.append({"term": r["事象"], "pt_code": r["PTコード"].strip(),
+                            "pt_name": (r["PT名"] or r["PTコード"]).strip()})
+    return removed, recoded
+
+
+def _add_event_editor(key: str):
+    """Dynamic table to add missed events with manual verdicts. Returns added_events."""
+    st.caption("見落とし事象を追加（判定は手入力。行を足せます）。")
+    template = [{"事象": "", "PTコード": "", "PT名": "", "重篤度": "要確認", "因果": "否定できない"}]
+    edited = st.data_editor(
+        template, key=key, num_rows="dynamic", hide_index=True, use_container_width=True,
+        column_config={
+            "重篤度": st.column_config.SelectboxColumn("重篤度", options=SER_OPTIONS, required=True),
+            "因果": st.column_config.SelectboxColumn("因果", options=CAU_OPTIONS, required=True),
+        },
+    )
+    added = []
+    for r in edited:
+        term = (r.get("事象") or "").strip()
+        if not term:
+            continue
+        added.append({
+            "term": term,
+            "pt_code": (r.get("PTコード") or "").strip() or None,
+            "pt_name": (r.get("PT名") or "").strip() or None,
+            "seriousness": r.get("重篤度") or "要確認",
+            "causality": r.get("因果") or "否定できない",
+        })
+    return added
+
+
 def render_review(case: dict) -> None:
     """The Phase 4b HITL gate: review the draft, override verdicts, approve/reject."""
     st.divider()
@@ -384,6 +447,15 @@ def render_review(case: dict) -> None:
             )
         else:
             st.caption("上書きなし（ドラフトのまま承認）。")
+        edits = review.get("extraction_edits") or []
+        if edits:
+            st.markdown("**抽出の修正（監査証跡）**")
+            KIND = {"removed": "削除", "added": "追加", "recoded": "PT修正"}
+            st.dataframe(
+                [{"種別": KIND.get(e["kind"], e["kind"]), "事象": e["term"], "詳細": e.get("detail") or "—"}
+                 for e in edits],
+                use_container_width=True, hide_index=True,
+            )
         promotions = review.get("ime_promotions") or []
         if promotions:
             st.markdown("**IMEリストへ昇格したPT（今後の症例に反映）**")
@@ -437,7 +509,12 @@ def render_review(case: dict) -> None:
 
     promotions = _ime_promotion_editor(case, "ov_ime")
 
+    st.markdown("**抽出の修正（任意）** — 削除・MedDRA修正・見落とし追加。")
+    removed_terms, recoded = _extraction_editor(case, "edit_extract")
+    added_events = _add_event_editor("edit_add")
+
     thread_id = case["thread_id"]
+    edits = {"removed_terms": removed_terms, "added_events": added_events, "recoded": recoded}
     col1, col2 = st.columns(2)
     if col1.button("承認する", type="primary"):
         if not reviewer:
@@ -446,7 +523,7 @@ def render_review(case: dict) -> None:
             submit_decision(
                 thread_id,
                 {"action": "approve", "reviewer": reviewer, "note": note or None,
-                 "overrides": overrides, "ime_promotions": promotions},
+                 "overrides": overrides, "ime_promotions": promotions, **edits},
             )
     if col2.button("却下する"):
         if not reviewer:
