@@ -1,0 +1,11 @@
+{
+  "_note": "起案: Claude（要レビュー）。DrugBは自社品でない→expectedness対象外。今回エピソードの3事象のみが対象。過去の薬剤反応(ST合剤/アモキシシリン/MTX)は対象外＝抽出してはならない(拾えば偽陽性)。全て非重篤・投与後発現で否定できない。",
+  "case_id": "ICSR-2025-005",
+  "document": "case_005.txt",
+  "drugs": [],
+  "events": [
+    {"term": "斑状丘疹状皮疹", "pt_codes": ["10037868"], "seriousness": "非重篤", "causality": "否定できない"},
+    {"term": "そう痒症", "pt_codes": ["10037087"], "seriousness": "非重篤", "causality": "否定できない"},
+    {"term": "蕁麻疹", "pt_codes": ["10046735"], "seriousness": "非重篤", "causality": "否定できない"}
+  ]
+}

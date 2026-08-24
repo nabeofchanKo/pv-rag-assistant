@@ -1,0 +1,15 @@
+{
+  "_note": "起案: Claude（要レビュー）。DrugAは自社品でない→自社品該当なし・既知/未知は対象外(expectedness空)。全事象 外来・投与継続中で非重篤、投与後発現で否定できない。lay記述からの抽出のため term ゆれに留意。",
+  "case_id": "ICSR-2025-004",
+  "document": "case_004.txt",
+  "drugs": [],
+  "events": [
+    {"term": "疲労", "pt_codes": ["10016256"], "seriousness": "非重篤", "causality": "否定できない"},
+    {"term": "不眠症", "pt_codes": ["10022437"], "seriousness": "非重篤", "causality": "否定できない"},
+    {"term": "下痢", "pt_codes": ["10012735"], "seriousness": "非重篤", "causality": "否定できない"},
+    {"term": "悪心", "pt_codes": ["10028813"], "seriousness": "非重篤", "causality": "否定できない"},
+    {"term": "錯感覚", "pt_codes": ["10033775"], "seriousness": "非重篤", "causality": "否定できない"},
+    {"term": "快感消失", "pt_codes": ["10002869"], "seriousness": "非重篤", "causality": "否定できない"},
+    {"term": "うつ病", "pt_codes": ["10012378"], "seriousness": "非重篤", "causality": "否定できない"}
+  ]
+}
