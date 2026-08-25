@@ -1,0 +1,10 @@
+{
+  "_note": "起案: Claude（要レビュー）。難症例(E5): 抽出精度。対象は今回の2事象のみ。過去の反応(アモキシシリン発疹2019/手術後の吐き気2021)と花粉症は対象外＝抽出してはならない(拾えば偽陽性)。立ちくらみは重複記述だが1事象。DrugX高血圧薬、いずれも既知・非重篤・投与後発現で否定できない。",
+  "case_id": "ICSR-2025-007",
+  "document": "case_007.txt",
+  "drugs": ["DrugX"],
+  "events": [
+    {"term": "浮動性めまい", "pt_codes": ["10013573"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugX": "既知"}},
+    {"term": "頭痛", "pt_codes": ["10019211"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugX": "既知"}}
+  ]
+}
