@@ -218,17 +218,31 @@ def pct(n, d):
 
 def main():
     gold = load_gold()
+    in_scope = [g for g in gold if not g.get("out_of_scope")]
+    oos = [g for g in gold if g.get("out_of_scope")]
     results = {m: {} for m in MODES}
+    gate = {"pass": 0, "total": len(oos), "bad": []}
     with TestClient(app) as client:
-        for gc in gold:
+        for gc in in_scope:
             # One fresh LLM pass (advisory); applied is derived from the same fresh
             # verdicts, so the A/B reflects influence only, not run-to-run variance.
             advisory = run_case(client, gc["document"], "advisory")
             results["advisory"][gc["document"]] = index_system(advisory)
             results["applied"][gc["document"]] = index_system(derive_applied(advisory))
+        # Out-of-scope cases: verify the own-company hard gate fired (Phase 4g).
+        for gc in oos:
+            content = (SAMPLE_DIR / gc["document"]).read_bytes()
+            r = client.post("/cases/triage", params={"auto_approve": "true"},
+                            files={"file": (gc["document"], content, "text/plain")})
+            r.raise_for_status()
+            status = r.json().get("status")
+            if status == "out_of_scope":
+                gate["pass"] += 1
+            else:
+                gate["bad"].append(f"{gc['document']}={status}")
 
-    scores = {m: score_mode(gold, results[m]) for m in MODES}
-    ab_rows, ab_sum = influence_ab(gold, results["applied"], results["advisory"])
+    scores = {m: score_mode(in_scope, results[m]) for m in MODES}
+    ab_rows, ab_sum = influence_ab(in_scope, results["applied"], results["advisory"])
 
     lines = []
     lines.append("# トリアージ評価（influence A/B ＋ 精度）\n")
@@ -236,6 +250,10 @@ def main():
     lines.append("> LLM実行し、applied は同一の素判定に influence を適用して導出（A/BはLLMの実行揺れでなく")
     lines.append("> influence効果のみを反映）。単一実行スナップショット。`experiments/scripts/triage_eval.py` で再現。\n")
 
+    lines.append("## 自社品ゲート（Phase 4g）\n")
+    bad = f"（誤り: {', '.join(gate['bad'])}）" if gate["bad"] else ""
+    lines.append(f"- 自社品なし症例のハードゲート: **{gate['pass']}/{gate['total']}** が正しく評価対象外{bad}")
+    lines.append("- 以降の精度・A/Bは自社品ありの in-scope 症例のみ。\n")
     lines.append("## Part 1 — influence A/B（applied vs advisory）\n")
     lines.append(f"- 変化した判定: **{ab_sum['changed']}** 件（安全側↑ {ab_sum['safe_up']} / 格下げ↓ **{ab_sum['downgrade']}**）")
     lines.append("- 期待: 格下げ0（precedentは安全側ナッジのみ、IMEは重篤化のみ）\n")
@@ -275,10 +293,10 @@ def main():
         lines.append(f"| {pc['doc']} | {pc['recall']} | {extra} | {under} |")
     lines.append("")
 
-    n_events = sum(len(gc["events"]) for gc in gold)
+    n_events = sum(len(gc["events"]) for gc in in_scope)
     lines.append("## 限界と解釈（重要）\n")
     lines.append("この結果は**バリデーションではなく、安全インバリアントの実証＋回帰ベースライン**として読むこと。")
-    lines.append(f"- **標本が小規模**（{len(gold)}症例・{n_events}事象）。百分率は高分散で、「100%」＝「その試行で誤りなし」。信頼区間は広い。")
+    lines.append(f"- **標本が小規模**（in-scope {len(in_scope)}症例・{n_events}事象、＋自社品なし {len(oos)}症例のゲート確認）。百分率は高分散で、「100%」＝「その試行で誤りなし」。信頼区間は広い。")
     lines.append("- **ゴールドは単一起案（要独立PVレビュー）＝循環リスク**。システムの保守的ルールを作った思考で正解も付けているため、")
     lines.append("  高い一致は「規制上の真実との一致」ではなく「作者の判断との一致」を含む。天井（アノテータ間一致）は未測定。")
     lines.append("- **症例は合成・整った例**。現場の矛盾・欠測・OCR・境界事例は未収載＝ハッピーパス寄り。")

@@ -133,7 +133,7 @@ def under_and_agree(gold_case, sysmap, terms):
 
 
 def main():
-    gold = load_gold()
+    gold = [g for g in load_gold() if not g.get("out_of_scope")]  # verdict-based: skip out-of-scope
     rows, changes = [], []
     tot = {"adv_a": 0, "adv_t": 0, "app_a": 0, "app_t": 0,
            "adv_u": 0, "app_u": 0, "downgrade": 0, "changed": 0}

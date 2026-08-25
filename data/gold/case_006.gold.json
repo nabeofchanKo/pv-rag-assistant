@@ -1,10 +1,11 @@
 {
-  "_note": "起案: Claude（要レビュー）。難症例(E5): 婉曲表現の重篤＋未知。全身のひきつけ発作=痙攣発作。ICU入院・『生命に関わりかねない』→企業評価は重篤（報告者は非重篤＝過小の罠）。DrugZ添付文書にけいれん記載なし→未知。悪心/頭痛はDrugZに記載あり=既知・非重篤。",
+  "_note": "起案: Claude／PVレビュー反映。難症例(E5): 婉曲表現の重篤＋未知。全身のひきつけ発作=痙攣発作。ICU入院・『生命に関わりかねない』→重篤（報告者は非重篤＝過小の罠）。DrugZにけいれん記載なし→未知。腎機能の悪化を追加(レビュー指摘・非重篤・否定できない・記載なし=未知)。悪心/頭痛はDrugZ記載あり=既知・非重篤。",
   "case_id": "ICSR-2025-006",
   "document": "case_006.txt",
   "drugs": ["DrugZ"],
   "events": [
     {"term": "全身のひきつけ発作", "pt_codes": ["10039906"], "seriousness": "重篤", "causality": "否定できない", "expectedness": {"DrugZ": "未知"}},
+    {"term": "腎機能の悪化", "pt_codes": ["10023506", "10038359"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugZ": "未知"}},
     {"term": "悪心", "pt_codes": ["10028813"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugZ": "既知"}},
     {"term": "頭痛", "pt_codes": ["10019211"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugZ": "既知"}}
   ]

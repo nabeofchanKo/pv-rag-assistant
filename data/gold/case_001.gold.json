@@ -4,7 +4,7 @@
   "document": "case_001.txt",
   "drugs": ["DrugX"],
   "events": [
-    {"term": "頭痛", "pt_codes": ["10019211"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugX": "既知"}},
+    {"term": "頭痛（重度）", "pt_codes": ["10019211"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugX": "既知"}},
     {"term": "浮動性めまい", "pt_codes": ["10013573"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugX": "既知"}},
     {"term": "悪心", "pt_codes": ["10028813"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugX": "未知"}}
   ]

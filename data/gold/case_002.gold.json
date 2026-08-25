@@ -6,8 +6,8 @@
   "events": [
     {"term": "肝機能異常", "pt_codes": ["10019837", "10072268"], "seriousness": "重篤", "causality": "否定できない", "expectedness": {"DrugY": "既知"}},
     {"term": "黄疸", "pt_codes": ["10023126"], "seriousness": "重篤", "causality": "否定できない", "expectedness": {"DrugY": "既知"}},
-    {"term": "疲労", "pt_codes": ["10016256"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugY": "未知"}},
-    {"term": "腹痛", "pt_codes": ["10000059"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugY": "未知"}},
-    {"term": "そう痒症", "pt_codes": ["10037087"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugY": "既知"}}
+    {"term": "疲労（重度）", "pt_codes": ["10016256"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugY": "未知"}},
+    {"term": "腹痛（右上腹部）", "pt_codes": ["10000059"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugY": "未知"}},
+    {"term": "そう痒症（全身性）", "pt_codes": ["10037087"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugY": "既知"}}
   ]
 }
