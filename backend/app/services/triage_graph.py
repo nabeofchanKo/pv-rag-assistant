@@ -365,6 +365,14 @@ def build_triage_graph(
     def product_match_node(state: TriageState) -> dict:
         return {"product_match": product_master.match(state["text"])}
 
+    def out_of_scope_node(state: TriageState) -> dict:
+        # No own-company product → hard-gate: skip all evaluation (Phase 4g).
+        return {"status": "out_of_scope"}
+
+    def _route_scope(state: TriageState) -> str:
+        pm = state.get("product_match")
+        return "in_scope" if (pm and pm.is_company_product_present) else "out_of_scope"
+
     def extraction_node(state: TriageState) -> dict:
         return {"extraction": extraction.extract(state["text"])}
 
@@ -505,6 +513,7 @@ def build_triage_graph(
 
     graph = StateGraph(TriageState)
     graph.add_node("product_match", product_match_node)
+    graph.add_node("out_of_scope", out_of_scope_node)
     graph.add_node("extraction", extraction_node)
     graph.add_node("meddra", meddra_node)
     graph.add_node("seriousness", seriousness_node)
@@ -515,15 +524,19 @@ def build_triage_graph(
     graph.add_node("human_review", human_review_node)
     graph.add_node("finalize", finalize_node)
 
-    # product_match ∥ extraction fan out from START.
+    # Own-company scope gate (Phase 4g): no company product → skip all evaluation.
     graph.add_edge(START, "product_match")
-    graph.add_edge(START, "extraction")
-    # meddra → seriousness chain (seriousness also reads extraction, already done).
+    graph.add_conditional_edges(
+        "product_match", _route_scope,
+        {"in_scope": "extraction", "out_of_scope": "out_of_scope"},
+    )
+    graph.add_edge("out_of_scope", END)
+    # In scope: extraction feeds meddra→seriousness and (with product_match, already
+    # done upstream) causality / expectedness.
     graph.add_edge("extraction", "meddra")
     graph.add_edge("meddra", "seriousness")
-    # causality / expectedness join on both product_match AND extraction.
-    graph.add_edge(["product_match", "extraction"], "causality")
-    graph.add_edge(["product_match", "extraction"], "expectedness")
+    graph.add_edge("extraction", "causality")
+    graph.add_edge("extraction", "expectedness")
     # All three assessment branches join at the precedent lookup (needs the
     # verdicts + coded PTs); the influence layer then folds past data in (or
     # annotates), and the human-review gate follows.

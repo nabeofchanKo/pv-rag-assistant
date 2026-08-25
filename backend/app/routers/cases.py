@@ -14,7 +14,13 @@ from app.dependencies import (
     get_triage_graph,
 )
 from app.exceptions import IngestionError, UnsupportedFileTypeError
-from app.schemas import ImePromotionRecord, ReviewDecision, TriageDraft, TriageResult
+from app.schemas import (
+    ImePromotionRecord,
+    OutOfScopeResult,
+    ReviewDecision,
+    TriageDraft,
+    TriageResult,
+)
 from app.services.ime import ImeReference
 from app.services.ingestion import IngestionService
 from app.services.precedent import PrecedentService, record_from_result
@@ -40,6 +46,14 @@ def _content_fields(values: dict) -> dict:
         precedent=values.get("precedent", []),
         influence_mode=values.get("influence_mode", "applied"),
         influence=values.get("influence", []),
+        source_text=values.get("text", ""),
+    )
+
+
+def _out_of_scope(thread_id: str, values: dict) -> OutOfScopeResult:
+    return OutOfScopeResult(
+        thread_id=thread_id,
+        product_match=values["product_match"],
         source_text=values.get("text", ""),
     )
 
@@ -73,7 +87,7 @@ async def triage_endpoint(
     influence: str = "applied",
     ingestion: IngestionService = Depends(get_ingestion_service),
     graph: CompiledStateGraph = Depends(get_triage_graph),
-) -> TriageDraft | TriageResult:
+) -> TriageDraft | TriageResult | OutOfScopeResult:
     """Ingest a case (PDF / email / image / text) and start a triage run.
 
     The six evaluation steps run inside the LangGraph triage graph, which then
@@ -114,6 +128,8 @@ async def triage_endpoint(
     )
     values = graph.get_state(_config(thread_id)).values
 
+    if values.get("status") == "out_of_scope":  # no own-company product → hard-gated
+        return _out_of_scope(thread_id, values)
     if values.get("status"):  # auto_approve ran the review gate straight through
         return _result(thread_id, values)
     return _draft(thread_id, values)
@@ -123,13 +139,15 @@ async def triage_endpoint(
 async def get_case(
     thread_id: str,
     graph: CompiledStateGraph = Depends(get_triage_graph),
-) -> TriageDraft | TriageResult:
+) -> TriageDraft | TriageResult | OutOfScopeResult:
     """Reload a triage run by thread id — its draft (awaiting review) or its
     finalized result. Backed by the checkpointer, so it survives restarts."""
     snapshot = graph.get_state(_config(thread_id))
     values = snapshot.values
     if not values:
         raise HTTPException(status_code=404, detail=f"unknown thread_id: {thread_id}")
+    if values.get("status") == "out_of_scope":
+        return _out_of_scope(thread_id, values)
     if values.get("status"):
         return _result(thread_id, values)
     return _draft(thread_id, values)

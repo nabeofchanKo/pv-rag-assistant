@@ -566,8 +566,19 @@ with triage_tab:
 
     if "case" in st.session_state:
         st.divider()
-        render_triage(st.session_state["case"])
-        render_review(st.session_state["case"])
+        case = st.session_state["case"]
+        if case.get("status") == "out_of_scope":
+            st.warning("⛔ 評価対象外：自社品が使用されていません（自社品判定でヒットなし）。")
+            if case.get("reason"):
+                st.caption(case["reason"])
+            with st.expander("読み取ったテキスト（出典）"):
+                st.text(case.get("source_text", ""))
+            if st.button("別の症例を評価する"):
+                st.session_state.pop("case", None)
+                st.rerun()
+        else:
+            render_triage(case)
+            render_review(case)
 
 
 with rag_tab:
