@@ -107,7 +107,7 @@ def score_run(gold, runs_by_doc_single):
 
 
 def main():
-    gold = load_gold()
+    gold = [g for g in load_gold() if not g.get("out_of_scope")]  # verdict-based: skip out-of-scope
     # runs[k][doc] = index
     runs = [dict() for _ in range(K)]
     with TestClient(app) as client:

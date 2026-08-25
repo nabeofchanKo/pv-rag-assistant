@@ -109,7 +109,7 @@ def score(gold, sysmap):
 
 
 def main():
-    gold = load_gold()
+    gold = [g for g in load_gold() if not g.get("out_of_scope")]  # verdict-based: skip out-of-scope
     llm = ChatOpenAI(model="gpt-4o", temperature=0.0, api_key=settings.openai_api_key)
     chain = llm.with_structured_output(BaselineTriage)
 
