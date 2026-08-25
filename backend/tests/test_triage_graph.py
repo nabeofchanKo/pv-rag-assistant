@@ -163,6 +163,17 @@ def test_causality_receives_suspect_drugs():
     assert causality.seen_drugs == ["DrugX"]
 
 
+def test_no_company_product_is_hard_gated_out_of_scope():
+    # No own-company product -> gate out, skip ALL evaluation (Phase 4g).
+    graph = _build(FakeProductMaster([]), FakeExtraction([_ae("頭痛")]), FakeSeriousness(), FakeCausality())
+
+    final = graph.invoke({"text": "t", "document_name": "c.txt", "auto_approve": True})
+
+    assert final.get("status") == "out_of_scope"
+    assert final["product_match"].is_company_product_present is False
+    assert "extraction" not in final and "seriousness" not in final  # evaluation skipped
+
+
 def test_no_adverse_events_short_circuits_downstream():
     graph = _build(FakeProductMaster(_drugx()), FakeExtraction([]), FakeSeriousness(), FakeCausality())
 

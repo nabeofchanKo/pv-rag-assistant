@@ -104,7 +104,11 @@ class Patient(BaseModel):
 
 class AdverseEventCore(BaseModel):
     term: str = Field(
-        description="有害事象の名称。報告書の記載どおりに（例：頭痛、嘔吐、肝機能異常）。",
+        description=(
+            "有害事象の名称。報告書の記載どおりに、修飾語（部位・性状・程度等）も省略せず"
+            "転記する（例：頭痛（重度）、そう痒症（全身性）、鼻出血（反復性）、徐脈（症候性））。"
+            "併記された英語名（例：（Pruritus））は含めない。"
+        ),
     )
     onset_date: str | None = Field(
         default=None,
@@ -550,3 +554,15 @@ class TriageResult(TriageResponse):
     thread_id: str
     status: Literal["approved", "rejected"]
     review: ReviewOutcome
+
+
+class OutOfScopeResult(BaseModel):
+    """Returned when no own-company product is involved — the case is hard-gated
+    out and NO evaluation (extraction / MedDRA / the four judgments) is run
+    (Phase 4g). Own-company scoping is a prerequisite for company assessment."""
+
+    thread_id: str
+    status: Literal["out_of_scope"] = "out_of_scope"
+    product_match: ProductMatchResult
+    reason: str = "自社品が使用されていないため評価対象外（自社品判定でヒットなし）"
+    source_text: str
