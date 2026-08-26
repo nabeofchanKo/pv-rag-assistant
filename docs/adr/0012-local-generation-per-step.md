@@ -70,8 +70,25 @@ stay on the frontier model. This vindicates the per-step-selection architecture 
 0004/0005 split of LLM-interpret vs deterministic-decide is what lets the cheap steps
 degrade gracefully).
 
-Per-step *local* overrides (mix local + OpenAI in one run) are the natural next wiring
-but are deferred — the benchmark first had to say which steps a local model may own.
+### Follow-up (2026-08-26): hybrid wired
+
+The per-step split is now implemented. `chat_provider="hybrid"` runs the steps in
+`settings.local_generation_steps` (default `extraction,narrative,meddra` — the winner
+ELYZA-JP-8B) on the local model and every other step, crucially the three clinical
+judgments, on OpenAI. `build_chat_model(openai_model, step=...)` gates on the step name;
+`ollama_chat_model` now defaults to ELYZA-JP-8B (the bench winner). Verified end-to-end
+(case_001, hybrid): HTTP 200 in ~37s, clean patient age (`65歳` — no qwen-style
+garble), all six sections produced. **The judgment verdicts are byte-for-byte the same
+code+models as the validated OpenAI baseline, so 過小0 is preserved by construction.**
+A confirmation triage_eval in hybrid mode (`experiments/triage_eval_hybrid.md`) holds it:
+**過小 seriousness/causality/expectedness = 0/0/0**, MedDRA (ELYZA) 100% (15/15), the
+three judgments matching the OpenAI baseline. **Honest caveat: ELYZA extraction recall
+is variable — 91% in the step bench but 65% (15/23) in this run, with 8 false-positive
+extras** — so the local-extraction tier leans harder on the HITL extraction editing
+(Phase 4f) to recover missed/spurious events; a missed event is an extraction gap, not a
+judgment under-call. Net: the shipped cost×privacy option runs the high-volume
+transcription/coding on-prem and keeps the safety-critical judgments (and the safety
+invariant) on the frontier model, with HITL as the safety net for local extraction noise.
 
 ## Consequences
 

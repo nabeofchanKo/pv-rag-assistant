@@ -64,26 +64,26 @@ def get_embeddings() -> Embeddings:
     raise ValueError(f"Unknown embedding_provider: {settings.embedding_provider!r}")
 
 
-def build_chat_model(openai_model: str) -> BaseChatModel:
+def build_chat_model(openai_model: str, step: str | None = None) -> BaseChatModel:
     """Build a chat model for a pipeline step, dispatched on settings.chat_provider.
 
     - "openai": ChatOpenAI with the step's own model (per-step selection preserved).
     - "ollama": ChatOllama with the single settings.ollama_chat_model for EVERY step
       (the per-step openai_model arg is ignored) — the "whole pipeline on one local
-      model" mode the model-comparison bench drives. num_ctx is raised from Ollama's
-      2048 default so a full case + long system prompt is not silently truncated.
+      model" mode the model-comparison bench drives.
+    - "hybrid": ChatOllama only when ``step`` is in settings.local_steps, else OpenAI —
+      the benchmark-driven split (ADR 0012: transcription/coding local, the three
+      clinical judgments stay on OpenAI).
 
-    Every service calls llm.with_structured_output(Schema); ChatOllama implements it
-    (Ollama native structured output), which is the compatibility point 5b validates.
+    ChatOllama raises num_ctx from Ollama's 2048 default (a full case + long system
+    prompt would be silently truncated) and caps num_predict + a client timeout so a
+    local model can't run away or wedge Ollama's queue. Every service calls
+    llm.with_structured_output(Schema); ChatOllama implements it (Ollama native
+    structured output), the compatibility point 5b validates.
     """
     provider = settings.chat_provider.lower()
-    if provider == "openai":
-        return ChatOpenAI(
-            model=openai_model,
-            temperature=0.0,
-            api_key=settings.openai_api_key,
-        )
-    if provider == "ollama":
+    use_local = provider == "ollama" or (provider == "hybrid" and step in settings.local_steps)
+    if use_local:
         from langchain_ollama import ChatOllama
 
         return ChatOllama(
@@ -94,13 +94,19 @@ def build_chat_model(openai_model: str) -> BaseChatModel:
             num_predict=settings.ollama_num_predict,
             client_kwargs={"timeout": settings.ollama_request_timeout},
         )
+    if provider in ("openai", "hybrid"):
+        return ChatOpenAI(
+            model=openai_model,
+            temperature=0.0,
+            api_key=settings.openai_api_key,
+        )
     raise ValueError(f"Unknown chat_provider: {settings.chat_provider!r}")
 
 
 @lru_cache
 def get_chat_model() -> BaseChatModel:
     """Chat model for RAG Q&A generation (swappable via settings.chat_provider)."""
-    return build_chat_model(settings.openai_chat_model)
+    return build_chat_model(settings.openai_chat_model, step="chat")
 
 
 @lru_cache
@@ -153,13 +159,13 @@ def get_generator_service() -> GeneratorService:
 @lru_cache
 def get_extraction_model() -> BaseChatModel:
     """Model for the reported-events extraction call (swappable via settings)."""
-    return build_chat_model(settings.openai_extraction_model)
+    return build_chat_model(settings.openai_extraction_model, step="extraction")
 
 
 @lru_cache
 def get_narrative_model() -> BaseChatModel:
     """Model for the narrative-diff call (harder semantic step; swappable)."""
-    return build_chat_model(settings.openai_narrative_model)
+    return build_chat_model(settings.openai_narrative_model, step="narrative")
 
 
 def get_extraction_service() -> ExtractionService:
@@ -202,7 +208,7 @@ def get_label_index_service() -> LabelIndexService:
 @lru_cache
 def get_expectedness_model() -> BaseChatModel:
     """Model for the grounded 既知/未知 judgment call (swappable via settings)."""
-    return build_chat_model(settings.openai_expectedness_model)
+    return build_chat_model(settings.openai_expectedness_model, step="expectedness")
 
 
 def get_expectedness_service() -> ExpectednessService:
@@ -237,7 +243,7 @@ def get_meddra_retriever() -> HybridMeddraRetriever:
 @lru_cache
 def get_meddra_model() -> BaseChatModel:
     """Model for the MedDRA candidate-selection call (swappable via settings)."""
-    return build_chat_model(settings.openai_meddra_model)
+    return build_chat_model(settings.openai_meddra_model, step="meddra")
 
 
 def get_meddra_coding_service() -> MeddraCodingService:
@@ -261,7 +267,7 @@ def get_ime_reference() -> ImeReference:
 @lru_cache
 def get_seriousness_model() -> BaseChatModel:
     """Model for the E2A criteria interpretation call (swappable via settings)."""
-    return build_chat_model(settings.openai_seriousness_model)
+    return build_chat_model(settings.openai_seriousness_model, step="seriousness")
 
 
 def get_seriousness_service() -> SeriousnessService:
@@ -282,7 +288,7 @@ def get_influence_service() -> InfluenceService:
 @lru_cache
 def get_causality_model() -> BaseChatModel:
     """Model for the temporal causality call (swappable via settings)."""
-    return build_chat_model(settings.openai_causality_model)
+    return build_chat_model(settings.openai_causality_model, step="causality")
 
 
 def get_causality_service() -> CausalityService:

@@ -17,13 +17,21 @@ class Settings(BaseSettings):
     openai_embedding_model: str = "text-embedding-3-small"  # 1536-dim
     ollama_embedding_model: str = "bge-m3"                  # 1024-dim, multilingual (strong JP)
 
-    # Chat / generation model (swappable: "openai" now, local via Ollama for 5b).
-    # When chat_provider="ollama", ALL generation steps use ollama_chat_model (the
-    # per-step openai_*_model names below are ignored) — this is the "run the whole
-    # pipeline on one local model" mode that the model-comparison bench drives.
-    chat_provider: str = "openai"          # "openai" | "ollama"
+    # Chat / generation model provider. Phase 5b:
+    #   "openai" — every step on OpenAI (default).
+    #   "ollama" — every step on the single ollama_chat_model (whole-pipeline-local;
+    #              the mode the model-comparison bench drives).
+    #   "hybrid" — steps in local_generation_steps run local; the rest run OpenAI.
+    # The per-step comparison (ADR 0012) found no local 7-8B preserves 過小0 on the
+    # judgment axes, but extraction/coding hold — so hybrid keeps the three judgments
+    # (seriousness/causality/expectedness) on OpenAI and moves the rest local.
+    chat_provider: str = "openai"          # "openai" | "ollama" | "hybrid"
     openai_chat_model: str = "gpt-4o-mini"
-    ollama_chat_model: str = "qwen2.5:7b"  # first local generation candidate (Phase 5b)
+    # Best local generation model per the 5b bench (ELYZA-JP-8B; JP-tuned Llama-3).
+    ollama_chat_model: str = "hf.co/elyza/Llama-3-ELYZA-JP-8B-GGUF:latest"
+    # Which steps run on the local model when chat_provider="hybrid" (comma-separated).
+    # Default = transcription + coding (no clinical judgment); judgments stay on OpenAI.
+    local_generation_steps: str = "extraction,narrative,meddra"
 
     # Local model runtime (Ollama exposes an OpenAI-compatible server + bundles its
     # own CUDA runtime, so no torch install is needed in this venv). Phase 5.
@@ -119,6 +127,11 @@ class Settings(BaseSettings):
     def chroma_dir(self) -> str:
         """Provider-scoped persist dir, e.g. ./chroma_db/openai__text-embedding-3-small."""
         return str(Path(self.chroma_persist_dir) / self.embedding_id)
+
+    @property
+    def local_steps(self) -> set[str]:
+        """Step names that run on the local model in hybrid mode (parsed set)."""
+        return {s.strip() for s in self.local_generation_steps.split(",") if s.strip()}
 
 
 settings = Settings()
