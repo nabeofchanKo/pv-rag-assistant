@@ -49,3 +49,21 @@ def test_per_step_factory_follows_provider(monkeypatch):
         assert isinstance(dependencies.get_seriousness_model(), ChatOllama)
     finally:
         dependencies.get_seriousness_model.cache_clear()
+
+
+def test_hybrid_routes_only_local_steps_to_ollama(monkeypatch):
+    """hybrid: steps in local_generation_steps go local, judgments stay on OpenAI."""
+    from langchain_ollama import ChatOllama
+
+    monkeypatch.setattr(dependencies.settings, "chat_provider", "hybrid")
+    monkeypatch.setattr(dependencies.settings, "local_generation_steps", "extraction,narrative,meddra")
+    # transcription/coding -> local
+    assert isinstance(dependencies.build_chat_model("gpt-4o-mini", step="extraction"), ChatOllama)
+    assert isinstance(dependencies.build_chat_model("gpt-4o-mini", step="meddra"), ChatOllama)
+    # the three clinical judgments -> OpenAI with their own per-step model
+    ser = dependencies.build_chat_model("gpt-4o", step="seriousness")
+    assert isinstance(ser, ChatOpenAI) and ser.model_name == "gpt-4o"
+    assert isinstance(dependencies.build_chat_model("gpt-4o", step="causality"), ChatOpenAI)
+    assert isinstance(dependencies.build_chat_model("gpt-4o-mini", step="expectedness"), ChatOpenAI)
+    # a step with no name (or 'chat') is never local
+    assert isinstance(dependencies.build_chat_model("gpt-4o-mini", step="chat"), ChatOpenAI)
