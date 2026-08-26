@@ -42,11 +42,26 @@ from app.services.triage_graph import build_triage_graph
 
 @lru_cache
 def get_embeddings() -> Embeddings:
-    """Return the embedding model. Swappable via settings.embedding_provider."""
-    return OpenAIEmbeddings(
-        model=settings.openai_embedding_model,
-        api_key=settings.openai_api_key,
-    )
+    """Return the embedding model, dispatched on settings.embedding_provider.
+
+    - "openai": text-embedding-3-small (cloud; case text leaves the machine).
+    - "ollama": a local model (e.g. bge-m3) served by Ollama — on-prem/privacy tier.
+      Imported lazily so langchain-ollama is only required when actually selected.
+    """
+    provider = settings.embedding_provider.lower()
+    if provider == "openai":
+        return OpenAIEmbeddings(
+            model=settings.openai_embedding_model,
+            api_key=settings.openai_api_key,
+        )
+    if provider == "ollama":
+        from langchain_ollama import OllamaEmbeddings
+
+        return OllamaEmbeddings(
+            model=settings.ollama_embedding_model,
+            base_url=settings.ollama_base_url,
+        )
+    raise ValueError(f"Unknown embedding_provider: {settings.embedding_provider!r}")
 
 
 @lru_cache
@@ -97,7 +112,7 @@ def get_chunker() -> FixedLengthChunker:
 def get_retriever_service() -> RetrieverService:
     return RetrieverService(
         embeddings=get_embeddings(),
-        persist_dir=settings.chroma_persist_dir,
+        persist_dir=settings.chroma_dir,
         collection_name=settings.collection_name,
     )
 
@@ -148,7 +163,7 @@ def get_label_retriever_service() -> RetrieverService:
     """Retriever over the drug-label collection (separate from case documents)."""
     return RetrieverService(
         embeddings=get_embeddings(),
-        persist_dir=settings.chroma_persist_dir,
+        persist_dir=settings.chroma_dir,
         collection_name=settings.label_collection_name,
     )
 
@@ -197,7 +212,7 @@ def get_meddra_retriever() -> HybridMeddraRetriever:
     return HybridMeddraRetriever(
         dictionary=get_meddra_dictionary(),
         embeddings=get_embeddings(),
-        persist_dir=settings.chroma_persist_dir,
+        persist_dir=settings.chroma_dir,
         collection_name=settings.meddra_collection_name,
     )
 
