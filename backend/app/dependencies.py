@@ -64,14 +64,43 @@ def get_embeddings() -> Embeddings:
     raise ValueError(f"Unknown embedding_provider: {settings.embedding_provider!r}")
 
 
+def build_chat_model(openai_model: str) -> BaseChatModel:
+    """Build a chat model for a pipeline step, dispatched on settings.chat_provider.
+
+    - "openai": ChatOpenAI with the step's own model (per-step selection preserved).
+    - "ollama": ChatOllama with the single settings.ollama_chat_model for EVERY step
+      (the per-step openai_model arg is ignored) — the "whole pipeline on one local
+      model" mode the model-comparison bench drives. num_ctx is raised from Ollama's
+      2048 default so a full case + long system prompt is not silently truncated.
+
+    Every service calls llm.with_structured_output(Schema); ChatOllama implements it
+    (Ollama native structured output), which is the compatibility point 5b validates.
+    """
+    provider = settings.chat_provider.lower()
+    if provider == "openai":
+        return ChatOpenAI(
+            model=openai_model,
+            temperature=0.0,
+            api_key=settings.openai_api_key,
+        )
+    if provider == "ollama":
+        from langchain_ollama import ChatOllama
+
+        return ChatOllama(
+            model=settings.ollama_chat_model,
+            base_url=settings.ollama_base_url,
+            temperature=0.0,
+            num_ctx=settings.ollama_num_ctx,
+            num_predict=settings.ollama_num_predict,
+            client_kwargs={"timeout": settings.ollama_request_timeout},
+        )
+    raise ValueError(f"Unknown chat_provider: {settings.chat_provider!r}")
+
+
 @lru_cache
 def get_chat_model() -> BaseChatModel:
-    """Return the chat model. Swappable via settings.chat_provider."""
-    return ChatOpenAI(
-        model=settings.openai_chat_model,
-        temperature=0.0,
-        api_key=settings.openai_api_key,
-    )
+    """Chat model for RAG Q&A generation (swappable via settings.chat_provider)."""
+    return build_chat_model(settings.openai_chat_model)
 
 
 @lru_cache
@@ -124,21 +153,13 @@ def get_generator_service() -> GeneratorService:
 @lru_cache
 def get_extraction_model() -> BaseChatModel:
     """Model for the reported-events extraction call (swappable via settings)."""
-    return ChatOpenAI(
-        model=settings.openai_extraction_model,
-        temperature=0.0,
-        api_key=settings.openai_api_key,
-    )
+    return build_chat_model(settings.openai_extraction_model)
 
 
 @lru_cache
 def get_narrative_model() -> BaseChatModel:
     """Model for the narrative-diff call (harder semantic step; swappable)."""
-    return ChatOpenAI(
-        model=settings.openai_narrative_model,
-        temperature=0.0,
-        api_key=settings.openai_api_key,
-    )
+    return build_chat_model(settings.openai_narrative_model)
 
 
 def get_extraction_service() -> ExtractionService:
@@ -181,11 +202,7 @@ def get_label_index_service() -> LabelIndexService:
 @lru_cache
 def get_expectedness_model() -> BaseChatModel:
     """Model for the grounded 既知/未知 judgment call (swappable via settings)."""
-    return ChatOpenAI(
-        model=settings.openai_expectedness_model,
-        temperature=0.0,
-        api_key=settings.openai_api_key,
-    )
+    return build_chat_model(settings.openai_expectedness_model)
 
 
 def get_expectedness_service() -> ExpectednessService:
@@ -220,11 +237,7 @@ def get_meddra_retriever() -> HybridMeddraRetriever:
 @lru_cache
 def get_meddra_model() -> BaseChatModel:
     """Model for the MedDRA candidate-selection call (swappable via settings)."""
-    return ChatOpenAI(
-        model=settings.openai_meddra_model,
-        temperature=0.0,
-        api_key=settings.openai_api_key,
-    )
+    return build_chat_model(settings.openai_meddra_model)
 
 
 def get_meddra_coding_service() -> MeddraCodingService:
@@ -248,11 +261,7 @@ def get_ime_reference() -> ImeReference:
 @lru_cache
 def get_seriousness_model() -> BaseChatModel:
     """Model for the E2A criteria interpretation call (swappable via settings)."""
-    return ChatOpenAI(
-        model=settings.openai_seriousness_model,
-        temperature=0.0,
-        api_key=settings.openai_api_key,
-    )
+    return build_chat_model(settings.openai_seriousness_model)
 
 
 def get_seriousness_service() -> SeriousnessService:
@@ -273,11 +282,7 @@ def get_influence_service() -> InfluenceService:
 @lru_cache
 def get_causality_model() -> BaseChatModel:
     """Model for the temporal causality call (swappable via settings)."""
-    return ChatOpenAI(
-        model=settings.openai_causality_model,
-        temperature=0.0,
-        api_key=settings.openai_api_key,
-    )
+    return build_chat_model(settings.openai_causality_model)
 
 
 def get_causality_service() -> CausalityService:

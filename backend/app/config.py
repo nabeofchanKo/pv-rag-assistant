@@ -17,13 +17,26 @@ class Settings(BaseSettings):
     openai_embedding_model: str = "text-embedding-3-small"  # 1536-dim
     ollama_embedding_model: str = "bge-m3"                  # 1024-dim, multilingual (strong JP)
 
-    # Chat / generation model (swappable: "openai" now, local e.g. "medllama" later)
-    chat_provider: str = "openai"
+    # Chat / generation model (swappable: "openai" now, local via Ollama for 5b).
+    # When chat_provider="ollama", ALL generation steps use ollama_chat_model (the
+    # per-step openai_*_model names below are ignored) — this is the "run the whole
+    # pipeline on one local model" mode that the model-comparison bench drives.
+    chat_provider: str = "openai"          # "openai" | "ollama"
     openai_chat_model: str = "gpt-4o-mini"
+    ollama_chat_model: str = "qwen2.5:7b"  # first local generation candidate (Phase 5b)
 
     # Local model runtime (Ollama exposes an OpenAI-compatible server + bundles its
     # own CUDA runtime, so no torch install is needed in this venv). Phase 5.
     ollama_base_url: str = "http://localhost:11434"
+    # Ollama's default context window is only 2048 tokens — too small for a full ICSR
+    # plus our long system prompts, which would be silently truncated. qwen2.5 handles
+    # 32k; 8192 comfortably fits a case + prompt without wasting VRAM.
+    ollama_num_ctx: int = 8192
+    # Cap generation length + request time so a local model can't run away (constrained
+    # decoding can loop) or wedge Ollama's request queue. 2048 fits any of our
+    # structured outputs; a truncated/failed call surfaces as an error, not a hang.
+    ollama_num_predict: int = 2048
+    ollama_request_timeout: int = 120
 
     # Vision model used for image OCR (gpt-4o is stronger on handwriting; mini is cheaper)
     openai_vision_model: str = "gpt-4o"
