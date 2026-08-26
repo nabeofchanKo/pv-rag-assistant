@@ -45,9 +45,10 @@ OUT = ROOT / "experiments" / "generation_comparison.md"
 RESULT_MARKER = "@@RESULT@@"
 # A single structured-output call must not hang the whole bench (a local model can
 # wedge an HTTP request). Bound each call; on timeout it is counted as a failure and
-# the bench moves on (the stuck daemon thread dies with the process). 90s is generous
-# for a real qwen call (~10-30s) while still catching a true hang.
-CALL_TIMEOUT_S = 90
+# the bench moves on (the stuck daemon thread dies with the process). 60s is generous
+# for a real call (~10-30s) while catching a hang faster (a weak model can hang ~half
+# its calls, so timeout x #calls dominates the multi-model wall-clock).
+CALL_TIMEOUT_S = 60
 
 
 def _call_with_timeout(fn, timeout):

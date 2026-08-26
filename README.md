@@ -60,7 +60,7 @@ The pipeline is exposed via a **FastAPI** backend and consumed by a **Streamlit*
 | Text splitting      | LangChain `TokenTextSplitter` (tiktoken cl100k_base)|
 | Embeddings          | OpenAI `text-embedding-3-small` (default) — or local `bge-m3` via Ollama (opt-in, on-prem); swappable behind DI |
 | Vector store        | Chroma (via langchain-chroma, cosine)              |
-| Generation          | OpenAI `gpt-4o-mini` (via langchain-openai, temp 0)|
+| Generation          | OpenAI per-step (4o / 4o-mini, temp 0) by default — or a local model via Ollama (opt-in; benchmarked per step, see ADR 0012); swappable behind DI |
 | Data validation     | Pydantic v2                                        |
 | Config              | pydantic-settings                                  |
 
@@ -176,6 +176,10 @@ Expectedness (is an adverse event already described in the drug's package insert
 
 The **cost / privacy ladder** now has its first local rung. `get_embeddings()` dispatches on `EMBEDDING_PROVIDER` — `openai` (default) or `ollama`, a local model (e.g. `bge-m3`) served by Ollama so case text never leaves the machine. Because a vector store is bound to one embedding dimension, the Chroma store is namespaced per embedding model, so both providers coexist and switching is a flag flip (the reference collections re-index at startup). A deterministic, LLM-free [retrieval bench](experiments/embedding_retrieval_bench.md) shows local `bge-m3` matches OpenAI `text-embedding-3-small` on the retrieval the system actually uses (hybrid hit@3 = 100% on both; the only gap is one term at vector-only rank-1, absorbed by the BM25/exact fusion), and an end-to-end run keeps the under-call-0 safety invariant. Local's win is privacy + zero marginal cost + no quota, **not** latency (LangChain's Ollama embedder is sequential, so per-query it is slower here). OpenAI stays the default; local is a validated opt-in. See [ADR 0011](docs/adr/0011-local-embedding-provider.md).
 
+### Design note — local generation, per step (Phase 5b)
+
+Generation is swappable the same way (`CHAT_PROVIDER=ollama`, one `OLLAMA_CHAT_MODEL` for every step). Because a full end-to-end triage on a local 7B is impractical (~10-15 min/case), a [per-step comparison harness](experiments/scripts/generation_bench.py) benchmarks each step in isolation over the gold set — which is also exactly the "where does local hold vs break" question — reporting **under-calls first**. Across OpenAI vs qwen2.5:7b / ELYZA-JP-8B / gemma3:4b / medllama2, the [result](experiments/generation_comparison.md) is clear: **no local 7-8B preserves the under-call-0 safety invariant** — every one misses a serious event on the hard-narrative seriousness step. **ELYZA-JP-8B is the strongest local** (extraction 91%, beating OpenAI's 87%; MedDRA and causality 100%) and is viable for extraction / coding / the conservative causality default, but the safety-critical judgments still need the frontier model. The honest cost×privacy answer is therefore **hybrid per-step** — local for the easy/deterministic steps, OpenAI for the three judgment axes. The Ollama path is hardened (`num_ctx`/`num_predict`/timeout) so a local model can't run away or hang the pipeline. See [ADR 0012](docs/adr/0012-local-generation-per-step.md).
+
 ### Known limitations (current MVP)
 
 - Dense-vector retrieval can be confused by documents that share a common format/vocabulary, and is weaker on proper nouns (e.g. distinguishing one drug or reporter name from another). Hybrid retrieval is on the roadmap.
@@ -240,7 +244,7 @@ GeneratorService    ── LCEL チェーン: prompt | ChatOpenAI(temperature=0)
 | テキスト分割         | LangChain `TokenTextSplitter`（tiktoken cl100k_base）|
 | 埋め込み             | OpenAI `text-embedding-3-small`（既定）／ ローカル `bge-m3`（Ollama・オンプレ・オプトイン）。DI背後で差し替え可 |
 | ベクトルストア       | Chroma（langchain-chroma経由・cosine）              |
-| 生成                 | OpenAI `gpt-4o-mini`（langchain-openai経由・temp 0）|
+| 生成                 | 既定はOpenAIのステップ別（4o / 4o-mini・temp 0）／ ローカルモデル（Ollama・オプトイン・ステップ別ベンチ済み、ADR 0012）。DI背後で差し替え可 |
 | データ検証           | Pydantic v2                                          |
 | 設定                 | pydantic-settings                                    |
 
@@ -354,6 +358,10 @@ streamlit run app.py
 ### 設計メモ — ローカル埋め込みティア（Phase 5a）
 
 **コスト／プライバシーの梯子** に最初のローカル段を追加しました。`get_embeddings()` は `EMBEDDING_PROVIDER` で分岐し、`openai`（既定）または `ollama`（Ollama が配信するローカルモデル、例 `bge-m3`）を選べます。後者では症例テキストが端末外に出ません。ベクトルストアは埋め込み次元に紐づくため、Chroma ストアを埋め込みモデル単位で名前空間分離し、両プロバイダを共存させてフラグ一つで切替可能にしています（参照コレクションは起動時に再インデックス）。決定的・LLM非依存の [検索ベンチ](experiments/embedding_retrieval_bench.md) では、ローカル `bge-m3` が実運用で使う検索（hybrid hit@3＝両者100%。差は vector単独のrank-1で1件のみで、BM25/exact融合が吸収）で OpenAI `text-embedding-3-small` と同等、end-to-end でも過小コール0の安全インバリアントを維持しました。ローカルの利点はプライバシー＋限界コスト0＋クォータ無しで、**レイテンシではありません**（LangChain の Ollama 埋め込みは逐次実行のため単発クエリはむしろ遅い）。既定は OpenAI のまま、ローカルは検証済みのオプトイン。[ADR 0011](docs/adr/0011-local-embedding-provider.md) 参照。
+
+### 設計メモ — ローカル生成、ステップ別（Phase 5b）
+
+生成も同様に差し替え可能です（`CHAT_PROVIDER=ollama`、全ステップを1つの `OLLAMA_CHAT_MODEL` で実行）。ローカル7BでのフルE2Eは約10-15分/症例と非現実的なため、[ステップ別比較ハーネス](experiments/scripts/generation_bench.py)で各ステップを分離計測し（＝「どこでローカルが持つ/崩れるか」の問いに直結）、**過小コールを最優先**で報告します。OpenAI vs qwen2.5:7b / ELYZA-JP-8B / gemma3:4b / medllama2 の[結果](experiments/generation_comparison.md)は明快で、**7-8Bのローカル勢はどれも過小コール0の安全インバリアントを保てません** — 全モデルが hard-narrative の重篤度で重篤事象を見落とします。**ELYZA-JP-8B が最良のローカル**（抽出91%でOpenAIの87%を上回り、MedDRA・因果は100%）で、抽出／コード化／保守的な因果既定には実用ですが、安全critな判定はやはり frontier モデルが必要です。よって正直なコスト×プライバシーの答えは **ステップ別ハイブリッド** — 簡単／決定的なステップはローカル、3つの判定軸はOpenAI。Ollama経路は暴走・ハングを防ぐよう `num_ctx`/`num_predict`/タイムアウトで堅牢化しています。[ADR 0012](docs/adr/0012-local-generation-per-step.md) 参照。
 
 ### 既知の制約（現MVP）
 
