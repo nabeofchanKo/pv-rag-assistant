@@ -12,13 +12,18 @@ class Settings(BaseSettings):
 
     openai_api_key: str
 
-    # Embedding model (swappable: "openai" now, local e.g. "huggingface" later)
-    embedding_provider: str = "openai"
-    openai_embedding_model: str = "text-embedding-3-small"
+    # Embedding model (swappable: "openai" now, local "ollama" for on-prem/privacy).
+    embedding_provider: str = "openai"          # "openai" | "ollama"
+    openai_embedding_model: str = "text-embedding-3-small"  # 1536-dim
+    ollama_embedding_model: str = "bge-m3"                  # 1024-dim, multilingual (strong JP)
 
     # Chat / generation model (swappable: "openai" now, local e.g. "medllama" later)
     chat_provider: str = "openai"
     openai_chat_model: str = "gpt-4o-mini"
+
+    # Local model runtime (Ollama exposes an OpenAI-compatible server + bundles its
+    # own CUDA runtime, so no torch install is needed in this venv). Phase 5.
+    ollama_base_url: str = "http://localhost:11434"
 
     # Vision model used for image OCR (gpt-4o is stronger on handwriting; mini is cheaper)
     openai_vision_model: str = "gpt-4o"
@@ -80,6 +85,27 @@ class Settings(BaseSettings):
 
     # Retrieval
     top_k_retrieval: int = 3
+
+    # --- Phase 5: embedding-provider-scoped vector store ---
+    # Different embedding models produce different-dimensioned vectors (OpenAI 1536,
+    # BGE-M3 1024), so a Chroma collection is bound to one model. Scope the persist
+    # dir by embedding id so providers coexist on disk and the A/B is a flag flip;
+    # the startup lifespan re-indexes the reference collections into an empty dir.
+    @property
+    def embedding_id(self) -> str:
+        """Filesystem-safe id for the active embedding model (provider + name)."""
+        name = (
+            self.openai_embedding_model
+            if self.embedding_provider == "openai"
+            else self.ollama_embedding_model
+        )
+        slug = f"{self.embedding_provider}__{name}"
+        return slug.replace(":", "-").replace("/", "-")
+
+    @property
+    def chroma_dir(self) -> str:
+        """Provider-scoped persist dir, e.g. ./chroma_db/openai__text-embedding-3-small."""
+        return str(Path(self.chroma_persist_dir) / self.embedding_id)
 
 
 settings = Settings()

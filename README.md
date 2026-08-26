@@ -58,7 +58,7 @@ The pipeline is exposed via a **FastAPI** backend and consumed by a **Streamlit*
 | Frontend            | Streamlit                                          |
 | PDF parsing         | pdfplumber (custom processor, NFKC normalization)  |
 | Text splitting      | LangChain `TokenTextSplitter` (tiktoken cl100k_base)|
-| Embeddings          | OpenAI `text-embedding-3-small` (via langchain-openai; swappable) |
+| Embeddings          | OpenAI `text-embedding-3-small` (default) — or local `bge-m3` via Ollama (opt-in, on-prem); swappable behind DI |
 | Vector store        | Chroma (via langchain-chroma, cosine)              |
 | Generation          | OpenAI `gpt-4o-mini` (via langchain-openai, temp 0)|
 | Data validation     | Pydantic v2                                        |
@@ -172,6 +172,10 @@ Expectedness (is an adverse event already described in the drug's package insert
 
 **Future extension — Approach C (hybrid, to A/B test):** read each insert *once* with an LLM to extract its adverse-reaction section into a structured, source-cited ADR list, cache it, then match each adverse event against that list. This trades per-query retrieval for a deterministic, auditable list (closer in spirit to the deterministic product-master matching). Worth benchmarking against Approach A on accuracy × cost once Approach A is in place.
 
+### Design note — local embedding tier (Phase 5a)
+
+The **cost / privacy ladder** now has its first local rung. `get_embeddings()` dispatches on `EMBEDDING_PROVIDER` — `openai` (default) or `ollama`, a local model (e.g. `bge-m3`) served by Ollama so case text never leaves the machine. Because a vector store is bound to one embedding dimension, the Chroma store is namespaced per embedding model, so both providers coexist and switching is a flag flip (the reference collections re-index at startup). A deterministic, LLM-free [retrieval bench](experiments/embedding_retrieval_bench.md) shows local `bge-m3` matches OpenAI `text-embedding-3-small` on the retrieval the system actually uses (hybrid hit@3 = 100% on both; the only gap is one term at vector-only rank-1, absorbed by the BM25/exact fusion), and an end-to-end run keeps the under-call-0 safety invariant. Local's win is privacy + zero marginal cost + no quota, **not** latency (LangChain's Ollama embedder is sequential, so per-query it is slower here). OpenAI stays the default; local is a validated opt-in. See [ADR 0011](docs/adr/0011-local-embedding-provider.md).
+
 ### Known limitations (current MVP)
 
 - Dense-vector retrieval can be confused by documents that share a common format/vocabulary, and is weaker on proper nouns (e.g. distinguishing one drug or reporter name from another). Hybrid retrieval is on the roadmap.
@@ -234,7 +238,7 @@ GeneratorService    ── LCEL チェーン: prompt | ChatOpenAI(temperature=0)
 | フロントエンド       | Streamlit                                           |
 | PDF解析              | pdfplumber（自作プロセッサ、NFKC正規化）            |
 | テキスト分割         | LangChain `TokenTextSplitter`（tiktoken cl100k_base）|
-| 埋め込み             | OpenAI `text-embedding-3-small`（langchain-openai経由・差し替え可）|
+| 埋め込み             | OpenAI `text-embedding-3-small`（既定）／ ローカル `bge-m3`（Ollama・オンプレ・オプトイン）。DI背後で差し替え可 |
 | ベクトルストア       | Chroma（langchain-chroma経由・cosine）              |
 | 生成                 | OpenAI `gpt-4o-mini`（langchain-openai経由・temp 0）|
 | データ検証           | Pydantic v2                                          |
@@ -346,6 +350,10 @@ streamlit run app.py
 既知／未知（その有害事象が添付文書に記載済みか）は **Approach A：添付文書テキストへの RAG 検索** で実装します。添付文書をチャンク化・埋め込みし、有害事象ごとに当該薬剤の「副作用」欄の関連箇所を検索して、LLM が *記載あり（既知）／記載なし（未知）／判定不能* を判定し、根拠となる引用文を返します。既存の検索基盤を再利用し、根拠に紐づけた判定を行います。裏付けとなる記載が見つからない場合は **未知を安全側の既定値** とします。
 
 **今後の拡張 — Approach C（ハイブリッド、A/B比較の候補）:** 添付文書を **一度だけ** LLM で読み、副作用欄を出典付きの構造化 ADR リストへ抽出してキャッシュし、以後は各有害事象をそのリストと照合する方式。クエリごとの検索を、決定的で監査可能なリストに置き換える（決定的な自社品マスタ照合に思想が近い）。Approach A の実装後、精度×コストでベンチマークする価値がある。
+
+### 設計メモ — ローカル埋め込みティア（Phase 5a）
+
+**コスト／プライバシーの梯子** に最初のローカル段を追加しました。`get_embeddings()` は `EMBEDDING_PROVIDER` で分岐し、`openai`（既定）または `ollama`（Ollama が配信するローカルモデル、例 `bge-m3`）を選べます。後者では症例テキストが端末外に出ません。ベクトルストアは埋め込み次元に紐づくため、Chroma ストアを埋め込みモデル単位で名前空間分離し、両プロバイダを共存させてフラグ一つで切替可能にしています（参照コレクションは起動時に再インデックス）。決定的・LLM非依存の [検索ベンチ](experiments/embedding_retrieval_bench.md) では、ローカル `bge-m3` が実運用で使う検索（hybrid hit@3＝両者100%。差は vector単独のrank-1で1件のみで、BM25/exact融合が吸収）で OpenAI `text-embedding-3-small` と同等、end-to-end でも過小コール0の安全インバリアントを維持しました。ローカルの利点はプライバシー＋限界コスト0＋クォータ無しで、**レイテンシではありません**（LangChain の Ollama 埋め込みは逐次実行のため単発クエリはむしろ遅い）。既定は OpenAI のまま、ローカルは検証済みのオプトイン。[ADR 0011](docs/adr/0011-local-embedding-provider.md) 参照。
 
 ### 既知の制約（現MVP）
 

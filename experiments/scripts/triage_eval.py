@@ -43,7 +43,9 @@ from app.services.influence import InfluenceService  # noqa: E402
 
 GOLD_DIR = ROOT / "data" / "gold"
 SAMPLE_DIR = ROOT / "data" / "sample_reports"
-OUT = ROOT / "experiments" / "triage_eval.md"
+# Output path is overridable so a provider A/B run (e.g. EMBEDDING_PROVIDER=ollama)
+# can write to its own file instead of clobbering the canonical baseline report.
+OUT = Path(os.environ.get("TRIAGE_EVAL_OUT", ROOT / "experiments" / "triage_eval.md"))
 MODES = ["applied", "advisory"]
 # Safety-critical directions: gold value -> the verdict that would be an UNDER-call.
 SER_ORDER = {"非重篤": 0, "要確認": 1, "重篤": 2}

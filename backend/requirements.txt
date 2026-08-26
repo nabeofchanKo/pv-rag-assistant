@@ -1,6 +1,7 @@
 # RAG orchestration (LangChain 1.x)
 langchain-core>=1.5.0
 langchain-openai>=1.5.0
+langchain-ollama>=0.2.0  # Phase 5: local embedding/chat provider (on-prem/privacy tier)
 langchain-text-splitters>=1.1.0
 langchain-chroma>=1.1.0
 

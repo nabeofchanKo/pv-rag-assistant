@@ -232,6 +232,9 @@ backend/checkpoints/
 # Past-case precedent store (Phase 4d) — runtime auto-saved approvals (seeds are tracked)
 backend/past_cases/
 
+# Phase 5 embedding benchmark scratch (provider-scoped throwaway Chroma stores)
+backend/.embed_bench/
+
 # Sample data PDFs (large files, optional)
 # data/sample_reports/*.pdf
 

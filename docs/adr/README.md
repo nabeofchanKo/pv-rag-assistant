@@ -18,6 +18,7 @@ that produced its evidence, when there is one.
 | [0008](0008-hitl-ime-promotion.md) | HITL that feeds accuracy: promote a PT to the IME list from a review (forward-looking) | Accepted | design + tests + live E2E |
 | [0009](0009-past-case-precedent.md) | Past-case precedent: structured per-(drug,PT) consistency, advisory (never auto-changes a verdict) | Accepted | design + tests + live E2E |
 | [0010](0010-past-data-influence-mode.md) | Past-data influence mode (applied/advisory) via an influence layer; IME→重篤, precedent→safe-side nudge | Accepted | design + tests + live A/B |
+| [0011](0011-local-embedding-provider.md) | Local embedding provider (Ollama/bge-m3) behind the switch; provider-scoped Chroma dir; OpenAI default, local opt-in | Accepted | [retrieval bench](../../experiments/embedding_retrieval_bench.md) + E2E safety check + tests |
 
 Evidence for evidence-backed ADRs lives under [`experiments/`](../../experiments/),
 with the reproducible script alongside each write-up.
