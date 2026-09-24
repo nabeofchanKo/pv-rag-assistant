@@ -20,9 +20,11 @@ backend/chroma_db/
 backend/checkpoints/
 backend/past_cases/
 backend/.embed_bench/
+# Local-dev tiktoken cache; the image warms its own at build time.
+backend/.tiktoken_cache/
 
-# --- Not part of the backend image ---
-frontend/
+# --- Not part of the backend image (web/ builds from its own context) ---
+web/
 docs/
 experiments/
 添付文書_sample/
