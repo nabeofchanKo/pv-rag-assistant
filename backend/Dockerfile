@@ -29,18 +29,29 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY backend/requirements.txt /tmp/requirements.txt
 RUN pip install -r /tmp/requirements.txt
 
+# Warm the tiktoken BPE vocab cache at BUILD time. tiktoken otherwise downloads
+# these on first use (the first embedding call), which makes a runtime request to
+# openaipublic.blob.core.windows.net — a network dependency we do not want in a
+# running container, and one that fails outright behind a TLS-inspecting proxy
+# whose CA certifi does not trust. Baking it in makes startup self-contained.
+ENV TIKTOKEN_CACHE_DIR=/opt/tiktoken_cache
+RUN mkdir -p "$TIKTOKEN_CACHE_DIR" \
+    && python -c "import tiktoken; [tiktoken.get_encoding(e) for e in ('cl100k_base','o200k_base')]"
+
 # ---- Stage 2: runtime — slim image, non-root ----
 FROM python:3.12-slim AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/opt/venv/bin:$PATH" \
-    PYTHONPATH=/app/backend
+    PYTHONPATH=/app/backend \
+    TIKTOKEN_CACHE_DIR=/opt/tiktoken_cache
 
 # Dedicated non-root runtime user.
 RUN useradd --create-home --uid 1000 appuser
 
 COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /opt/tiktoken_cache /opt/tiktoken_cache
 
 # App code + read-only reference data. Copied so that config.py's
 # PROJECT_ROOT (= this file's parent.parent.parent) resolves to /app,

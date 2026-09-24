@@ -1,0 +1,20 @@
+# Build context is web/. Keep it small and never bake secrets into a layer.
+node_modules
+.next
+out
+coverage
+
+# Secrets: BACKEND_URL etc. are passed at runtime.
+.env
+.env.*
+!.env.example
+
+# Not needed to build the app
+README.md
+AGENTS.md
+CLAUDE.md
+Dockerfile
+.dockerignore
+.git
+.DS_Store
+*.log
