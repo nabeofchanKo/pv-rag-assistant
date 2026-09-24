@@ -1,0 +1,41 @@
+# Build context is the repo root. Keep it small: exclude VCS, the local venv,
+# caches, runtime state, and everything the backend image does not COPY.
+
+# --- VCS ---
+.git
+.gitattributes
+
+# --- Python env & caches ---
+venv/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Runtime state (rebuilt inside the container; must not be baked in) ---
+chroma_db/
+backend/chroma_db/
+backend/checkpoints/
+backend/past_cases/
+backend/.embed_bench/
+
+# --- Not part of the backend image ---
+frontend/
+docs/
+experiments/
+添付文書_sample/
+backend/tests/
+backend/requirements-dev.txt
+
+# --- Secrets: passed at runtime, never copied into an image layer ---
+.env
+.env.*
+!.env.example
+
+# --- OS / editor cruft ---
+.DS_Store
+.vscode/
+.idea/
+*.log

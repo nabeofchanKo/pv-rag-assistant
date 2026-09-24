@@ -263,3 +263,6 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# tiktoken BPE vocab cache (runtime; pre-download to avoid first-use network fetch)
+backend/.tiktoken_cache/
