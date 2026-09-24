@@ -60,12 +60,20 @@ removed now that the Next.js UI reaches feature parity.
   `web/src/lib/labels.ts` restate `ALLOWED_VERDICTS`
   (`services/triage_graph.py`); a value outside them is rejected 422 server-side,
   so the UI constrains but the backend still enforces.
-- **Deploy target (decided, executed in Step 5):** **AWS App Runner** for the
-  FastAPI container (via ECR) + hosting for the Next.js app, chosen over a
-  single box (Lightsail/EC2 + compose), ECS Fargate + ALB, and Vercel. Rationale:
-  both ends managed, git-push CI/CD, no VPC/task-definition work, ~$10–30/mo —
-  the balance point for a portfolio demo, with a stated upgrade path (Fargate +
-  ALB, checkpointer on RDS/Postgres) rather than a built one.
+- **Deploy target (decided; executed in Step 5): both services as containers on
+  AWS App Runner** (two services, images via ECR), chosen over a single box
+  (Lightsail/EC2 + compose), ECS Fargate + ALB, and a split where the frontend
+  sits on Amplify or Vercel. App Runner is managed (no VPC or task definitions)
+  and ~$10–30/mo at demo scale, with a stated upgrade path (Fargate + ALB,
+  checkpointer on RDS/Postgres) rather than a built one.
+
+  The deciding factor against the Amplify split was **artifact parity**: with
+  both services containerized, the *same image* that `docker compose up` runs
+  locally is what runs in production. Amplify would have introduced a second
+  build system for the frontend and made "the stack is containerized" true only
+  of the backend. The cost is giving up Amplify's CDN, image optimization and
+  preview branches — acceptable for a low-traffic demo, and a deliberate trade
+  rather than an oversight.
 
 ## Consequences
 
@@ -78,6 +86,12 @@ removed now that the Next.js UI reaches feature parity.
 - (+) **The BFF is the natural control point** for the demo protections Step 5
   needs (sample-only input enforcement, rate limiting) — they belong server-side,
   not in the client where they could be bypassed.
+- (−) **On App Runner, "the backend stays private" needs explicit work.** App
+  Runner services get a public URL by default, so deploying the API as its own
+  service partially gives back the isolation the BFF buys locally (where the API
+  is only on the compose network). Step 5 closes this with a shared secret the
+  BFF sends and the API requires; making the backend service VPC-private is the
+  fuller fix and is noted as the upgrade path.
 - (−) **One more hop and a proxy file per endpoint.** Cheap here (four routes),
   but it is boilerplate that grows with the API surface.
 - (−) **Two languages, one contract.** The TS types can drift from the Pydantic
