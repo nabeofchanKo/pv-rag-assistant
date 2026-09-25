@@ -14,6 +14,7 @@ import {
   hitGlobalDaily,
   tooManyRequests,
 } from "@/lib/ratelimit";
+import { renderIcsr, validateDraft } from "@/lib/case-builder";
 
 // BFF proxy for starting a triage run. Browser → this handler → FastAPI
 // POST /cases/triage.
@@ -21,6 +22,9 @@ import {
 // Two input shapes:
 //   { "sample": "case_001.txt" }  — always allowed; the BFF reads the bundled
 //                                   file itself, so no caller content is trusted.
+//   { "build": { ...fields } }    — always allowed; the BFF validates the fields
+//                                   and RENDERS the report text itself, so the
+//                                   caller supplies data, never a document.
 //   multipart/form-data           — a real upload; refused while DEMO_MODE is on.
 //
 // Triage is the expensive route (~20s, several LLM calls), so it carries the
@@ -37,15 +41,28 @@ export async function POST(request: Request) {
 
   let form: FormData;
   if (contentType.includes("application/json")) {
-    const body = (await request.json().catch(() => null)) as { sample?: unknown } | null;
-    if (!isAllowedSample(body?.sample)) {
+    const body = (await request.json().catch(() => null)) as {
+      sample?: unknown;
+      build?: unknown;
+    } | null;
+
+    form = new FormData();
+    if (body && "build" in body && body.build !== undefined) {
+      const v = validateDraft(body.build);
+      if (!v.ok) return Response.json({ detail: v.error }, { status: 400 });
+      const text = renderIcsr(v.draft);
+      form.append(
+        "file",
+        new File([text], "builder_case.txt", { type: "text/plain" }),
+      );
+    } else if (isAllowedSample(body?.sample)) {
+      form.append("file", await readSample(body.sample));
+    } else {
       return Response.json(
         { detail: "指定されたサンプル症例は利用できません。" },
         { status: 400 },
       );
     }
-    form = new FormData();
-    form.append("file", await readSample(body.sample));
   } else {
     if (DEMO_MODE) return uploadsDisabled();
     form = await request.formData();

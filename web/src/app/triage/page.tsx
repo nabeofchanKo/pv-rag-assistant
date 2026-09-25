@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Spinner from "@/components/Spinner";
+import CaseBuilder from "@/components/triage/CaseBuilder";
 import ReviewPanel from "@/components/triage/ReviewPanel";
 import TriageSections from "@/components/triage/TriageSections";
 import { AXIS_LABELS } from "@/lib/labels";
+import type { CaseDraft } from "@/lib/case-builder";
 import type { TriageStartResponse } from "@/lib/types";
 
 type Sample = { file: string; label: string; hint: string };
@@ -20,6 +22,7 @@ export default function TriagePage() {
   // is never briefly offered on a deployment that refuses uploads.
   const [demoMode, setDemoMode] = useState(true);
   const [samples, setSamples] = useState<Sample[]>([]);
+  const [mode, setMode] = useState<"sample" | "build">("sample");
 
   useEffect(() => {
     fetch("/api/config")
@@ -61,6 +64,16 @@ export default function TriagePage() {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ sample: name }),
+    });
+  }
+
+  // Likewise the builder sends fields, not a document — the BFF renders the
+  // report text server-side after validating them.
+  function startBuilt(draft: CaseDraft) {
+    return run({
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ build: draft }),
     });
   }
 
@@ -107,6 +120,32 @@ export default function TriagePage() {
         )}
 
         <div className={demoMode ? "" : "mt-4 border-t border-border pt-4"}>
+          <div className="mb-3 inline-flex rounded-lg border border-border bg-surface-2 p-0.5">
+            {(
+              [
+                ["sample", "サンプル症例"],
+                ["build", "症例を作る"],
+              ] as const
+            ).map(([m, label]) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+                  mode === m
+                    ? "bg-surface font-medium text-accent shadow-sm"
+                    : "text-muted hover:text-ink"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {mode === "build" ? (
+            <CaseBuilder loading={loading} onRun={startBuilt} />
+          ) : (
+          <>
           <p className="font-mono text-xs uppercase tracking-wider text-muted">
             サンプル症例で試す
           </p>
@@ -129,6 +168,8 @@ export default function TriagePage() {
               </button>
             ))}
           </div>
+          </>
+          )}
         </div>
       </section>
 
