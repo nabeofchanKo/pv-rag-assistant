@@ -1,17 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Spinner from "@/components/Spinner";
 import ReviewPanel from "@/components/triage/ReviewPanel";
 import TriageSections from "@/components/triage/TriageSections";
 import { AXIS_LABELS } from "@/lib/labels";
 import type { TriageStartResponse } from "@/lib/types";
 
-const SAMPLES = [
-  { file: "case_001.txt", label: "症例001", hint: "DrugX / 頭痛ほか" },
-  { file: "case_003.txt", label: "症例003", hint: "DrugZ / 多数事象" },
-  { file: "case_004.txt", label: "症例004", hint: "対象外の例" },
-];
+type Sample = { file: string; label: string; hint: string };
 
 export default function TriagePage() {
   const [file, setFile] = useState<File | null>(null);
@@ -20,14 +16,27 @@ export default function TriagePage() {
   const [result, setResult] = useState<TriageStartResponse | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  async function startTriage(f: File) {
+  // Default to demo mode until the server says otherwise, so the upload control
+  // is never briefly offered on a deployment that refuses uploads.
+  const [demoMode, setDemoMode] = useState(true);
+  const [samples, setSamples] = useState<Sample[]>([]);
+
+  useEffect(() => {
+    fetch("/api/config")
+      .then((r) => r.json())
+      .then((c) => {
+        setDemoMode(Boolean(c.demoMode));
+        setSamples(c.samples ?? []);
+      })
+      .catch(() => setSamples([]));
+  }, []);
+
+  async function run(init: RequestInit) {
     setLoading(true);
     setError(null);
     setResult(null);
     try {
-      const fd = new FormData();
-      fd.append("file", f);
-      const res = await fetch("/api/cases/triage", { method: "POST", body: fd });
+      const res = await fetch("/api/cases/triage", init);
       const data = await res.json();
       if (!res.ok)
         throw new Error(data?.detail ?? `トリアージ失敗 (HTTP ${res.status})`);
@@ -39,19 +48,20 @@ export default function TriagePage() {
     }
   }
 
-  async function startSample(name: string) {
-    setLoading(true);
-    setError(null);
-    setResult(null);
-    try {
-      const res = await fetch(`/samples/${name}`);
-      if (!res.ok) throw new Error(`サンプル取得失敗: ${name}`);
-      const blob = await res.blob();
-      await startTriage(new File([blob], name, { type: "text/plain" }));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-      setLoading(false);
-    }
+  function startTriage(f: File) {
+    const fd = new FormData();
+    fd.append("file", f);
+    return run({ method: "POST", body: fd });
+  }
+
+  // The BFF reads the bundled sample itself — we only send its name, so no file
+  // content is uploaded and the demo cannot be pointed at arbitrary input.
+  function startSample(name: string) {
+    return run({
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sample: name }),
+    });
   }
 
   return (
@@ -69,6 +79,7 @@ export default function TriagePage() {
 
       {/* ---- start controls ---- */}
       <section className="mt-8 rounded-xl border border-border bg-surface p-6 shadow-sm">
+        {!demoMode && (
         <div className="flex flex-wrap items-center gap-3">
           <label className="cursor-pointer rounded-lg border border-border bg-surface-2 px-4 py-2 text-sm text-ink transition-colors hover:border-accent">
             <input
@@ -93,13 +104,19 @@ export default function TriagePage() {
             トリアージ実行
           </button>
         </div>
+        )}
 
-        <div className="mt-4 border-t border-border pt-4">
+        <div className={demoMode ? "" : "mt-4 border-t border-border pt-4"}>
           <p className="font-mono text-xs uppercase tracking-wider text-muted">
-            同梱サンプルで試す（アップロード不要）
+            サンプル症例で試す
           </p>
+          {demoMode && (
+            <p className="mt-1 text-xs text-muted">
+              公開デモのため、実行は同梱のサンプル症例に限定し、回数にも制限を設けています。
+            </p>
+          )}
           <div className="mt-2 flex flex-wrap gap-2">
-            {SAMPLES.map((s) => (
+            {samples.map((s) => (
               <button
                 key={s.file}
                 type="button"

@@ -1,14 +1,39 @@
 import { proxyToBackend } from "@/lib/backend";
+import { DEMO_MODE, LIMITS, isAllowedSample, readSample, uploadsDisabled } from "@/lib/demo";
+import { clientKey, hit, tooManyRequests } from "@/lib/ratelimit";
 
 // BFF proxy for starting a triage run. Browser → this handler → FastAPI
-// POST /cases/triage. The multipart FormData (the case file) is forwarded as-is,
-// and any query string (e.g. ?influence=advisory, ?auto_approve=true) is passed
-// through to the backend.
+// POST /cases/triage.
+//
+// Two input shapes:
+//   { "sample": "case_001.txt" }  — always allowed; the BFF reads the bundled
+//                                   file itself, so no caller content is trusted.
+//   multipart/form-data           — a real upload; refused while DEMO_MODE is on.
+//
+// Triage is the expensive route (~20s, several LLM calls), so it carries the
+// tightest per-IP limit.
 export async function POST(request: Request) {
-  const form = await request.formData();
+  const rl = hit(`triage:${clientKey(request)}`, LIMITS.triage.limit, LIMITS.triage.windowSec);
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec);
+
   const qs = new URL(request.url).search;
-  return proxyToBackend(`/cases/triage${qs}`, {
-    method: "POST",
-    body: form,
-  });
+  const contentType = request.headers.get("content-type") ?? "";
+
+  let form: FormData;
+  if (contentType.includes("application/json")) {
+    const body = (await request.json().catch(() => null)) as { sample?: unknown } | null;
+    if (!isAllowedSample(body?.sample)) {
+      return Response.json(
+        { detail: "指定されたサンプル症例は利用できません。" },
+        { status: 400 },
+      );
+    }
+    form = new FormData();
+    form.append("file", await readSample(body.sample));
+  } else {
+    if (DEMO_MODE) return uploadsDisabled();
+    form = await request.formData();
+  }
+
+  return proxyToBackend(`/cases/triage${qs}`, { method: "POST", body: form });
 }
