@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/triage", label: "症例トリアージ", soon: false },
   { href: "/rag", label: "RAG Q&A", soon: false },
+  { href: "/samples", label: "サンプル症例", soon: false },
 ];
 
 export default function Header() {
