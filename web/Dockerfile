@@ -47,4 +47,9 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD ["node", "-e", "fetch('http://localhost:3000/triage').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
 
-CMD ["node", "server.js"]
+# The Next.js standalone server binds to process.env.HOSTNAME, and container
+# runtimes (Docker, App Runner) set HOSTNAME to the container's own hostname —
+# so it ends up listening on an address the platform health check cannot reach.
+# Forcing it here overrides whatever the runtime injected. Port mapping hides
+# this locally, which is why it only shows up on a real deployment.
+CMD ["sh", "-c", "HOSTNAME=0.0.0.0 exec node server.js"]
