@@ -46,6 +46,7 @@ services:
       # leaves DEMO_MODE unset, which means ON (fail closed): sample cases only,
       # plus the per-IP rate limits in lib/ratelimit.ts.
       DEMO_MODE: ${DEMO_MODE:-0}
+      GLOBAL_DAILY_TRIAGE: ${GLOBAL_DAILY_TRIAGE:-40}
       INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-}
     depends_on:
       backend:

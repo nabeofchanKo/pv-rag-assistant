@@ -1,6 +1,19 @@
 import { proxyToBackend } from "@/lib/backend";
-import { DEMO_MODE, LIMITS, isAllowedSample, readSample, uploadsDisabled } from "@/lib/demo";
-import { clientKey, hit, tooManyRequests } from "@/lib/ratelimit";
+import {
+  DEMO_MODE,
+  GLOBAL_DAILY_TRIAGE,
+  LIMITS,
+  isAllowedSample,
+  readSample,
+  uploadsDisabled,
+} from "@/lib/demo";
+import {
+  clientKey,
+  dailyCapReached,
+  hit,
+  hitGlobalDaily,
+  tooManyRequests,
+} from "@/lib/ratelimit";
 
 // BFF proxy for starting a triage run. Browser → this handler → FastAPI
 // POST /cases/triage.
@@ -15,6 +28,9 @@ import { clientKey, hit, tooManyRequests } from "@/lib/ratelimit";
 export async function POST(request: Request) {
   const rl = hit(`triage:${clientKey(request)}`, LIMITS.triage.limit, LIMITS.triage.windowSec);
   if (!rl.ok) return tooManyRequests(rl.retryAfterSec);
+
+  // Bounds total paid runs per day, which the per-IP limit alone does not.
+  if (!hitGlobalDaily(GLOBAL_DAILY_TRIAGE).ok) return dailyCapReached();
 
   const qs = new URL(request.url).search;
   const contentType = request.headers.get("content-type") ?? "";
