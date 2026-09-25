@@ -207,11 +207,11 @@ Interactive API documentation is auto-generated at `/docs`.
 The end goal is not "ask questions about a report" but a **triage / first-pass safety-evaluation assistant**: given an adverse-event report, produce an evidence-backed *draft* assessment (drugs involved, adverse events — including those inferable only from the narrative — MedDRA suggestions, expectedness, seriousness, and causality), with a human-in-the-loop approval step.
 
 - [x] **Phase 0 — Foundation:** end-to-end RAG (extract → chunk → embed → store → retrieve → generate), migrated to LangChain; Japanese sample data; bilingual README.
-- [ ] **Phase 1 — Input expansion:** ingest PDFs, scanned handwritten memos (image OCR), and email-format text reports behind one ingestion layer.
-- [ ] **Phase 2 — Structured extraction:** extract drugs / adverse events / patient info; match drugs against a company product master; read adverse events that appear only in the narrative.
-- [ ] **Phase 3 — Evaluation tasks:** MedDRA term suggestion, expectedness (vs. package insert), seriousness (ICH E2A criteria), and causality (temporal reasoning), each grounded with citations.
-- [ ] **Phase 4 — Orchestration:** connect the steps as an explainable workflow (LangGraph) with a human-in-the-loop propose → approve step.
-- [ ] **Phase 5 — Evaluation & cost/privacy:** retrieval metrics (Hit Rate@k / MRR) and answer quality (faithfulness); evaluate local embedding / generation models on cost × privacy × performance.
+- [x] **Phase 1 — Input expansion:** one ingestion layer behind a `DocumentLoader` interface — PDF (pdfplumber + NFKC), `.eml`, plain text, and scanned images through a swappable OCR engine. Unsupported types and unreadable files map to 415 / 422 at the boundary.
+- [x] **Phase 2 — Structured extraction:** patient and adverse events, **including events that appear only in the narrative**, via a two-call decomposition (a single call duplicated rephrasings on every model tried). Own-company matching is deterministic against a product master, so it stays auditable. Extraction transcribes faithfully and never judges — judgment is Phase 3.
+- [x] **Phase 3 — Evaluation tasks:** MedDRA PT coding via hybrid retrieval ([ADR 0003](docs/adr/0003-meddra-retrieval-hybrid.md)), expectedness against the label behind a confidence gate ([ADR 0001](docs/adr/0001-expectedness-approach-a-rag.md), [0002](docs/adr/0002-expectedness-confidence-gate.md)), seriousness on ICH E2A ([ADR 0004](docs/adr/0004-seriousness-e2a-llm-plus-deterministic.md)), and conservative temporal causality ([ADR 0005](docs/adr/0005-causality-conservative-temporal.md)) — each grounded with citations.
+- [x] **Phase 4 — Orchestration:** the steps as an explainable LangGraph workflow with parallel fan-out ([ADR 0006](docs/adr/0006-langgraph-orchestration.md)), a human-in-the-loop approval gate that survives restarts ([ADR 0007](docs/adr/0007-hitl-approval-interrupt.md)), reviewer feedback that changes later cases ([ADR 0008](docs/adr/0008-hitl-ime-promotion.md), [0009](docs/adr/0009-past-case-precedent.md), [0010](docs/adr/0010-past-data-influence-mode.md)), an own-company hard gate, and an evaluation harness scored against a hand-built gold set.
+- [x] **Phase 5 — Evaluation & cost/privacy:** retrieval benchmarked per embedding provider ([ADR 0011](docs/adr/0011-local-embedding-provider.md)) and generation benchmarked **per step** across five local models ([ADR 0012](docs/adr/0012-local-generation-per-step.md)). The honest finding: no local 7–8B model preserved the under-call-0 invariant, so what ships is a hybrid — transcription and coding local, clinical judgments on the frontier model.
 - [x] **Phase 6 — Frontend & deployment:** Next.js frontend behind a BFF (replacing Streamlit, no backend change), the whole stack containerized, deployed to AWS App Runner with demo protections. See the [design note](#design-note--phase-6-frontend--deployment) and [ADR 0013](docs/adr/0013-nextjs-frontend-bff.md).
 
 ### Design note — expectedness (既知/未知)
@@ -464,11 +464,11 @@ cd web && npm install && npm run dev
 最終目標は「報告書に質問する」ことではなく、**トリアージ／一次評価案の作成支援** です。有害事象報告を入力として、根拠付きの評価 *案*（関与薬剤、有害事象＝経過からしか読み取れないものを含む、MedDRA提案、既知／未知、重篤度、因果関係）を生成し、人間による承認（HITL）を挟みます。
 
 - [x] **Phase 0 — 基盤:** エンドツーエンドのRAG（抽出→チャンク→埋め込み→保存→検索→生成）をLangChainへ移行、日本語サンプルデータ、日英READMEを整備。
-- [ ] **Phase 1 — 入力の多様化:** PDF・手書きメモのスキャン（画像OCR）・メール形式のテキスト報告を、単一の取り込み層の背後で扱う。
-- [ ] **Phase 2 — 構造化抽出:** 薬剤／有害事象／患者情報を抽出、薬剤を自社製品マスタと照合、**経過にのみ現れる有害事象**を読み取る。
-- [ ] **Phase 3 — 評価タスク:** MedDRAコード提案、既知／未知判定（添付文書との照合）、重篤度判定（ICH E2A基準）、因果関係判定（時間的関係）を、それぞれ出典付きで。
-- [ ] **Phase 4 — オーケストレーション:** 各ステップを説明可能なワークフロー（LangGraph）として連結し、提案→承認のHITLを挟む。
-- [ ] **Phase 5 — 評価・コスト／プライバシー:** 検索評価（Hit Rate@k / MRR）と回答品質（faithfulness）を測定。ローカルの埋め込み／生成モデルを、コスト×プライバシー×性能で評価。
+- [x] **Phase 1 — 入力の多様化:** `DocumentLoader` インターフェースの背後に単一の取り込み層。PDF（pdfplumber＋NFKC）・`.eml`・プレーンテキスト・スキャン画像（差し替え可能なOCRエンジン経由）に対応。非対応形式・読み取り失敗は境界で 415 / 422 にマップ。
+- [x] **Phase 2 — 構造化抽出:** 患者情報と有害事象を抽出（**経過にのみ現れる事象を含む**）。1回の呼び出しではどのモデルでも言い換えの重複が出たため、2回に分解する設計を採用。自社品照合は製品マスタに対する決定的な処理で、監査可能性を保つ。抽出は**忠実に転記するだけで判定はしない**（判定は Phase 3）。
+- [x] **Phase 3 — 評価タスク:** ハイブリッド検索による MedDRA PT コード提案（[ADR 0003](docs/adr/0003-meddra-retrieval-hybrid.md)）、確信度ゲート付きの既知／未知判定（[ADR 0001](docs/adr/0001-expectedness-approach-a-rag.md)・[0002](docs/adr/0002-expectedness-confidence-gate.md)）、ICH E2A による重篤度判定（[ADR 0004](docs/adr/0004-seriousness-e2a-llm-plus-deterministic.md)）、保守的な時間的因果関係判定（[ADR 0005](docs/adr/0005-causality-conservative-temporal.md)）。いずれも出典付き。
+- [x] **Phase 4 — オーケストレーション:** 各ステップを並列ファンアウト付きの LangGraph ワークフローとして連結（[ADR 0006](docs/adr/0006-langgraph-orchestration.md)）、再起動をまたいで再開できる HITL 承認ゲート（[ADR 0007](docs/adr/0007-hitl-approval-interrupt.md)）、レビュー結果が以後の症例に効く仕組み（[ADR 0008](docs/adr/0008-hitl-ime-promotion.md)・[0009](docs/adr/0009-past-case-precedent.md)・[0010](docs/adr/0010-past-data-influence-mode.md)）、自社品のハードゲート、そして正解データに対して採点する評価ハーネス。
+- [x] **Phase 5 — 評価・コスト／プライバシー:** 埋め込みプロバイダ別の検索ベンチ（[ADR 0011](docs/adr/0011-local-embedding-provider.md)）と、ローカル5モデルに対する**ステップ別**の生成ベンチ（[ADR 0012](docs/adr/0012-local-generation-per-step.md)）。正直な結論として、**どのローカル7〜8Bモデルも過小コール0の不変条件を保てなかった**ため、採用したのはハイブリッド構成（転記・コード化はローカル、臨床判断はフロンティアモデル）。
 - [x] **Phase 6 — フロントエンド・デプロイ:** BFF 経由の Next.js フロントエンド（Streamlit を置き換え、バックエンド変更なし）、スタック全体のコンテナ化、AWS App Runner へデプロイ（デモ保護付き）。[設計メモ](#設計メモ--phase-6-フロントエンドデプロイ) と [ADR 0013](docs/adr/0013-nextjs-frontend-bff.md) 参照。
 
 ### 設計メモ — 既知／未知判定（expectedness）
