@@ -210,7 +210,10 @@ export default function TriagePage() {
                 </div>
               )}
 
-              <TriageSections data={result} />
+              <TriageSections
+                data={result}
+                review={result.status === "awaiting_review" ? null : result.review}
+              />
 
               <div className="mt-4">
                 {result.status === "awaiting_review" ? (

@@ -5,6 +5,7 @@ import type {
   ExpectednessAssessment,
   MeddraCoding,
   SeriousnessAssessment,
+  ReviewOutcome,
   TriageContent,
 } from "@/lib/types";
 import {
@@ -16,6 +17,13 @@ import {
   verdictTone,
 } from "@/lib/labels";
 import { Badge, TD, Table, dash } from "./ui";
+import {
+  SOURCE_LABEL,
+  type VerdictChange,
+  buildChanges,
+  changeKey,
+  indexChanges,
+} from "./changes";
 
 // The triage view is scanned under time pressure, not read top to bottom, so it
 // is ordered by what a reviewer needs first: the headline counts, then one row
@@ -82,13 +90,51 @@ function Stat({
   );
 }
 
+/**
+ * A verdict, plus where it came from when it is not what the model first said.
+ * Showing "non-serious ->" under the badge keeps both values visible at once,
+ * which reads better than a toggle that hides one of them.
+ */
+function VerdictCell({
+  axis,
+  verdict,
+  change,
+}: {
+  axis: "seriousness" | "causality" | "expectedness";
+  verdict?: string;
+  change?: VerdictChange;
+}) {
+  if (!verdict) return <span className="text-xs text-muted">—</span>;
+  return (
+    <div>
+      <Badge tone={verdictTone(axis, verdict)}>{verdict}</Badge>
+      {change && (
+        <div className="mt-0.5 text-[10px] leading-tight text-muted">
+          <span className="line-through">{change.from}</span> から
+          <span className={change.source === "reviewer" ? "text-accent" : "text-warn"}>
+            {change.source === "reviewer" ? "人手" : "過去データ"}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Shared by the column header and every event row so the columns line up.
 const ROW_GRID =
-  "grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 sm:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_5.5rem_7rem_5rem] sm:gap-y-0";
+  "grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_6.5rem_8rem_6.5rem] sm:gap-y-0";
 
-export default function TriageSections({ data }: { data: TriageContent }) {
+export default function TriageSections({
+  data,
+  review,
+}: {
+  data: TriageContent;
+  review?: ReviewOutcome | null;
+}) {
   const rows = buildRows(data);
   const pm = data.product_match;
+  const changes = buildChanges(data, review);
+  const changeIndex = indexChanges(changes);
 
   const nSerious = rows.filter((r) => r.ser?.is_serious).length;
   const nCheck = rows.filter((r) => r.ser?.verdict === "要確認").length;
@@ -139,6 +185,59 @@ export default function TriageSections({ data }: { data: TriageContent }) {
         )}
       </section>
 
+      {/* ---- what human review and past data actually changed ---- */}
+      {changes.length > 0 && (
+        <section className="rounded-xl border border-accent/40 bg-surface shadow-sm">
+          <div className="border-b border-border p-5 pb-3">
+            <h3 className="text-sm font-bold text-ink">
+              人手・過去データによる調整 — {changes.length} 件
+            </h3>
+            <p className="mt-1 text-xs leading-relaxed text-muted">
+              モデルが最初に出した判定と、そこから変わった判定を並べています。過去データ由来の変化は
+              1 回の実行結果から復元しているため、モデルの実行ごとのばらつきは混ざりません。
+            </p>
+          </div>
+          <div className="p-5 pt-3">
+            <Table head={["事象", "軸", "モデルの判定", "調整後", "由来", "理由"]}>
+              {changes.map((c, i) => (
+                <tr key={`${c.axis}-${c.term}-${i}`}>
+                  <td className={`${TD} font-medium text-ink`}>
+                    {c.term}
+                    {c.drug && (
+                      <span className="ml-1 text-xs text-muted">（{c.drug}）</span>
+                    )}
+                  </td>
+                  <td className={`${TD} text-xs`}>{AXIS_LABELS[c.axis] ?? c.axis}</td>
+                  <td className={TD}>
+                    <span className="text-xs text-muted line-through">{c.from}</span>
+                  </td>
+                  <td className={TD}>
+                    <Badge
+                      tone={verdictTone(
+                        c.axis as "seriousness" | "causality" | "expectedness",
+                        c.to,
+                      )}
+                    >
+                      {c.to}
+                    </Badge>
+                  </td>
+                  <td className={`${TD} text-xs`}>
+                    <span
+                      className={
+                        c.source === "reviewer" ? "text-accent" : "text-warn"
+                      }
+                    >
+                      {SOURCE_LABEL[c.source]}
+                    </span>
+                  </td>
+                  <td className={`${TD} text-xs text-muted`}>{dash(c.reason)}</td>
+                </tr>
+              ))}
+            </Table>
+          </div>
+        </section>
+      )}
+
       {/* ---- one row per event ---- */}
       <section className="rounded-xl border border-border bg-surface shadow-sm">
         <div className="flex items-baseline justify-between gap-2 border-b border-border p-5 pb-3">
@@ -181,32 +280,29 @@ export default function TriageSections({ data }: { data: TriageContent }) {
                     <span className="text-muted">—</span>
                   )}
                 </div>
-                <div>
-                  {r.ser ? (
-                    <Badge tone={verdictTone("seriousness", r.ser.verdict)}>
-                      {r.ser.verdict}
-                    </Badge>
-                  ) : (
-                    <span className="text-xs text-muted">—</span>
-                  )}
-                </div>
-                <div>
-                  {r.cau ? (
-                    <Badge tone={verdictTone("causality", r.cau.verdict)}>
-                      {r.cau.verdict}
-                    </Badge>
-                  ) : (
-                    <span className="text-xs text-muted">—</span>
-                  )}
-                </div>
+                <VerdictCell
+                  axis="seriousness"
+                  verdict={r.ser?.verdict}
+                  change={changeIndex.get(changeKey("seriousness", r.term))}
+                />
+                <VerdictCell
+                  axis="causality"
+                  verdict={r.cau?.verdict}
+                  change={changeIndex.get(changeKey("causality", r.term))}
+                />
                 <div className="flex flex-wrap gap-1">
                   {r.exp.length === 0 ? (
                     <span className="text-xs text-muted">—</span>
                   ) : (
                     r.exp.map((e) => (
-                      <Badge key={e.drug} tone={verdictTone("expectedness", e.a.verdict)}>
-                        {e.a.verdict}
-                      </Badge>
+                      <VerdictCell
+                        key={e.drug}
+                        axis="expectedness"
+                        verdict={e.a.verdict}
+                        change={changeIndex.get(
+                          changeKey("expectedness", r.term, e.drug),
+                        )}
+                      />
                     ))
                   )}
                 </div>
