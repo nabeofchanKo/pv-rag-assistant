@@ -1,11 +1,25 @@
-openai>=1.40.0
-chromadb>=0.5.0
+# RAG orchestration (LangChain 1.x)
+langchain-core>=1.5.0
+langchain-openai>=1.5.0
+langchain-ollama>=0.2.0  # Phase 5: local embedding/chat provider (on-prem/privacy tier)
+langchain-text-splitters>=1.1.0
+langchain-chroma>=1.1.0
+
+# Pipeline orchestration (LangGraph) — Phase 4 triage graph + HITL
+langgraph>=1.0.0
+langgraph-checkpoint-sqlite>=3.0.0  # persistent HITL interrupt/resume checkpointer
+
+# Vector store, PDF parsing, tokenization
+chromadb>=1.5.0
 pdfplumber>=0.11.0
 tiktoken>=0.7.0
+
+# API (the UI is the Next.js app in web/ — see ADR 0013)
 fastapi>=0.115.0
 uvicorn[standard]>=0.32.0
-streamlit>=1.40.0
-python-dotenv>=1.0.0
+python-multipart>=0.0.12
+
+# Config & validation
 pydantic>=2.9.0
 pydantic-settings>=2.5.0
-python-multipart>=0.0.12
+python-dotenv>=1.0.0

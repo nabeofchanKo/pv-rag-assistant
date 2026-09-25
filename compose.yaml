@@ -1,0 +1,58 @@
+# The whole stack in one command:
+#
+#   docker compose up --build
+#   → UI at http://localhost:3000   ·   API docs at http://localhost:8000/docs
+#
+# The browser only ever talks to `web`; `web` reaches `backend` over the compose
+# network (the BFF pattern — see ADR 0013), so the API needs no CORS.
+#
+# OPENAI_API_KEY (and any provider/model overrides) come from the repo-root .env,
+# the same file the app uses when run directly. Named volumes persist the vector
+# index and HITL checkpoints across runs so the reference corpora are embedded
+# once, not on every boot.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: pv-rag-assistant-backend:local
+    # Published so /docs stays reachable during development. The deployed
+    # topology keeps this private and only exposes `web`.
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Shared secret with the BFF. Empty locally = the API does not require it
+      # (it is only reachable on the compose network anyway); set in production,
+      # where both services have public URLs. See ADR 0013.
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-}
+    volumes:
+      - chroma:/app/backend/chroma_db
+      - checkpoints:/app/backend/checkpoints
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./web
+    image: pv-rag-assistant-web:local
+    ports:
+      - "3000:3000"
+    environment:
+      # Server-side only: resolved over the compose network, never sent to the browser.
+      BACKEND_URL: http://backend:8000
+      # Local dev runs unrestricted so you can feed it your own files. Production
+      # leaves DEMO_MODE unset, which means ON (fail closed): sample cases only,
+      # plus the per-IP rate limits in lib/ratelimit.ts.
+      DEMO_MODE: ${DEMO_MODE:-0}
+      GLOBAL_DAILY_TRIAGE: ${GLOBAL_DAILY_TRIAGE:-40}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-}
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  chroma:
+  checkpoints:

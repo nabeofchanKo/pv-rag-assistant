@@ -1,99 +1,99 @@
-INDIVIDUAL CASE SAFETY REPORT
+個別症例安全性報告
 
-Report ID: ICSR-2025-005
-Report Type: Spontaneous, Healthcare Professional
-Report Date: 2025-11-28
-Reporter: Dr. Watanabe, Sapporo University Hospital, Department of Dermatology
-Reporter Qualification: Physician (Dermatology Specialist)
-Country of Occurrence: Japan
-MedDRA Version: 27.0
+報告ID: ICSR-2025-005
+報告種別: 自発報告（医療専門家）
+報告日: 2025-11-28
+報告者: 札幌大学病院 皮膚科 渡辺医師
+報告者資格: 医師（皮膚科専門医）
+発生国: 日本
+MedDRAバージョン: 27.0
 
-PATIENT INFORMATION
-Patient Initials: T.M.
-Age: 51 years
-Sex: Female
-Weight: 64 kg
-Height: 159 cm
-Ethnicity: Asian
+患者情報
+患者イニシャル: T.M.
+年齢: 51歳
+性別: 女性
+体重: 64 kg
+身長: 159 cm
+人種: アジア系
 
-Medical History
-Important note for this case: this patient has an extensive medical history with multiple previously resolved drug reactions. The current adverse events must be carefully distinguished from prior unrelated events.
+既往歴・合併症
+本症例に関する重要な注意: 本患者は複数の消失済み薬剤反応を含む広範な既往歴を有する。今回の有害事象は、過去の無関係な事象とは慎重に区別する必要がある。
 
-Conditions
-- Rheumatoid arthritis, diagnosed 2015, currently in clinical remission on stable therapy
-- Hashimoto thyroiditis with primary hypothyroidism, diagnosed 2018, stable on levothyroxine
-- Generalised anxiety disorder, diagnosed 2020, well controlled
-- Essential hypertension, well controlled
+合併症
+- 関節リウマチ（2015年診断、現在は安定した治療下で臨床的寛解中）
+- 橋本病による原発性甲状腺機能低下症（2018年診断、レボチロキシンにより安定）
+- 全般性不安障害（2020年診断、良好にコントロールされている）
+- 本態性高血圧（良好にコントロールされている）
 
-Negative/Excluded History
-- No history of seizure or epilepsy
-- No history of asthma
-- No previous history of Stevens-Johnson syndrome or toxic epidermal necrolysis
-- Denies chest pain, palpitations, or syncope at any time in her life
-- No family history of malignancy
-- No personal history of malignancy
+除外・陰性の既往
+- てんかん・けいれんの既往なし
+- 喘息の既往なし
+- スティーブンス・ジョンソン症候群および中毒性表皮壊死融解症の既往なし
+- これまでの生涯を通じて胸痛・動悸・失神を否定
+- 悪性腫瘍の家族歴なし
+- 悪性腫瘍の既往なし
 
-Past Drug Reactions (Resolved, Not the Subject of This Report)
-- 2017: Developed mild rash on the trunk approximately 10 days after starting trimethoprim-sulfamethoxazole for a urinary tract infection. The rash was assessed at the time as a probable drug eruption. The medication was discontinued and the rash resolved within one week without sequelae. The patient has subsequently avoided sulfonamide antibiotics.
-- 2019: Developed transient pruritus without rash during a course of amoxicillin. Resolved spontaneously without intervention. Causality at the time was assessed as possible.
-- 2021: Reported nausea during initial titration of methotrexate. The nausea resolved with dose adjustment and antiemetic support and is no longer experienced by the patient on her current stable dose.
+過去の薬剤反応（消失済み・本報告の対象外）
+- 2017年: 尿路感染症に対しST合剤（トリメトプリム・スルファメトキサゾール）を開始した約10日後に体幹部に軽度の皮疹が出現。当時、薬疹の疑いと評価された。薬剤を中止し、皮疹は後遺症なく1週間以内に消失した。その後、患者はサルファ系抗菌薬を回避している。
+- 2019年: アモキシシリン投与中に皮疹を伴わない一過性のそう痒が出現。介入なく自然に消失した。当時の因果関係は「可能性あり(Possible)」と評価された。
+- 2021年: メトトレキサートの初回漸増中に悪心を訴えた。用量調整および制吐薬の投与により悪心は消失し、現在の安定用量では患者はもはや悪心を経験していない。
 
-These past reactions have all resolved and are mentioned only for completeness. They are not the subject of the current report.
+これらの過去の反応はいずれも消失済みであり、完全性を期すために記載しているに過ぎない。これらは今回の報告の対象ではない。
 
-SUSPECT DRUG
-Drug Name: DrugB
-Active Ingredient: Compound-B
-Indication: Acute upper respiratory tract infection (prescribed by the patient's primary care physician)
-Dosage Regimen: 500 mg twice daily for 7 days
-Route of Administration: Oral
-Therapy Start Date: 2025-11-12
-Therapy End Date: 2025-11-17 (discontinued early due to current adverse events)
-Action Taken with Drug: Drug withdrawn
+被疑薬
+薬剤名: DrugB
+有効成分: Compound-B
+適応: 急性上気道感染症（患者のかかりつけ医により処方）
+用法・用量: 500 mg 1日2回 7日間
+投与経路: 経口
+投与開始日: 2025-11-12
+投与終了日: 2025-11-17（今回の有害事象により早期中止）
+薬剤に対して取られた措置: 薬剤中止
 
-CONCOMITANT MEDICATIONS (At Time of Current Event)
-- Methotrexate 12.5 mg once weekly (oral), ongoing since 2017 for rheumatoid arthritis. Patient has tolerated this dose for several years without adverse events at the time of this report.
-- Folic acid 5 mg once weekly, ongoing
-- Levothyroxine 75 micrograms once daily, ongoing since 2018
-- Amlodipine 5 mg once daily, ongoing since 2022
-- Sertraline 50 mg once daily, ongoing since 2020
+併用薬（今回の事象発現時点）
+- メトトレキサート 12.5 mg 週1回（経口）、関節リウマチに対し2017年より継続中。本報告時点で、患者は本用量を数年間にわたり有害事象なく忍容している。
+- 葉酸 5 mg 週1回、継続中
+- レボチロキシン 75 マイクログラム 1日1回、2018年より継続中
+- アムロジピン 5 mg 1日1回、2022年より継続中
+- セルトラリン 50 mg 1日1回、2020年より継続中
 
-ADVERSE EVENTS (Current Episode)
+有害事象（今回のエピソード）
 
-Event 1: Rash (maculopapular, generalised)
-  Onset Date: 2025-11-16 (day 5 of DrugB therapy)
-  Distribution: Trunk and proximal extremities
-  Outcome: Recovered
-  Seriousness: Non-serious
+事象1: 斑状丘疹状皮疹(Rash maculo-papular)（全身性）
+  発現日: 2025-11-16（DrugB投与5日目）
+  分布: 体幹および四肢近位部
+  転帰: 回復
+  重篤性: 非重篤
 
-Event 2: Pruritus (generalised)
-  Onset Date: 2025-11-16
-  Outcome: Recovered
-  Seriousness: Non-serious
+事象2: そう痒症(Pruritus)（全身性）
+  発現日: 2025-11-16
+  転帰: 回復
+  重篤性: 非重篤
 
-Event 3: Urticaria
-  Onset Date: 2025-11-17
-  Outcome: Recovered
-  Seriousness: Non-serious
+事象3: 蕁麻疹(Urticaria)
+  発現日: 2025-11-17
+  転帰: 回復
+  重篤性: 非重篤
 
-CAUSALITY ASSESSMENT (For Current Events Only)
-Reporter Causality: Probable
-Company Causality: Probable
-WHO-UMC Scale: Probable
+因果関係評価（今回の事象のみ）
+報告者による因果関係: ほぼ確実(Probable)
+企業による因果関係: ほぼ確実(Probable)
+WHO-UMC評価尺度: ほぼ確実(Probable)
 
-NARRATIVE
+症例経過
 
-A 51-year-old female with rheumatoid arthritis on stable methotrexate therapy, Hashimoto thyroiditis on levothyroxine, hypertension on amlodipine, and generalised anxiety disorder on sertraline was prescribed DrugB by her primary care physician on 2025-11-12 for an acute upper respiratory tract infection. The patient took the medication as directed.
+安定したメトトレキサート療法下の関節リウマチ、レボチロキシン投与下の橋本病、アムロジピン投与下の高血圧、およびセルトラリン投与下の全般性不安障害を有する51歳女性が、2025-11-12にかかりつけ医より急性上気道感染症に対しDrugBを処方された。患者は指示どおりに服薬した。
 
-It must be emphasised that this is a separate and unrelated episode from the patient's previous, fully resolved drug reactions. In 2017 she experienced a rash to trimethoprim-sulfamethoxazole, which resolved within one week of withdrawal and led to lifelong avoidance of sulfonamide antibiotics. In 2019 she experienced transient pruritus during amoxicillin therapy. Both of those events are now historical and the patient has been free of cutaneous reactions for more than four years. The current event involves a different drug (DrugB, which is structurally unrelated to either sulfonamides or aminopenicillins) and represents a new and separate clinical episode.
+これは、患者の過去の完全に消失した薬剤反応とは別個の独立したエピソードであることを強調しなければならない。2017年にはST合剤（トリメトプリム・スルファメトキサゾール）に対する皮疹を経験したが、中止後1週間以内に消失し、生涯にわたるサルファ系抗菌薬の回避につながった。2019年にはアモキシシリン投与中に一過性のそう痒を経験した。これら双方の事象はいずれも既に過去のものであり、患者は4年以上にわたり皮膚反応を認めていない。今回の事象は別個の薬剤（DrugBは、サルファ系薬剤ともアミノペニシリン系薬剤とも構造的に無関係である）に関するものであり、新規かつ独立した臨床エピソードを構成する。
 
-On the fifth day of DrugB therapy (2025-11-16), the patient noticed an itchy maculopapular rash beginning on the upper trunk and rapidly spreading over several hours to involve the back, shoulders, and proximal upper arms. Pruritus was severe. The patient applied a topical emollient without benefit. The following day (2025-11-17) she additionally developed urticarial wheals on the abdomen and thighs. There was no facial or oral swelling, no breathing difficulty, no wheezing, and no hypotension. Specifically, the patient denied any sensation of throat tightness, denied chest pain, and denied palpitations. There was no fever. No mucous membrane involvement was observed. No blistering or skin sloughing was present at any point, ruling out severe cutaneous adverse reactions such as Stevens-Johnson syndrome.
+DrugB投与5日目（2025-11-16）に、患者は上部体幹に始まり数時間で背部、肩、上腕近位部に急速に拡大するそう痒性の斑状丘疹状皮疹に気づいた。そう痒は重度であった。患者は外用保湿剤を塗布したが効果はなかった。翌日（2025-11-17）にはさらに腹部および大腿部に蕁麻疹様の膨疹が出現した。顔面・口腔の腫脹、呼吸困難、喘鳴、および低血圧はいずれも認めなかった。特に、患者は咽頭絞扼感を否定し、胸痛を否定し、動悸を否定した。発熱はなかった。粘膜病変は認めなかった。水疱形成や皮膚剥離はいかなる時点においても認められず、スティーブンス・ジョンソン症候群などの重症皮膚有害反応は否定された。
 
-DrugB was discontinued on 2025-11-17. The patient was assessed in the dermatology outpatient clinic on 2025-11-18. Examination confirmed a typical maculopapular drug eruption with overlying urticarial lesions, without features suggestive of severe cutaneous reaction. She was prescribed an oral antihistamine and a moderate-potency topical corticosteroid. Concomitant methotrexate, levothyroxine, amlodipine, and sertraline were continued unchanged, as none of them had been recently initiated or dose-adjusted, and the temporal relationship clearly implicated DrugB.
+DrugBは2025-11-17に中止された。患者は2025-11-18に皮膚科外来で評価を受けた。診察により、重症皮膚反応を示唆する所見を伴わない、蕁麻疹様病変を重畳した典型的な斑状丘疹状薬疹が確認された。経口抗ヒスタミン薬および中等度力価の外用副腎皮質ステロイドが処方された。併用薬であるメトトレキサート、レボチロキシン、アムロジピン、およびセルトラリンは、いずれも最近に開始または用量調整されたものではなく、時間的関係が明らかにDrugBを示唆していたため、変更せず継続された。
 
-By 2025-11-25, the rash, urticaria, and pruritus had fully resolved. The patient remained well at follow-up on 2025-11-28. She has been counselled to avoid DrugB and structurally related agents in the future. This information has been added to her allergy record alongside the historical sulfonamide reaction.
+2025-11-25までに、皮疹、蕁麻疹、およびそう痒はすべて完全に消失した。患者は2025-11-28の追跡調査時においても良好であった。患者には、今後DrugBおよび構造的に関連する薬剤を回避するよう指導した。本情報は、過去のサルファ系薬剤反応とともに患者のアレルギー記録に追加された。
 
-DIFFERENTIATION FROM HISTORICAL EVENTS
-This report concerns only the events of November 2025. The reactions from 2017 (sulfonamide) and 2019 (amoxicillin) are mentioned in the medical history section for completeness only. The 2021 nausea event with methotrexate resolved years ago and is not relevant to the current cutaneous presentation. No active adverse event from any historical medication is present.
+過去事象との鑑別
+本報告は2025年11月の事象のみに関するものである。2017年（サルファ系薬剤）および2019年（アモキシシリン）の反応は、完全性を期すために既往歴の項に記載しているに過ぎない。2021年のメトトレキサートによる悪心事象は数年前に消失しており、今回の皮膚症状とは無関係である。いかなる過去の薬剤に起因する活動性の有害事象も存在しない。
 
-FOLLOW-UP
-No further follow-up required. Patient counselled on allergy avoidance.
+追跡調査
+追加の追跡調査は不要。患者にアレルギー回避について指導済み。

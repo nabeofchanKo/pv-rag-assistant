@@ -1,0 +1,40 @@
+# 自社製品マスタ (own-company product master)
+#
+# 評価対象（自社品）判定に使用する権威データ。編集して育てる（担当製品・別名・特筆事項を追記）。
+# aliases が記載ゆれ吸収の要 — 商品名・一般名・略称・想定される表記揺れを列挙する。
+# 照合は本ファイルの name / active_ingredient / aliases を NFKC 正規化した本文と突き合わせる。
+
+products:
+  - name: DrugX
+    active_ingredient: Compound-X
+    manufacturer: Pharma Sample Co., Ltd.
+    aliases:
+      - ドラッグX
+      - コンパウンドX
+      - Compound X
+    # 既知/未知（expectedness）判定で参照する添付文書（data/drug_labels/ 配下）。
+    label_document: drugx_label.md
+    notes: |
+      本態性高血圧治療薬。
+
+  - name: DrugY
+    active_ingredient: Compound-Y
+    manufacturer: Pharma Sample Co., Ltd.
+    aliases:
+      - ドラッグY
+      - コンパウンドY
+      - Compound Y
+    label_document: drugy_label.md
+    notes: |
+      2型糖尿病治療薬。肝機能障害（薬物性肝障害）の報告に留意。
+
+  - name: DrugZ
+    active_ingredient: Compound-Z
+    manufacturer: Pharma Sample Co., Ltd.
+    aliases:
+      - ドラッグZ
+      - コンパウンドZ
+      - Compound Z
+    label_document: drugz_label.md
+    notes: |
+      抗不整脈薬。ワルファリンとの相互作用（CYP2C9 阻害）および徐脈に注意。

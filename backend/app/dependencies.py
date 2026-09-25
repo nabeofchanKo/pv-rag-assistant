@@ -1,26 +1,140 @@
+import inspect
+import sqlite3
 from functools import lru_cache
-import chromadb
+from pathlib import Path
 
-from openai import OpenAI
+from langchain_core.embeddings import Embeddings
+from langchain_core.language_models import BaseChatModel
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+from langgraph.checkpoint.sqlite import SqliteSaver
+from langgraph.graph.state import CompiledStateGraph
+from pydantic import BaseModel
+
+from app import schemas
+
 from app.config import settings
-
-from app.services.embedding import EmbeddingService
-from app.services.generator import GeneratorService
-from app.services.retriever import RetrieverService
-from app.services.pdf_processor import PDFProcessor
 from app.services.chunking import FixedLengthChunker
+from app.services.expectedness import ExpectednessService
+from app.services.extraction import ExtractionService
+from app.services.generator import GeneratorService
+from app.services.influence import InfluenceService
+from app.services.label_index import LabelIndexService
+from app.services.causality import CausalityService
+from app.services.ime import ImeReference
+from app.services.meddra import MeddraDictionary
+from app.services.meddra_coding import MeddraCodingService
+from app.services.meddra_retriever import HybridMeddraRetriever
+from app.services.seriousness import SeriousnessService
+from app.services.ingestion import (
+    EmailLoader,
+    ImageLoader,
+    IngestionService,
+    TextLoader,
+)
+from app.services.ocr import OcrEngine, VisionLLMOcrEngine
+from app.services.pdf_processor import PDFProcessor
+from app.services.product_master import ProductMasterService
+from app.services.precedent import PrecedentService
+from app.services.retriever import RetrieverService
+from app.services.triage_graph import build_triage_graph
 
 
 @lru_cache
-def get_openai_client() -> OpenAI:
-    return OpenAI(api_key=settings.openai_api_key)
+def get_embeddings() -> Embeddings:
+    """Return the embedding model, dispatched on settings.embedding_provider.
+
+    - "openai": text-embedding-3-small (cloud; case text leaves the machine).
+    - "ollama": a local model (e.g. bge-m3) served by Ollama — on-prem/privacy tier.
+      Imported lazily so langchain-ollama is only required when actually selected.
+    """
+    provider = settings.embedding_provider.lower()
+    if provider == "openai":
+        return OpenAIEmbeddings(
+            model=settings.openai_embedding_model,
+            api_key=settings.openai_api_key,
+        )
+    if provider == "ollama":
+        from langchain_ollama import OllamaEmbeddings
+
+        return OllamaEmbeddings(
+            model=settings.ollama_embedding_model,
+            base_url=settings.ollama_base_url,
+        )
+    raise ValueError(f"Unknown embedding_provider: {settings.embedding_provider!r}")
+
+
+def build_chat_model(openai_model: str, step: str | None = None) -> BaseChatModel:
+    """Build a chat model for a pipeline step, dispatched on settings.chat_provider.
+
+    - "openai": ChatOpenAI with the step's own model (per-step selection preserved).
+    - "ollama": ChatOllama with the single settings.ollama_chat_model for EVERY step
+      (the per-step openai_model arg is ignored) — the "whole pipeline on one local
+      model" mode the model-comparison bench drives.
+    - "hybrid": ChatOllama only when ``step`` is in settings.local_steps, else OpenAI —
+      the benchmark-driven split (ADR 0012: transcription/coding local, the three
+      clinical judgments stay on OpenAI).
+
+    ChatOllama raises num_ctx from Ollama's 2048 default (a full case + long system
+    prompt would be silently truncated) and caps num_predict + a client timeout so a
+    local model can't run away or wedge Ollama's queue. Every service calls
+    llm.with_structured_output(Schema); ChatOllama implements it (Ollama native
+    structured output), the compatibility point 5b validates.
+    """
+    provider = settings.chat_provider.lower()
+    use_local = provider == "ollama" or (provider == "hybrid" and step in settings.local_steps)
+    if use_local:
+        from langchain_ollama import ChatOllama
+
+        return ChatOllama(
+            model=settings.ollama_chat_model,
+            base_url=settings.ollama_base_url,
+            temperature=0.0,
+            num_ctx=settings.ollama_num_ctx,
+            num_predict=settings.ollama_num_predict,
+            client_kwargs={"timeout": settings.ollama_request_timeout},
+        )
+    if provider in ("openai", "hybrid"):
+        return ChatOpenAI(
+            model=openai_model,
+            temperature=0.0,
+            api_key=settings.openai_api_key,
+        )
+    raise ValueError(f"Unknown chat_provider: {settings.chat_provider!r}")
+
 
 @lru_cache
-def get_chroma_client():
-    return chromadb.PersistentClient(path=settings.chroma_persist_dir)
+def get_chat_model() -> BaseChatModel:
+    """Chat model for RAG Q&A generation (swappable via settings.chat_provider)."""
+    return build_chat_model(settings.openai_chat_model, step="chat")
 
-def get_pdf_processor() -> PDFProcessor:
-    return PDFProcessor()
+
+@lru_cache
+def get_vision_model() -> BaseChatModel:
+    """Return the vision-capable model used for image OCR."""
+    return ChatOpenAI(
+        model=settings.openai_vision_model,
+        temperature=0.0,
+        api_key=settings.openai_api_key,
+    )
+
+
+def get_ocr_engine() -> OcrEngine:
+    """Return the OCR engine. Swappable (Vision LLM now, local later)."""
+    return VisionLLMOcrEngine(llm=get_vision_model())
+
+
+def get_ingestion_service() -> IngestionService:
+    """Dispatch PDF / email / text / image inputs to the right loader."""
+    return IngestionService(
+        loaders=[
+            PDFProcessor(),
+            EmailLoader(),
+            TextLoader(),
+            ImageLoader(ocr=get_ocr_engine()),
+        ],
+    )
+
 
 def get_chunker() -> FixedLengthChunker:
     return FixedLengthChunker(
@@ -28,17 +142,223 @@ def get_chunker() -> FixedLengthChunker:
         overlap=settings.chunk_overlap_tokens,
     )
 
-def get_embedding_service() -> EmbeddingService:
-    return EmbeddingService(
-        client=get_openai_client(),
-        model=settings.openai_embedding_model,
+
+@lru_cache
+def get_retriever_service() -> RetrieverService:
+    return RetrieverService(
+        embeddings=get_embeddings(),
+        persist_dir=settings.chroma_dir,
+        collection_name=settings.collection_name,
     )
 
-def get_retriever_service() -> RetrieverService:
-    return RetrieverService(client=get_chroma_client())
 
 def get_generator_service() -> GeneratorService:
-    return GeneratorService(
-        client=get_openai_client(),
-        model=settings.openai_chat_model,
+    return GeneratorService(llm=get_chat_model())
+
+
+@lru_cache
+def get_extraction_model() -> BaseChatModel:
+    """Model for the reported-events extraction call (swappable via settings)."""
+    return build_chat_model(settings.openai_extraction_model, step="extraction")
+
+
+@lru_cache
+def get_narrative_model() -> BaseChatModel:
+    """Model for the narrative-diff call (harder semantic step; swappable)."""
+    return build_chat_model(settings.openai_narrative_model, step="narrative")
+
+
+def get_extraction_service() -> ExtractionService:
+    """Structured extraction of patient + adverse events from case text."""
+    return ExtractionService(
+        reported_llm=get_extraction_model(),
+        narrative_llm=get_narrative_model(),
+    )
+
+
+@lru_cache
+def get_product_master_service() -> ProductMasterService:
+    """Own-company product matching (自社品判定) from the YAML master."""
+    return ProductMasterService(master_path=settings.product_master_path)
+
+
+# --- Phase 3: expectedness (既知/未知) over drug labels ---
+
+
+@lru_cache
+def get_label_retriever_service() -> RetrieverService:
+    """Retriever over the drug-label collection (separate from case documents)."""
+    return RetrieverService(
+        embeddings=get_embeddings(),
+        persist_dir=settings.chroma_dir,
+        collection_name=settings.label_collection_name,
+    )
+
+
+def get_label_index_service() -> LabelIndexService:
+    """One-time indexer for the drug-label files (run at startup)."""
+    return LabelIndexService(
+        ingestion=get_ingestion_service(),
+        chunker=get_chunker(),
+        retriever=get_label_retriever_service(),
+        labels_dir=settings.drug_labels_dir,
+    )
+
+
+@lru_cache
+def get_expectedness_model() -> BaseChatModel:
+    """Model for the grounded 既知/未知 judgment call (swappable via settings)."""
+    return build_chat_model(settings.openai_expectedness_model, step="expectedness")
+
+
+def get_expectedness_service() -> ExpectednessService:
+    """Assess expectedness of adverse events against a drug's package insert."""
+    return ExpectednessService(
+        llm=get_expectedness_model(),
+        retriever=get_label_retriever_service(),
+        top_k=settings.label_top_k,
+    )
+
+
+# --- Phase 3: MedDRA PT coding (hybrid retrieval + LLM select) ---
+
+
+@lru_cache
+def get_meddra_dictionary() -> MeddraDictionary:
+    """Load the MedDRA PT dictionary (+ build its char-bigram BM25 index)."""
+    return MeddraDictionary(csv_path=settings.meddra_path)
+
+
+@lru_cache
+def get_meddra_retriever() -> HybridMeddraRetriever:
+    """Hybrid MedDRA retriever (exact + BM25 ⊕ vector, RRF-fused)."""
+    return HybridMeddraRetriever(
+        dictionary=get_meddra_dictionary(),
+        embeddings=get_embeddings(),
+        persist_dir=settings.chroma_dir,
+        collection_name=settings.meddra_collection_name,
+    )
+
+
+@lru_cache
+def get_meddra_model() -> BaseChatModel:
+    """Model for the MedDRA candidate-selection call (swappable via settings)."""
+    return build_chat_model(settings.openai_meddra_model, step="meddra")
+
+
+def get_meddra_coding_service() -> MeddraCodingService:
+    """Suggest a MedDRA PT for each adverse-event term."""
+    return MeddraCodingService(
+        llm=get_meddra_model(),
+        retriever=get_meddra_retriever(),
+        top_k=settings.meddra_top_k,
+    )
+
+
+# --- Phase 3: seriousness assessment (企業評価 / ICH E2A) ---
+
+
+@lru_cache
+def get_ime_reference() -> ImeReference:
+    """PT-keyed important-medical-events list (E2A criterion 6, HITL-appendable)."""
+    return ImeReference(csv_path=settings.ime_path)
+
+
+@lru_cache
+def get_seriousness_model() -> BaseChatModel:
+    """Model for the E2A criteria interpretation call (swappable via settings)."""
+    return build_chat_model(settings.openai_seriousness_model, step="seriousness")
+
+
+def get_seriousness_service() -> SeriousnessService:
+    """Assess fresh company seriousness (ICH E2A) per adverse event (no past data —
+    IME criterion 6 is applied by the influence layer, Phase 4e)."""
+    return SeriousnessService(llm=get_seriousness_model())
+
+
+def get_influence_service() -> InfluenceService:
+    """Fold past data (IME + precedent) into verdicts, or annotate (Phase 4e).
+    Holds the shared IME singleton so promotions take effect immediately."""
+    return InfluenceService(ime=get_ime_reference())
+
+
+# --- Phase 3: causality (temporal, conservative) ---
+
+
+@lru_cache
+def get_causality_model() -> BaseChatModel:
+    """Model for the temporal causality call (swappable via settings)."""
+    return build_chat_model(settings.openai_causality_model, step="causality")
+
+
+def get_causality_service() -> CausalityService:
+    """Assess temporal causality (conservative) per adverse event."""
+    return CausalityService(llm=get_causality_model())
+
+
+# --- Phase 4d: past-case precedent (structured per-(drug, PT) lookup) ---
+
+
+@lru_cache
+def get_precedent_service() -> PrecedentService:
+    """Past-case precedent index (seed + runtime), shared as a singleton so a
+    just-approved case becomes precedent for the next triage in-process."""
+    return PrecedentService(
+        seed_dir=settings.past_cases_seed_dir,
+        runtime_dir=settings.past_cases_runtime_dir,
+    )
+
+
+# --- Phase 4a/4b: LangGraph orchestration of the triage pipeline ---
+
+
+def _schema_serde() -> JsonPlusSerializer:
+    """Serializer that explicitly allow-lists our Pydantic schema models.
+
+    The triage state holds Pydantic objects (ProductMatchResult, CaseExtraction,
+    the assessments, ReviewOutcome, …). LangGraph will block deserializing
+    unregistered types from a checkpoint in a future version, so register every
+    model defined in ``app.schemas`` up front (future-proof + silences warnings).
+    """
+    models = [
+        obj
+        for _, obj in inspect.getmembers(schemas, inspect.isclass)
+        if issubclass(obj, BaseModel) and obj.__module__ == schemas.__name__
+    ]
+    return JsonPlusSerializer(allowed_msgpack_modules=models)
+
+
+@lru_cache
+def get_checkpointer() -> SqliteSaver:
+    """Persistent LangGraph checkpointer for the HITL interrupt/resume flow.
+
+    A single SQLite connection (check_same_thread=False so LangGraph's parallel
+    fan-out threads may share it; SqliteSaver serializes access with its own
+    lock). Persists paused triage drafts across restarts.
+    """
+    db_path = Path(settings.checkpoint_db_path)
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(db_path), check_same_thread=False)
+    saver = SqliteSaver(conn, serde=_schema_serde())
+    saver.setup()
+    return saver
+
+
+@lru_cache
+def get_triage_graph() -> CompiledStateGraph:
+    """Build + compile the triage graph once, wiring the six services together
+    plus the SqliteSaver checkpointer (needed for the HITL review interrupt).
+
+    Cached so the graph is compiled a single time and reused across requests.
+    """
+    return build_triage_graph(
+        product_master=get_product_master_service(),
+        extraction=get_extraction_service(),
+        meddra=get_meddra_coding_service(),
+        seriousness=get_seriousness_service(),
+        causality=get_causality_service(),
+        expectedness=get_expectedness_service(),
+        precedent=get_precedent_service(),
+        influence=get_influence_service(),
+        checkpointer=get_checkpointer(),
     )
