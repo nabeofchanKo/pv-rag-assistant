@@ -15,6 +15,10 @@ Runs the real pipeline against bundled synthetic cases. Pick a sample, or build 
 with the case builder and watch the assessment respond to what you wrote in the narrative.
 No sign-up. / 同梱の合成症例で実際のパイプラインが動きます。症例ビルダーで自分で症例を組み立てることもできます。
 
+**[Case study / ケーススタディ](https://h4b6m4zyqj.ap-northeast-1.awsapprunner.com/about)** — the problem, the
+design decisions, what the evaluation does and does not show, and how it was built (JP/EN).
+/ 課題・設計判断・評価で言えること言えないこと・どう作ったか。
+
 > The public demo accepts **only the bundled sample cases and builder-composed cases** (no file upload),
 > and is rate limited — it calls a paid LLM API.
 > / 公開デモは費用管理のため、同梱サンプルとビルダーで作成した症例のみを受け付け、実行回数を制限しています。
