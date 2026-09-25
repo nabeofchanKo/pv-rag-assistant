@@ -1,55 +1,57 @@
-pt_code,pt_name,soc_name
-10019211,Headache,Nervous system disorders
-10013573,Dizziness,Nervous system disorders
-10028813,Nausea,Gastrointestinal disorders
-10019837,Hepatic function abnormal,Hepatobiliary disorders
-10023126,Jaundice,Hepatobiliary disorders
-10016256,Fatigue,General disorders and administration site conditions
-10000059,Abdominal pain,Gastrointestinal disorders
-10037087,Pruritus,Skin and subcutaneous tissue disorders
-10022402,International normalised ratio increased,Investigations
-10015090,Epistaxis,Respiratory thoracic and mediastinal disorders
-10014080,Ecchymosis,Vascular disorders
-10006093,Bradycardia,Cardiac disorders
-10042772,Syncope,Nervous system disorders
-10031127,Orthostatic hypotension,Vascular disorders
-10010305,Confusional state,Psychiatric disorders
-10022437,Insomnia,Psychiatric disorders
-10012735,Diarrhoea,Gastrointestinal disorders
-10033775,Paraesthesia,Nervous system disorders
-10002869,Anhedonia,Psychiatric disorders
-10012378,Depression,Psychiatric disorders
-10037868,Rash maculo-papular,Skin and subcutaneous tissue disorders
-10046735,Urticaria,Skin and subcutaneous tissue disorders
-10047700,Vomiting,Gastrointestinal disorders
-10037844,Rash,Skin and subcutaneous tissue disorders
-10005886,Asthenia,General disorders and administration site conditions
-10003988,Back pain,Musculoskeletal and connective tissue disorders
-10003239,Arthralgia,Musculoskeletal and connective tissue disorders
-10028411,Myalgia,Musculoskeletal and connective tissue disorders
-10010774,Constipation,Gastrointestinal disorders
-10000060,Abdominal discomfort,Gastrointestinal disorders
-10020772,Hypertension,Vascular disorders
-10020865,Hypotension,Vascular disorders
-10047340,Vertigo,Ear and labyrinth disorders
-10043521,Tremor,Nervous system disorders
-10039906,Seizure,Nervous system disorders
-10025482,Loss of consciousness,Nervous system disorders
-10008190,Cardiac arrest,Cardiac disorders
-10042244,Tachycardia,Cardiac disorders
-10003658,Atrial fibrillation,Cardiac disorders
-10008479,Chest pain,General disorders and administration site conditions
-10037660,Pyrexia,General disorders and administration site conditions
-10008531,Chills,General disorders and administration site conditions
-10001497,Anxiety,Psychiatric disorders
-10024690,Liver injury,Hepatobiliary disorders
-10038359,Renal failure,Renal and urinary disorders
-10023506,Acute kidney injury,Renal and urinary disorders
-10011224,Cough,Respiratory thoracic and mediastinal disorders
-10013968,Dyspnoea,Respiratory thoracic and mediastinal disorders
-10002198,Anaphylactic reaction,Immune system disorders
-10002424,Angioedema,Immune system disorders
-10042033,Stevens-Johnson syndrome,Skin and subcutaneous tissue disorders
-10044565,Toxic epidermal necrolysis,Skin and subcutaneous tissue disorders
-10020635,Hyperglycaemia,Metabolism and nutrition disorders
-10020758,Hypoglycaemia,Metabolism and nutrition disorders
+pt_code,pt_name_ja,pt_name_en,soc_name_ja
+10019211,頭痛,Headache,神経系障害
+10013573,浮動性めまい,Dizziness,神経系障害
+10028813,悪心,Nausea,胃腸障害
+10019837,肝機能異常,Hepatic function abnormal,肝胆道系障害
+10023126,黄疸,Jaundice,肝胆道系障害
+10016256,疲労,Fatigue,一般・全身障害および投与部位の状態
+10000059,腹痛,Abdominal pain,胃腸障害
+10037087,そう痒症,Pruritus,皮膚および皮下組織障害
+10022402,国際標準比増加,International normalised ratio increased,臨床検査
+10015090,鼻出血,Epistaxis,呼吸器、胸郭および縦隔障害
+10014080,斑状出血,Ecchymosis,血管障害
+10006093,徐脈,Bradycardia,心臓障害
+10042772,失神,Syncope,神経系障害
+10031127,起立性低血圧,Orthostatic hypotension,血管障害
+10010305,錯乱状態,Confusional state,精神障害
+10022437,不眠症,Insomnia,精神障害
+10012735,下痢,Diarrhoea,胃腸障害
+10033775,錯感覚,Paraesthesia,神経系障害
+10002869,無快感症,Anhedonia,精神障害
+10012378,うつ病,Depression,精神障害
+10037868,斑状丘疹状皮疹,Rash maculo-papular,皮膚および皮下組織障害
+10046735,蕁麻疹,Urticaria,皮膚および皮下組織障害
+10047700,嘔吐,Vomiting,胃腸障害
+10037844,発疹,Rash,皮膚および皮下組織障害
+10005886,無力症,Asthenia,一般・全身障害および投与部位の状態
+10003988,背部痛,Back pain,筋骨格系および結合組織障害
+10003239,関節痛,Arthralgia,筋骨格系および結合組織障害
+10028411,筋肉痛,Myalgia,筋骨格系および結合組織障害
+10010774,便秘,Constipation,胃腸障害
+10000060,腹部不快感,Abdominal discomfort,胃腸障害
+10020772,高血圧,Hypertension,血管障害
+10020865,低血圧,Hypotension,血管障害
+10047340,回転性めまい,Vertigo,耳および迷路障害
+10043521,振戦,Tremor,神経系障害
+10039906,痙攣発作,Seizure,神経系障害
+10025482,意識消失,Loss of consciousness,神経系障害
+10008190,心停止,Cardiac arrest,心臓障害
+10042244,頻脈,Tachycardia,心臓障害
+10003658,心房細動,Atrial fibrillation,心臓障害
+10008479,胸痛,Chest pain,一般・全身障害および投与部位の状態
+10037660,発熱,Pyrexia,一般・全身障害および投与部位の状態
+10008531,悪寒,Chills,一般・全身障害および投与部位の状態
+10001497,不安,Anxiety,精神障害
+10024690,肝障害,Liver injury,肝胆道系障害
+10038359,腎不全,Renal failure,腎および尿路障害
+10023506,急性腎障害,Acute kidney injury,腎および尿路障害
+10011224,咳嗽,Cough,呼吸器、胸郭および縦隔障害
+10013968,呼吸困難,Dyspnoea,呼吸器、胸郭および縦隔障害
+10002198,アナフィラキシー反応,Anaphylactic reaction,免疫系障害
+10002424,血管浮腫,Angioedema,免疫系障害
+10042033,スティーブンス・ジョンソン症候群,Stevens-Johnson syndrome,皮膚および皮下組織障害
+10044565,中毒性表皮壊死融解症,Toxic epidermal necrolysis,皮膚および皮下組織障害
+10020635,高血糖,Hyperglycaemia,代謝および栄養障害
+10020758,低血糖,Hypoglycaemia,代謝および栄養障害
+10014387,心電図QT延長,Electrocardiogram QT prolonged,臨床検査
+10072268,薬物性肝障害,Drug-induced liver injury,肝胆道系障害

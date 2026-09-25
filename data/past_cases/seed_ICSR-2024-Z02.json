@@ -1,0 +1,24 @@
+{
+  "case_id": "ICSR-2024-Z02",
+  "date": "2025-02-08",
+  "drugs": ["DrugZ"],
+  "reviewer": "PVレビュー（過去・シード）",
+  "events": [
+    {
+      "term": "鼻出血",
+      "pt_code": "10015090",
+      "pt_name": "鼻出血",
+      "seriousness": "重篤",
+      "causality": "否定できない",
+      "expectedness": {"DrugZ": "既知"}
+    },
+    {
+      "term": "国際標準比増加",
+      "pt_code": "10022402",
+      "pt_name": "国際標準比増加",
+      "seriousness": "非重篤",
+      "causality": "否定できない",
+      "expectedness": {"DrugZ": "既知"}
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+/* ---- Clinical palette (matches the Phase 6 sketch: teal accent) ---- */
+:root {
+  --bg: #eef2f6;
+  --surface: #ffffff;
+  --surface-2: #f5f8fb;
+  --ink: #14202e;
+  --text: #2a3743;
+  --muted: #5e6c7b;
+  --border: #d4dee8;
+  --accent: #0e7490;
+  --accent-weak: #def0f4;
+  --good: #2c7a54;
+  --good-weak: #e1f0e8;
+  --warn: #a5620a;
+  --warn-weak: #f6ead6;
+  --danger: #c0392b;
+  --danger-weak: #fbe7e4;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0c141d;
+    --surface: #131e2a;
+    --surface-2: #182533;
+    --ink: #eaf1f8;
+    --text: #c4d0dc;
+    --muted: #8a99a9;
+    --border: #253340;
+    --accent: #2eb8ce;
+    --accent-weak: #10303a;
+    --good: #4fb07e;
+    --good-weak: #12301f;
+    --warn: #e2a44b;
+    --warn-weak: #2e2410;
+    --danger: #e5776b;
+    --danger-weak: #2c1512;
+  }
+}
+
+/* Map palette + fonts into Tailwind's theme so `bg-surface`, `text-ink`,
+   `border-border`, `text-accent`, `font-mono`, … all resolve to these vars. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-weak: var(--accent-weak);
+  --color-good: var(--good);
+  --color-good-weak: var(--good-weak);
+  --color-warn: var(--warn);
+  --color-warn-weak: var(--warn-weak);
+  --color-danger: var(--danger);
+  --color-danger-weak: var(--danger-weak);
+  --font-sans: var(--font-noto-sans-jp);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-noto-sans-jp), system-ui, sans-serif;
+}

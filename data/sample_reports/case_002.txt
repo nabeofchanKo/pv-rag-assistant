@@ -1,95 +1,96 @@
-INDIVIDUAL CASE SAFETY REPORT
+個別症例安全性報告
 
-Report ID: ICSR-2025-002
-Report Type: Spontaneous, Healthcare Professional
-Report Date: 2025-12-03
-Reporter: Dr. Yamamoto, Osaka Medical Center, Department of Hepatology
-Reporter Qualification: Physician (Specialist)
-Country of Occurrence: Japan
-MedDRA Version: 27.0
+報告ID：ICSR-2025-002
+報告種別：自発報告（医療専門家）
+報告日：2025-12-03
+報告者：大阪医療センター 肝臓内科 山本医師
+報告者資格：医師（専門医）
+発生国：日本
+MedDRAバージョン：27.0
 
-PATIENT INFORMATION
-Patient Initials: M.S.
-Age: 58 years
-Sex: Male
-Weight: 82 kg
-Height: 172 cm
-Ethnicity: Asian
-Smoking Status: Former smoker (quit 2018)
-Alcohol Use: Occasional (less than 7 units per week)
+患者情報
+患者イニシャル：M.S.
+年齢：58歳
+性別：男性
+体重：82 kg
+身長：172 cm
+人種：アジア人
+喫煙状況：元喫煙者（2018年に禁煙）
+飲酒歴：機会飲酒（週7単位未満）
 
-Medical History
-- Type 2 diabetes mellitus, diagnosed 2019, baseline HbA1c 7.8 percent
-- Dyslipidaemia, diagnosed 2020
-- Essential hypertension, diagnosed 2017
-- Chronic kidney disease, stage 2 (eGFR 72 mL/min/1.73 m2)
-- No prior history of liver disease. Baseline ALT 28 U/L, AST 24 U/L, total bilirubin 0.8 mg/dL within 30 days prior to initiation of suspect drug.
-- No known drug allergies.
+既往歴・合併症
+・2型糖尿病（2019年診断、ベースラインHbA1c 7.8％）
+・脂質異常症（2020年診断）
+・本態性高血圧症（2017年診断）
+・慢性腎臓病 ステージ2（eGFR 72 mL/min/1.73 m2）
+・肝疾患の既往なし。被疑薬投与開始前30日以内のベースライン値はALT 28 U/L、AST 24 U/L、総ビリルビン0.8 mg/dLであった。
+・既知の薬物アレルギーなし。
 
-SUSPECT DRUG
-Drug Name: DrugY
-Active Ingredient: Compound-Y 50 mg
-Manufacturer: Pharma Sample Co., Ltd.
-Dosage Form: Tablet
-Dosage Regimen: 50 mg, oral, once daily
-Route of Administration: Oral
-Indication: Type 2 diabetes mellitus, glycaemic control add-on therapy
-Therapy Start Date: 2025-10-15
-Therapy End Date: 2025-11-22 (discontinued)
-Action Taken with Drug: Drug withdrawn
+被疑薬
+薬剤名：DrugY
+有効成分：Compound-Y 50 mg
+製造販売業者：Pharma Sample Co., Ltd.
+剤形：錠剤
+用法：1日1回 経口投与
+用量：50 mg
+投与経路：経口
+適応：2型糖尿病、血糖コントロールのための追加（アドオン）療法
+投与開始日：2025-10-15
+投与終了日：2025-11-22（投与中止）
+薬剤に対する処置：投与中止
 
-CONCOMITANT MEDICATIONS
-- Metformin 1000 mg twice daily, ongoing since 2019
-- Atorvastatin 20 mg once daily at night, ongoing since 2020
-- Telmisartan 40 mg once daily, ongoing since 2017
-- Aspirin 100 mg once daily, ongoing since 2022 (low-dose for cardiovascular prevention)
+併用薬（継続中）
+・メトホルミン 1000 mg 1日2回（2019年より継続中）
+・アトルバスタチン 20 mg 1日1回 就寝前（2020年より継続中）
+・テルミサルタン 40 mg 1日1回（2017年より継続中）
+・アスピリン 100 mg 1日1回（2022年より継続中、心血管イベント予防目的の低用量）
 
-ADVERSE EVENTS
-Event 1: Hepatic function abnormal (drug-induced liver injury)
-  Onset Date: 2025-11-15 (approximately 30 days after DrugY initiation)
-  Date of Resolution: Ongoing at the time of this report
-  Outcome: Recovering
-  Seriousness Criteria Met: Hospitalisation (inpatient admission required for evaluation and supportive care)
-  Seriousness: Serious
+有害事象
+事象1：肝機能異常（Hepatic function abnormal）／薬物性肝障害
+　発現日：2025-11-15（DrugY投与開始から約30日後）
+　消失日：本報告時点で継続中
+　転帰：軽快
+　重篤性の該当基準：入院（評価および支持療法のための入院を要した）
+　重篤度：重篤
 
-Event 2: Jaundice
-  Onset Date: 2025-11-18
-  Outcome: Recovering
-  Seriousness Criteria Met: Associated with the serious event above
+事象2：黄疸（Jaundice）
+　発現日：2025-11-18
+　転帰：軽快
+　重篤性の該当基準：上記重篤事象に関連
 
-Event 3: Fatigue (severe)
-  Onset Date: 2025-11-10
-  Outcome: Recovering
-  Seriousness: Non-serious
+事象3：疲労（Fatigue、重度）
+　発現日：2025-11-10
+　転帰：軽快
+　重篤度：非重篤
 
-Event 4: Abdominal pain (right upper quadrant)
-  Onset Date: 2025-11-17
-  Outcome: Recovering
-  Seriousness: Non-serious
+事象4：腹痛（Abdominal pain、右上腹部）
+　発現日：2025-11-17
+　転帰：軽快
+　重篤度：非重篤
 
-Event 5: Pruritus (generalised)
-  Onset Date: 2025-11-19
-  Outcome: Recovering
-  Seriousness: Non-serious
+事象5：そう痒症（Pruritus、全身性）
+　発現日：2025-11-19
+　転帰：軽快
+　重篤度：非重篤
 
-CAUSALITY ASSESSMENT
-Reporter Causality: Probable
-Company Causality: Probable
-WHO-UMC Scale: Probable
-RUCAM (Roussel Uclaf Causality Assessment Method) Score: 8 (Probable)
+因果関係評価
+報告者による因果関係：ほぼ確実（Probable）
+企業による因果関係：ほぼ確実（Probable）
+WHO-UMC判定：ほぼ確実（Probable）
+RUCAM（Roussel Uclaf因果関係評価法）スコア：8（Probable）
 
-NARRATIVE
-A 58-year-old male patient with a multi-year history of type 2 diabetes mellitus, dyslipidaemia, hypertension, and stage 2 chronic kidney disease was initiated on DrugY 50 mg once daily on 2025-10-15 as an add-on to metformin for inadequate glycaemic control. Baseline liver function tests obtained within 30 days prior to therapy initiation were within normal limits (ALT 28 U/L, AST 24 U/L, ALP 95 U/L, total bilirubin 0.8 mg/dL).
+症例経過
+2型糖尿病、脂質異常症、高血圧症および慢性腎臓病ステージ2を数年来有する58歳男性。血糖コントロール不良に対し、メトホルミンへの追加療法として2025-10-15よりDrugY 50 mgを1日1回で開始した。投与開始前30日以内に測定したベースラインの肝機能検査値はいずれも正常範囲内であった（ALT 28 U/L、AST 24 U/L、ALP 95 U/L、総ビリルビン0.8 mg/dL）。
 
-Approximately three weeks after starting DrugY, the patient reported new-onset progressive fatigue and reduced exercise tolerance. He did not initially associate these symptoms with his new medication. On 2025-11-15, he developed nausea and noted darkening of his urine. By 2025-11-17 he had developed right upper quadrant abdominal discomfort, and on 2025-11-18 his wife observed scleral icterus, prompting an urgent consultation.
+DrugY開始から約3週間後、患者は新たに進行性の疲労感と運動耐容能の低下を自覚したが、当初はこれらの症状を新規開始薬と関連づけていなかった。2025-11-15には悪心が出現し、尿の濃染に気づいた。2025-11-17には右上腹部の腹部不快感が出現し、2025-11-18には妻が眼球結膜の黄染に気づいたため、緊急受診に至った。
 
-Laboratory evaluation on the day of admission showed ALT 612 U/L, AST 487 U/L, ALP 168 U/L, total bilirubin 4.8 mg/dL (direct bilirubin 3.2 mg/dL), and INR 1.2. Hepatitis A, B, C, and E serologies were negative. Anti-nuclear antibody and anti-mitochondrial antibody were negative. Abdominal ultrasound demonstrated no biliary obstruction or focal hepatic lesion. No alcohol or herbal supplement use was reported in the preceding three months. The pattern of injury was predominantly hepatocellular (R-value 7.2).
+入院当日の検査所見では、ALT 612 U/L、AST 487 U/L、ALP 168 U/L、総ビリルビン4.8 mg/dL（直接ビリルビン3.2 mg/dL）、INR 1.2であった。A型・B型・C型・E型肝炎の血清学的検査はいずれも陰性であり、抗核抗体および抗ミトコンドリア抗体も陰性であった。腹部超音波検査では胆道閉塞や肝限局性病変は認めなかった。直近3か月間にアルコールや健康食品・サプリメントの使用歴はなかった。肝障害のパターンは主に肝細胞障害型であった（R値7.2）。
 
-DrugY was discontinued on 2025-11-22. The patient was hospitalised for five days for observation and supportive care. Atorvastatin was temporarily held on admission as a precautionary measure but was reintroduced after liver enzymes began to decline, without further worsening. Metformin, telmisartan, and aspirin were continued throughout. Generalised pruritus developed on 2025-11-19 and was managed with antihistamines.
+DrugYは2025-11-22に投与中止とした。患者は経過観察および支持療法のため5日間入院した。アトルバスタチンは入院時に予防的措置として一時的に中止したが、肝酵素が低下し始めた後に再開したところ、その後の増悪は認めなかった。メトホルミン、テルミサルタンおよびアスピリンは経過を通じて継続した。2025-11-19に全身性のそう痒症が出現し、抗ヒスタミン薬で管理した。
 
-By 2025-12-02, the patient's symptoms had substantially improved. Repeat laboratory testing showed ALT 142 U/L, AST 98 U/L, total bilirubin 2.1 mg/dL, demonstrating a downward trend. Pruritus had resolved. The patient remained off DrugY at the time of this report.
+2025-12-02までに患者の症状は著明に改善した。再検査ではALT 142 U/L、AST 98 U/L、総ビリルビン2.1 mg/dLと低下傾向を示した。そう痒症は消失した。本報告時点で患者はDrugYを中止したままである。
 
-The RUCAM score of 8 reflects the temporal relationship (latency of 30 days, consistent with idiosyncratic drug-induced liver injury), the dechallenge response (substantial improvement following drug withdrawal), the exclusion of alternative causes, and the absence of other plausible hepatotoxins. Concomitant atorvastatin is a known but uncommon cause of hepatotoxicity; however, the patient had tolerated atorvastatin for five years without prior abnormality, and atorvastatin was continued during recovery without further injury.
+RUCAMスコア8は、時間的関連性（潜伏期間30日は特異体質性の薬物性肝障害に矛盾しない）、投与中止後の反応（薬剤中止後の著明な改善）、他要因の除外、および他に妥当な肝毒性物質が存在しないことを反映している。併用薬のアトルバスタチンは既知ではあるが頻度の低い肝毒性の原因である。しかし本患者はアトルバスタチンを5年間にわたり過去の異常なく忍容しており、回復期にも継続投与したにもかかわらず肝障害の増悪を認めなかった。
 
-FOLLOW-UP
-Follow-up scheduled for 2025-12-15 with repeat liver function tests and re-evaluation of diabetes management. Rechallenge with DrugY is not planned.
+追跡調査
+2025-12-15に肝機能検査の再検および糖尿病治療の再評価を目的とした追跡調査を予定している。DrugYの再投与（リチャレンジ）は計画していない。

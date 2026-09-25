@@ -1,0 +1,16 @@
+{
+  "_note": "起案: Claude／PVレビュー反映。DrugAは自社品でない→Phase 4g のハードゲートで評価対象外(out_of_scope)。参考として想定判定を残すが、システムは評価をスキップし out_of_scope を返すのが正。",
+  "case_id": "ICSR-2025-004",
+  "document": "case_004.txt",
+  "out_of_scope": true,
+  "drugs": [],
+  "events": [
+    {"term": "疲労", "pt_codes": ["10016256"], "seriousness": "非重篤", "causality": "否定できない"},
+    {"term": "不眠症", "pt_codes": ["10022437"], "seriousness": "非重篤", "causality": "否定できない"},
+    {"term": "下痢", "pt_codes": ["10012735"], "seriousness": "非重篤", "causality": "否定できない"},
+    {"term": "悪心", "pt_codes": ["10028813"], "seriousness": "非重篤", "causality": "否定できない"},
+    {"term": "錯感覚", "pt_codes": ["10033775"], "seriousness": "非重篤", "causality": "否定できない"},
+    {"term": "快感消失", "pt_codes": ["10002869"], "seriousness": "非重篤", "causality": "否定できない"},
+    {"term": "うつ病", "pt_codes": ["10012378"], "seriousness": "非重篤", "causality": "否定できない"}
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "_note": "起案: Claude（要レビュー）。企業評価(E2A)・時間的因果(保守的)・DrugX添付文書に基づく既知/未知。severity≠seriousness。",
+  "case_id": "ICSR-2025-001",
+  "document": "case_001.txt",
+  "drugs": ["DrugX"],
+  "events": [
+    {"term": "頭痛（重度）", "pt_codes": ["10019211"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugX": "既知"}},
+    {"term": "浮動性めまい", "pt_codes": ["10013573"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugX": "既知"}},
+    {"term": "悪心", "pt_codes": ["10028813"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugX": "未知"}}
+  ]
+}

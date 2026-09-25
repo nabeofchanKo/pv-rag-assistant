@@ -1,0 +1,17 @@
+{
+  "_note": "起案: Claude／PVレビュー反映。DrugZ主被疑。出血系はワルファリン相互作用=既知(10.2)。徐脈/失神は入院=重篤かつ既知。起立性低血圧は入院の原因でない→非重篤・記載なし→未知(レビュー一致)。錯乱は中止後・記載なし=未知。浮動性めまいはDrugZ 11.2に記載あり=既知(レビュー指摘の未知は不採用)。QTc間隔の延長を追加(QT延長=既知・重大な副作用=重篤)。心房細動は基礎疾患(適応)のためAEとして追加せず。",
+  "case_id": "ICSR-2025-003",
+  "document": "case_003.txt",
+  "drugs": ["DrugZ"],
+  "events": [
+    {"term": "INR増加", "pt_codes": ["10022402"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugZ": "既知"}},
+    {"term": "鼻出血（反復性）", "pt_codes": ["10015090"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugZ": "既知"}},
+    {"term": "斑状出血", "pt_codes": ["10014080"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugZ": "既知"}},
+    {"term": "徐脈（症候性）", "pt_codes": ["10006093"], "seriousness": "重篤", "causality": "否定できない", "expectedness": {"DrugZ": "既知"}},
+    {"term": "失神", "pt_codes": ["10042772"], "seriousness": "重篤", "causality": "否定できない", "expectedness": {"DrugZ": "既知"}},
+    {"term": "起立性低血圧", "pt_codes": ["10031127"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugZ": "未知"}},
+    {"term": "錯乱状態", "pt_codes": ["10010305"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugZ": "未知"}},
+    {"term": "浮動性めまい", "pt_codes": ["10013573"], "seriousness": "非重篤", "causality": "否定できない", "expectedness": {"DrugZ": "既知"}},
+    {"term": "QTc間隔の延長", "pt_codes": ["10014387"], "seriousness": "重篤", "causality": "否定できない", "expectedness": {"DrugZ": "既知"}}
+  ]
+}

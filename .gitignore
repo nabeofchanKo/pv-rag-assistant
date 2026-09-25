@@ -225,8 +225,22 @@ __marimo__/
 chroma_db/
 backend/chroma_db/
 
+# LangGraph HITL checkpointer (Phase 4b) — runtime state, not source
+backend/checkpoints/
+*.sqlite
+
+# Past-case precedent store (Phase 4d) — runtime auto-saved approvals (seeds are tracked)
+backend/past_cases/
+
+# Phase 5 embedding benchmark scratch (provider-scoped throwaway Chroma stores)
+backend/.embed_bench/
+
 # Sample data PDFs (large files, optional)
 # data/sample_reports/*.pdf
+
+# Real package inserts used only as a format reference (not app data; copyright).
+# The app uses the fictional inserts in data/drug_labels/ instead.
+添付文書_sample/
 
 # Python
 __pycache__/
@@ -249,3 +263,6 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# tiktoken BPE vocab cache (runtime; pre-download to avoid first-use network fetch)
+backend/.tiktoken_cache/
