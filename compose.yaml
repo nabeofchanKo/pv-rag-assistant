@@ -23,6 +23,11 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    environment:
+      # Shared secret with the BFF. Empty locally = the API does not require it
+      # (it is only reachable on the compose network anyway); set in production,
+      # where both services have public URLs. See ADR 0013.
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-}
     volumes:
       - chroma:/app/backend/chroma_db
       - checkpoints:/app/backend/checkpoints
@@ -37,6 +42,11 @@ services:
     environment:
       # Server-side only: resolved over the compose network, never sent to the browser.
       BACKEND_URL: http://backend:8000
+      # Local dev runs unrestricted so you can feed it your own files. Production
+      # leaves DEMO_MODE unset, which means ON (fail closed): sample cases only,
+      # plus the per-IP rate limits in lib/ratelimit.ts.
+      DEMO_MODE: ${DEMO_MODE:-0}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-}
     depends_on:
       backend:
         condition: service_healthy

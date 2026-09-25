@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { QueryResponse, UploadResponse } from "@/lib/types";
 
 function Spinner() {
@@ -29,6 +29,50 @@ export default function RagPage() {
   const [asking, setAsking] = useState(false);
   const [answer, setAnswer] = useState<QueryResponse | null>(null);
   const [queryError, setQueryError] = useState<string | null>(null);
+
+  // Fail closed: assume the demo's upload restriction until the server says otherwise.
+  const [demoMode, setDemoMode] = useState(true);
+  const [samples, setSamples] = useState<{ file: string; label: string }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/config")
+      .then((r) => r.json())
+      .then((c) => {
+        setDemoMode(Boolean(c.demoMode));
+        setSamples(c.samples ?? []);
+      })
+      .catch(() => setSamples([]));
+  }, []);
+
+  async function indexPayload(init: RequestInit) {
+    setUploading(true);
+    setUploadError(null);
+    setUploadMsg(null);
+    try {
+      const res = await fetch("/api/documents/upload", init);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.detail ?? `索引化に失敗しました (HTTP ${res.status})`);
+      const up = data as UploadResponse;
+      setUploadMsg(`${up.document_name}：${up.chunks_added} チャンクを索引に追加しました。`);
+      setIndexed((prev) => [
+        up,
+        ...prev.filter((d) => d.document_name !== up.document_name),
+      ]);
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  // The BFF reads the bundled sample itself — only its name is sent.
+  function indexSample(name: string) {
+    return indexPayload({
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sample: name }),
+    });
+  }
 
   async function handleUpload() {
     if (!file) return;
@@ -91,7 +135,28 @@ export default function RagPage() {
 
       {/* ---- ① Upload ---- */}
       <section className="mt-8 rounded-xl border border-border bg-surface p-6 shadow-sm">
-        <h2 className="text-sm font-bold text-ink">① 文書をアップロードして索引化</h2>
+        <h2 className="text-sm font-bold text-ink">① 文書を索引化</h2>
+        {demoMode && (
+          <>
+            <p className="mt-1 text-xs text-muted">
+              公開デモのためアップロードは無効です。同梱のサンプル症例を索引化してお試しください。
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {samples.map((s) => (
+                <button
+                  key={s.file}
+                  type="button"
+                  onClick={() => indexSample(s.file)}
+                  disabled={uploading}
+                  className="rounded-lg border border-border bg-surface-2 px-3 py-1.5 text-sm text-ink transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {s.label} を索引化
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+        {!demoMode && (
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <label className="cursor-pointer rounded-lg border border-border bg-surface-2 px-4 py-2 text-sm text-ink transition-colors hover:border-accent">
             <input
@@ -120,6 +185,7 @@ export default function RagPage() {
             {uploading ? "索引化中…" : "アップロード＆索引化"}
           </button>
         </div>
+        )}
 
         {uploadMsg && (
           <p className="mt-3 rounded-lg border border-good/40 bg-good-weak px-3 py-2 text-sm text-good">
