@@ -5,7 +5,19 @@
 
 🌐 **[English](#english)** ｜ **[日本語](#日本語)**
 
-> **Status / 状況:** Active development. MVP complete (end-to-end RAG on Japanese ICSRs, built on LangChain). Evolving from a Q&A tool toward a PV triage / first-pass evaluation assistant — see the [Roadmap](#roadmap).
+> **Status / 状況:** Active development. The triage assistant is **deployed and publicly runnable** — see the live demo below. Phases 0–6 complete; see the [Roadmap](#roadmap).
+
+### 🚀 Live demo / デモ
+
+**https://h4b6m4zyqj.ap-northeast-1.awsapprunner.com**
+
+Runs the real pipeline against bundled synthetic cases. Pick a sample, or build your own case
+with the case builder and watch the assessment respond to what you wrote in the narrative.
+No sign-up. / 同梱の合成症例で実際のパイプラインが動きます。症例ビルダーで自分で症例を組み立てることもできます。
+
+> The public demo accepts **only the bundled sample cases and builder-composed cases** (no file upload),
+> and is rate limited — it calls a paid LLM API.
+> / 公開デモは費用管理のため、同梱サンプルとビルダーで作成した症例のみを受け付け、実行回数を制限しています。
 
 ---
 
@@ -22,9 +34,22 @@ In drug-safety operations, the cost of a hallucinated or unsourced answer is hig
 
 ### What it does
 
-- **Ingest** — Upload a PV report (PDF). The system extracts text per page, normalizes it (NFKC), splits it into overlapping token-based chunks, embeds each chunk, and stores it in a vector database.
-- **Ask** — Submit a natural-language question. The system embeds the question, retrieves the most relevant chunks, and generates an answer constrained to the retrieved context.
-- **Trace** — Every answer is returned with its source chunks (document name and page number), so it can be verified against the original report.
+- **Triage a case** — the main flow. Feed it a case report (PDF, text, email or a scanned
+  image) and it produces a first-pass assessment: own-company product gate → extraction of
+  patient and adverse events (**including events that appear only in the narrative**) →
+  MedDRA PT coding → seriousness against ICH E2A, expectedness against the package insert,
+  and temporal causality → consistency against past approved cases.
+- **Review and approve (human in the loop)** — the draft pauses for a reviewer, who can
+  override any verdict, correct the extraction, and promote a PT to the medically-important
+  events list. Every change keeps the original value as an audit trail, and an approval
+  becomes precedent for later cases.
+- **Ask (RAG Q&A)** — the original flow: index a report and ask questions about it.
+- **Trace** — every judgment carries its evidence: the quoted case text, the E2A criterion
+  it met, or the passage of the insert it matched. Nothing is asserted without a source.
+
+The safety posture is deliberate throughout: uncertain judgments land on the conservative
+side (要確認 / 否定できない) and are surfaced for a human rather than silently resolved, because
+in drug safety an under-call is far more costly than an over-call.
 
 ### Architecture
 
@@ -47,7 +72,7 @@ GeneratorService    ── LCEL chain: prompt | ChatOpenAI(temperature=0) | StrO
 answer + source citations
 ```
 
-The pipeline is exposed via a **FastAPI** backend and consumed by a **Streamlit** frontend over HTTP, keeping frontend and backend cleanly separated. Both the embedding model and the chat model are injected as swappable LangChain abstractions, so they can be exchanged (e.g. for local models) without touching the pipeline.
+The pipeline is exposed via a **FastAPI** backend and consumed by a **Next.js** frontend, which reaches it through its own server (a backend-for-frontend) rather than from the browser — so there is no CORS and the API never has to be public. Because that split existed from the start, replacing the original Streamlit UI in Phase 6 required **no backend change at all** (see [ADR 0013](docs/adr/0013-nextjs-frontend-bff.md)). Both the embedding model and the chat model are injected as swappable LangChain abstractions, so they can be exchanged (e.g. for local models) without touching the pipeline.
 
 ### Tech stack
 
@@ -55,7 +80,9 @@ The pipeline is exposed via a **FastAPI** backend and consumed by a **Streamlit*
 | ------------------- | -------------------------------------------------- |
 | RAG orchestration   | LangChain 1.x (LCEL)                               |
 | Backend API         | FastAPI                                            |
-| Frontend            | Streamlit                                          |
+| Frontend            | Next.js 16 (App Router, TypeScript, Tailwind v4) via a BFF |
+| Packaging           | Docker (multi-stage, non-root); `docker compose up` runs the whole stack |
+| Deployment          | AWS App Runner ×2 (web + API) from ECR, ap-northeast-1 |
 | PDF parsing         | pdfplumber (custom processor, NFKC normalization)  |
 | Text splitting      | LangChain `TokenTextSplitter` (tiktoken cl100k_base)|
 | Embeddings          | OpenAI `text-embedding-3-small` (default) — or local `bge-m3` via Ollama (opt-in, on-prem); swappable behind DI |
@@ -99,8 +126,17 @@ pv-rag-assistant/
 │   │       └── generator.py      # LCEL context-grounded generation
 │   ├── requirements.txt
 │   └── requirements-dev.txt
-├── frontend/
-│   └── app.py                 # Streamlit UI
+│   └── Dockerfile             # multi-stage, non-root, tiktoken cache baked in
+├── web/                       # Next.js frontend + BFF
+│   ├── src/app/
+│   │   ├── api/               # BFF route handlers -> FastAPI (no CORS, key stays server-side)
+│   │   ├── triage/            # triage screen: samples, case builder, HITL review
+│   │   ├── rag/               # RAG Q&A screen
+│   │   └── samples/           # what each bundled case is designed to probe
+│   ├── src/components/triage/ # result view, review panel, case builder
+│   ├── src/lib/               # typed API contract, demo policy, rate limits
+│   └── Dockerfile
+├── compose.yaml               # whole stack in one command
 ├── data/
 │   ├── sample_reports/        # synthetic Japanese ICSRs (.txt source + .pdf)
 │   └── meddra_sample/         # sample MedDRA subset (for upcoming MedDRA features)
@@ -110,37 +146,45 @@ pv-rag-assistant/
 
 ### Getting started
 
-**Prerequisites:** Python 3.12+ and an OpenAI API key.
+**Prerequisites:** Docker, and an OpenAI API key.
 
 ```bash
 git clone https://github.com/nabeofchanKo/pv-rag-assistant.git
 cd pv-rag-assistant
 
-python -m venv venv
-source venv/bin/activate         # macOS/Linux
-# source venv/Scripts/activate   # Windows (Git Bash)
-
-pip install -r backend/requirements.txt
-
 cp .env.example .env
 # then edit .env and set OPENAI_API_KEY
 ```
 
-Run the backend and frontend as two processes:
+The whole stack in one command:
 
 ```bash
-# Terminal 1 — backend (from project root)
-cd backend
-uvicorn app.main:app --reload
-# API docs at http://localhost:8000/docs
-
-# Terminal 2 — frontend
-cd frontend
-streamlit run app.py
-# UI at http://localhost:8501
+docker compose up --build
 ```
 
-Upload a PDF from `data/sample_reports/`, then ask a question about its contents.
+UI at http://localhost:3000, API docs at http://localhost:8000/docs. Compose runs
+the local stack with `DEMO_MODE=0`, so you can upload your own case files; the
+deployed demo leaves it on.
+
+<details>
+<summary>Running it without Docker</summary>
+
+**Prerequisites:** Python 3.12+ and Node.js 20+.
+
+```bash
+python -m venv venv
+source venv/bin/activate         # macOS/Linux
+# source venv/Scripts/activate   # Windows (Git Bash)
+pip install -r backend/requirements.txt
+
+# Terminal 1 — API (from project root)
+venv/bin/uvicorn app.main:app --app-dir backend --reload
+
+# Terminal 2 — web
+cd web && npm install && npm run dev
+```
+
+</details>
 
 ### API
 
@@ -164,7 +208,7 @@ The end goal is not "ask questions about a report" but a **triage / first-pass s
 - [ ] **Phase 3 — Evaluation tasks:** MedDRA term suggestion, expectedness (vs. package insert), seriousness (ICH E2A criteria), and causality (temporal reasoning), each grounded with citations.
 - [ ] **Phase 4 — Orchestration:** connect the steps as an explainable workflow (LangGraph) with a human-in-the-loop propose → approve step.
 - [ ] **Phase 5 — Evaluation & cost/privacy:** retrieval metrics (Hit Rate@k / MRR) and answer quality (faithfulness); evaluate local embedding / generation models on cost × privacy × performance.
-- [ ] **Phase 6 — Frontend & deployment:** Next.js frontend, containerization, deploy to AWS.
+- [x] **Phase 6 — Frontend & deployment:** Next.js frontend behind a BFF (replacing Streamlit, no backend change), the whole stack containerized, deployed to AWS App Runner with demo protections. See the [design note](#design-note--phase-6-frontend--deployment) and [ADR 0013](docs/adr/0013-nextjs-frontend-bff.md).
 
 ### Design note — expectedness (既知/未知)
 
@@ -180,11 +224,56 @@ The **cost / privacy ladder** now has its first local rung. `get_embeddings()` d
 
 Generation is swappable the same way (`CHAT_PROVIDER=ollama`, one `OLLAMA_CHAT_MODEL` for every step). Because a full end-to-end triage on a local 7B is impractical (~10-15 min/case), a [per-step comparison harness](experiments/scripts/generation_bench.py) benchmarks each step in isolation over the gold set — which is also exactly the "where does local hold vs break" question — reporting **under-calls first**. Across OpenAI vs qwen2.5:7b / ELYZA-JP-8B / gemma3:4b / medllama2, the [result](experiments/generation_comparison.md) is clear: **no local 7-8B preserves the under-call-0 safety invariant** — every one misses a serious event on the hard-narrative seriousness step. **ELYZA-JP-8B is the strongest local** (extraction 91%, beating OpenAI's 87%; MedDRA and causality 100%) and is viable for extraction / coding / the conservative causality default, but the safety-critical judgments still need the frontier model. The honest cost×privacy answer is therefore **hybrid per-step**, and it is wired: `CHAT_PROVIDER=hybrid` runs the transcription/coding steps (extraction, narrative, MedDRA) on the local model — ELYZA-JP-8B, the bench winner — and keeps the three clinical judgments on OpenAI, so the under-call-0 safety invariant is preserved by construction (the judgment code + models are unchanged) while the high-volume steps go on-prem. The Ollama path is hardened (`num_ctx`/`num_predict`/timeout) so a local model can't run away or hang the pipeline. See [ADR 0012](docs/adr/0012-local-generation-per-step.md).
 
+### Design note — Phase 6 frontend & deployment
+
+The Streamlit UI was replaced by a Next.js app **without changing a single line of
+the backend**. That was possible because the split already existed: every phase
+had been built behind the FastAPI REST API, and Streamlit was itself just an HTTP
+client. Phase 6 was therefore a frontend swap, not new development.
+
+**Backend-for-frontend.** The browser talks only to the Next.js server, whose route
+handlers proxy to FastAPI server-to-server. That buys three things at the cost of
+one extra hop: no CORS, no API key in the browser bundle, and an API that does not
+have to be publicly reachable. The typed contract in `web/src/lib/types.ts` mirrors
+`backend/app/schemas.py` by hand — small and stable enough not to warrant codegen,
+with a contract test as the planned mitigation for drift.
+
+**Everything is a container.** `docker compose up` runs the whole stack, and the
+*same images* run in production on two App Runner services. Choosing containers for
+both ends over a managed frontend host was deliberate: it keeps one build system and
+makes "the stack is containerized" true in production, at the cost of a CDN.
+
+**Reading the result.** The triage view is scanned under time pressure, so it leads
+with a summary (counts, and the serious-and-not-in-the-label events that drive
+expedited reporting), then gives **one row per adverse event** carrying all four
+verdicts, with the evidence behind a per-row disclosure. An earlier version repeated
+the same event list across four tables, which made the page long and gave "what was
+decided" and "why" the same visual weight.
+
+**Showing what the human and the history contributed.** Where a verdict differs from
+what the model first produced — because the reviewer overrode it, or because the IME
+list or past-case precedent adjusted it — the original is shown struck through beside
+the adjusted value, and every adjustment is listed with its source. The "before"
+verdict is reconstructed from a **single run** (`InfluenceItem.from_verdict`);
+re-running the case to obtain a baseline would fold in LLM run-to-run variation and
+stop isolating the effect, which is the same reasoning the evaluation harness uses.
+
+**Case builder.** Fixed samples show that the pipeline works but not what it does
+under a case you care about, so the UI can compose one from constrained fields. The
+client sends fields, never a document — the BFF validates them and renders the report
+text itself, which is what lets this coexist with the demo restrictions below.
+
+**Demo protections.** The public demo calls a paid API, so: input is restricted to the
+bundled samples and builder-composed cases (**enforced server-side**, not by hiding the
+file picker), requests are rate limited per IP and capped globally per day, and the API
+requires a shared secret from the BFF so it cannot be called directly. A hard spending
+cap at the LLM provider sits behind all of it as the only real guarantee.
+
 ### Known limitations (current MVP)
 
 - Dense-vector retrieval can be confused by documents that share a common format/vocabulary, and is weaker on proper nouns (e.g. distinguishing one drug or reporter name from another). Hybrid retrieval is on the roadmap.
 - Token-based chunking can split mid-character on Japanese text, so per-chunk character offsets are best-effort (they are metadata only and do not affect retrieval or answers). A Japanese-aware splitter is a Phase 5 improvement.
-- Automated tests are minimal so far; correctness has been verified end-to-end (including live OpenAI calls).
+- The frontend has no automated tests yet (the backend has 74, mostly API-free fakes). A contract test between the hand-written TypeScript types and the OpenAPI schema, plus an end-to-end smoke test, are the next additions.
 - Error handling is fail-fast (MVP); production hardening (retries, rate-limit handling, structured errors) is planned.
 
 ### Note on data
@@ -206,9 +295,18 @@ The sample reports in `data/sample_reports/` are **synthetic** ICSRs created for
 
 ### 何ができるか
 
-- **取り込み** — PV報告書（PDF）をアップロード。ページ単位でテキスト抽出→正規化（NFKC）→トークンベースで重複ありチャンク化→埋め込み→ベクトルDBに保存。
-- **質問** — 自然言語で質問。質問を埋め込み、関連チャンクを検索し、**検索結果の文脈のみに基づいて**回答を生成。
-- **追跡** — 回答は必ず出典チャンク（文書名・ページ番号）付きで返るため、元report と照合・検証できます。
+- **症例のトリアージ** — 本体の機能。症例報告（PDF／テキスト／メール／スキャン画像）を投入すると、
+  一次評価案を生成します：自社品判定（ゲート）→ 患者・有害事象の抽出（**経過からしか読み取れない事象を含む**）
+  → MedDRA PT コード提案 → 重篤度（ICH E2A）・既知/未知（添付文書との照合）・因果関係（時間的）→ 過去承認症例との整合。
+- **レビューと承認（HITL）** — ドラフトは人手レビューで一時停止します。判定の上書き、抽出の修正、
+  医学的に重要な事象（IME）リストへのPT昇格が可能で、**変更は必ず元の値を残して監査証跡化**されます。
+  承認された症例は以後の判例になります。
+- **質問（RAG Q&A）** — 当初からの機能。報告書を索引化して内容を質問できます。
+- **追跡** — すべての判定が根拠を伴います（症例本文の引用、該当したE2A基準、添付文書の該当箇所）。
+  出典なしに何かを断定することはありません。
+
+安全側への寄せ方は一貫した設計方針です。確信が持てない判定は保守的な側（要確認／否定できない）に置き、
+黙って解決せず人手に上げます。安全性業務では**過小評価のコストが過大評価より圧倒的に高い**ためです。
 
 ### アーキテクチャ
 
@@ -231,7 +329,7 @@ GeneratorService    ── LCEL チェーン: prompt | ChatOpenAI(temperature=0)
 回答 ＋ 出典
 ```
 
-パイプラインは **FastAPI** バックエンドとして公開し、**Streamlit** フロントエンドが HTTP 経由で利用します（フロント／バックの分離）。埋め込みモデルとチャットモデルは、差し替え可能な LangChain の抽象として注入されるため、パイプラインを触らずに（例：ローカルモデルへ）交換できます。
+パイプラインは **FastAPI** バックエンドとして公開し、**Next.js** フロントエンドが利用します。ブラウザから直接ではなく Next.js のサーバー側（BFF）経由で呼ぶため、**CORS が不要**で、APIを公開せずに済みます。この分離が最初からあったため、Phase 6 で Streamlit を置き換える際に**バックエンドの変更は一切不要**でした（[ADR 0013](docs/adr/0013-nextjs-frontend-bff.md)）。埋め込みモデルとチャットモデルは、差し替え可能な LangChain の抽象として注入されるため、パイプラインを触らずに（例：ローカルモデルへ）交換できます。
 
 ### 技術スタック
 
@@ -239,7 +337,9 @@ GeneratorService    ── LCEL チェーン: prompt | ChatOpenAI(temperature=0)
 | -------------------- | ---------------------------------------------------- |
 | RAG オーケストレーション | LangChain 1.x（LCEL）                             |
 | バックエンドAPI      | FastAPI                                              |
-| フロントエンド       | Streamlit                                           |
+| フロントエンド       | Next.js 16（App Router / TypeScript / Tailwind v4）＋ BFF |
+| パッケージング       | Docker（マルチステージ・非root）。`docker compose up` で全体が起動 |
+| デプロイ             | AWS App Runner ×2（web / API）、ECR、東京リージョン |
 | PDF解析              | pdfplumber（自作プロセッサ、NFKC正規化）            |
 | テキスト分割         | LangChain `TokenTextSplitter`（tiktoken cl100k_base）|
 | 埋め込み             | OpenAI `text-embedding-3-small`（既定）／ ローカル `bge-m3`（Ollama・オンプレ・オプトイン）。DI背後で差し替え可 |
@@ -283,8 +383,17 @@ pv-rag-assistant/
 │   │       └── generator.py      # LCEL による文脈準拠の生成
 │   ├── requirements.txt
 │   └── requirements-dev.txt
-├── frontend/
-│   └── app.py                 # Streamlit UI
+│   └── Dockerfile             # マルチステージ・非root・tiktokenキャッシュ同梱
+├── web/                       # Next.js フロントエンド＋BFF
+│   ├── src/app/
+│   │   ├── api/               # BFFルート → FastAPI（CORS不要・鍵はサーバー側）
+│   │   ├── triage/            # トリアージ画面：サンプル・症例ビルダー・HITLレビュー
+│   │   ├── rag/               # RAG Q&A 画面
+│   │   └── samples/           # 各サンプル症例の「狙い」
+│   ├── src/components/triage/ # 結果表示・レビューパネル・症例ビルダー
+│   ├── src/lib/               # 型付きAPI契約・デモ保護・レート制限
+│   └── Dockerfile
+├── compose.yaml               # 1コマンドでスタック全体
 ├── data/
 │   ├── sample_reports/        # 合成の日本語ICSR（.txt原本＋.pdf）
 │   └── meddra_sample/         # MedDRAサンプル部分集合（今後のMedDRA機能用）
@@ -294,37 +403,46 @@ pv-rag-assistant/
 
 ### セットアップ
 
-**前提:** Python 3.12以上、OpenAI APIキー。
+**前提:** Docker、OpenAI APIキー。
 
 ```bash
 git clone https://github.com/nabeofchanKo/pv-rag-assistant.git
 cd pv-rag-assistant
 
-python -m venv venv
-source venv/bin/activate         # macOS/Linux
-# source venv/Scripts/activate   # Windows (Git Bash)
-
-pip install -r backend/requirements.txt
-
 cp .env.example .env
 # .env を編集し OPENAI_API_KEY を設定
 ```
 
-バックエンドとフロントエンドは2プロセスで起動します。
+1コマンドでスタック全体が起動します。
 
 ```bash
-# ターミナル1 — バックエンド（プロジェクトルートから）
-cd backend
-uvicorn app.main:app --reload
-# APIドキュメント: http://localhost:8000/docs
-
-# ターミナル2 — フロントエンド
-cd frontend
-streamlit run app.py
-# UI: http://localhost:8501
+docker compose up --build
 ```
 
-`data/sample_reports/` のPDFをアップロードし、内容について質問してください。
+UI: http://localhost:3000 ／ APIドキュメント: http://localhost:8000/docs
+
+compose はローカルを `DEMO_MODE=0` で起動するため、自分の症例ファイルをアップロードして試せます
+（公開デモ側はデモ保護を有効のままにしています）。
+
+<details>
+<summary>Docker を使わずに起動する場合</summary>
+
+**前提:** Python 3.12以上、Node.js 20以上。
+
+```bash
+python -m venv venv
+source venv/bin/activate         # macOS/Linux
+# source venv/Scripts/activate   # Windows (Git Bash)
+pip install -r backend/requirements.txt
+
+# ターミナル1 — API（プロジェクトルートから）
+venv/bin/uvicorn app.main:app --app-dir backend --reload
+
+# ターミナル2 — web
+cd web && npm install && npm run dev
+```
+
+</details>
 
 ### API
 
@@ -347,7 +465,7 @@ streamlit run app.py
 - [ ] **Phase 3 — 評価タスク:** MedDRAコード提案、既知／未知判定（添付文書との照合）、重篤度判定（ICH E2A基準）、因果関係判定（時間的関係）を、それぞれ出典付きで。
 - [ ] **Phase 4 — オーケストレーション:** 各ステップを説明可能なワークフロー（LangGraph）として連結し、提案→承認のHITLを挟む。
 - [ ] **Phase 5 — 評価・コスト／プライバシー:** 検索評価（Hit Rate@k / MRR）と回答品質（faithfulness）を測定。ローカルの埋め込み／生成モデルを、コスト×プライバシー×性能で評価。
-- [ ] **Phase 6 — フロントエンド・デプロイ:** Next.js フロントエンド、コンテナ化、AWSへデプロイ。
+- [x] **Phase 6 — フロントエンド・デプロイ:** BFF 経由の Next.js フロントエンド（Streamlit を置き換え、バックエンド変更なし）、スタック全体のコンテナ化、AWS App Runner へデプロイ（デモ保護付き）。[設計メモ](#設計メモ--phase-6-フロントエンドデプロイ) と [ADR 0013](docs/adr/0013-nextjs-frontend-bff.md) 参照。
 
 ### 設計メモ — 既知／未知判定（expectedness）
 
@@ -363,11 +481,48 @@ streamlit run app.py
 
 生成も同様に差し替え可能です（`CHAT_PROVIDER=ollama`、全ステップを1つの `OLLAMA_CHAT_MODEL` で実行）。ローカル7BでのフルE2Eは約10-15分/症例と非現実的なため、[ステップ別比較ハーネス](experiments/scripts/generation_bench.py)で各ステップを分離計測し（＝「どこでローカルが持つ/崩れるか」の問いに直結）、**過小コールを最優先**で報告します。OpenAI vs qwen2.5:7b / ELYZA-JP-8B / gemma3:4b / medllama2 の[結果](experiments/generation_comparison.md)は明快で、**7-8Bのローカル勢はどれも過小コール0の安全インバリアントを保てません** — 全モデルが hard-narrative の重篤度で重篤事象を見落とします。**ELYZA-JP-8B が最良のローカル**（抽出91%でOpenAIの87%を上回り、MedDRA・因果は100%）で、抽出／コード化／保守的な因果既定には実用ですが、安全critな判定はやはり frontier モデルが必要です。よって正直なコスト×プライバシーの答えは **ステップ別ハイブリッド** で、実装済みです: `CHAT_PROVIDER=hybrid` は転記／コード化ステップ（抽出・narrative・MedDRA）をローカル（ベンチ勝者 ELYZA-JP-8B）で、3つの臨床判定は OpenAI で実行します。判定のコード・モデルは不変なので**過小コール0が構造上保たれ**つつ、高頻度ステップはオンプレに載ります。Ollama経路は暴走・ハングを防ぐよう `num_ctx`/`num_predict`/タイムアウトで堅牢化。[ADR 0012](docs/adr/0012-local-generation-per-step.md) 参照。
 
+### 設計メモ — Phase 6 フロントエンド・デプロイ
+
+Streamlit の UI を Next.js に置き換えましたが、**バックエンドは1行も変更していません**。
+各フェーズを一貫して FastAPI の REST API の背後に作ってきたこと、そして Streamlit 自体が
+HTTP クライアントに過ぎなかったことが理由です。Phase 6 は新規開発ではなく、フロント層の載せ替えでした。
+
+**BFF（Backend for Frontend）。** ブラウザは Next.js のサーバーとだけ通信し、そのルートハンドラが
+サーバー間通信で FastAPI を呼びます。ホップが1つ増える代わりに、**CORS 不要**・**APIキーがブラウザに出ない**・
+**API を公開しなくてよい**、の3つが手に入ります。`web/src/lib/types.ts` の型は
+`backend/app/schemas.py` を手書きでミラーしています（この規模ではコード生成の価値が薄いため）。
+ズレのリスクは自覚しており、契約テストで検出する方針です。
+
+**すべてコンテナ。** `docker compose up` でスタック全体が起動し、**同じイメージ**が本番の
+App Runner 2サービスで動きます。フロントをマネージドホスティングに載せる選択肢もありましたが、
+ビルド系統を1つに保ち「コンテナで完結している」を本番でも事実にするため、あえてコンテナに統一しました
+（CDN を諦めるトレードオフ）。
+
+**結果の読ませ方。** トリアージ画面は時間に追われながら走査されるので、まず**サマリー**
+（件数と、迅速報告の検討対象になる「重篤かつ既知でない」事象）を出し、続いて**1事象＝1行**で
+4つの判定を並べ、根拠は行の展開に収めています。以前は同じ事象リストを4つの表で繰り返しており、
+縦に長いうえ「何を判定したか」と「なぜか」が同じ重さで並んでいました。
+
+**人手と履歴が何を足したかを見せる。** モデルが最初に出した判定と違う場合 —— レビュアーが上書きした、
+あるいは IME リストや過去症例が調整した場合 —— 元の判定を打ち消し線で併記し、調整の一覧を由来つきで表示します。
+「前」の判定は**1回の実行**から復元しています（`InfluenceItem.from_verdict`）。
+ベースラインを取るために再実行すると LLM の実行ごとのばらつきが混ざり、効果を分離できなくなるためで、
+これは評価ハーネスで確立した考え方と同じです。
+
+**症例ビルダー。** 固定サンプルは「動くこと」は示せても「気になるケースでどう振る舞うか」は示せないため、
+制約付きの項目から症例を組み立てられるようにしました。クライアントが送るのは項目だけで、文書は送りません
+（**BFF がサーバー側で報告書テキストを生成**）。これが下記のデモ保護と両立できる理由です。
+
+**デモ保護。** 公開デモは有料APIを呼ぶため、入力を同梱サンプルとビルダー作成症例に限定し
+（**サーバー側で強制**。ファイル選択UIを隠すだけでは API を直接叩かれて突破されます）、
+IP単位と全体1日単位でレート制限をかけ、API は BFF からの共有シークレットを要求します。
+その背後に、LLM プロバイダ側のハードな支出上限を置いています —— 絶対的な保証はこれだけです。
+
 ### 既知の制約（現MVP）
 
 - 密ベクトル検索は、共通の書式・語彙を持つ文書間で混同しやすく、固有名詞（薬剤名・報告者名の区別等）に弱い傾向があります。ハイブリッド検索をロードマップに記載。
 - トークンベースのチャンク化は日本語で文字の途中で分割されうるため、チャンク単位の文字オフセットはベストエフォートです（メタデータのみで、検索・回答には影響しません）。日本語対応スプリッタはPhase 5の改善項目。
-- 自動テストはまだ最小限で、正しさはエンドツーエンド（OpenAIへの実通信を含む）で確認済み。
+- フロントエンドの自動テストは未整備（バックエンドは74件、大半がAPI非依存のフェイク）。手書きのTypeScript型とOpenAPIスキーマの契約テスト、およびE2Eスモークテストが次の追加候補。
 - エラー処理はMVPとしてfail-fast。本番向けの堅牢化（リトライ、レート制限対応、構造化エラー）は今後。
 
 ### データについて
