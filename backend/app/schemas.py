@@ -1,7 +1,7 @@
 """Define domain models for the PDF processing service."""
 
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
@@ -566,3 +566,13 @@ class OutOfScopeResult(BaseModel):
     product_match: ProductMatchResult
     reason: str = "自社品が使用されていないため評価対象外（自社品判定でヒットなし）"
     source_text: str
+
+
+# What POST /cases/triage and GET /cases/{thread_id} return. `status` tells the
+# three apart, so it is declared as the discriminator: the OpenAPI document then
+# carries all three models plus the status → model mapping, instead of nothing
+# (these routes used to declare response_model=None and were absent from /docs).
+TriageStartResponse = Annotated[
+    TriageDraft | TriageResult | OutOfScopeResult,
+    Field(discriminator="status"),
+]
