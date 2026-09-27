@@ -190,6 +190,21 @@ cd web && npm install && npm run dev
 
 </details>
 
+#### Tests
+
+```bash
+venv/bin/python -m pytest backend/tests -q     # backend: unit, contract, safety-invariant gate
+cd web && npx playwright install chromium && npm run test:e2e   # browser E2E smoke
+```
+
+The E2E suite drives a real browser through the reviewer's path (sample → draft →
+override a verdict → approve → audit trail) against the real Next.js BFF, but with a
+**fake backend** that replays JSON recorded from the real one — so it is free,
+deterministic, and never touches the IME list or precedent store. It checks that the
+decision the BFF forwards is exactly the one the real backend accepted. Re-record
+after a backend shape change with `web/e2e/record_fixtures.py` (real LLM calls, a few
+cents; all writes go to a temp dir).
+
 ### API
 
 | Method | Endpoint            | Description                                          |
@@ -277,7 +292,7 @@ cap at the LLM provider sits behind all of it as the only real guarantee.
 
 - Dense-vector retrieval can be confused by documents that share a common format/vocabulary, and is weaker on proper nouns (e.g. distinguishing one drug or reporter name from another). Hybrid retrieval is on the roadmap.
 - Token-based chunking can split mid-character on Japanese text, so per-chunk character offsets are best-effort (they are metadata only and do not affect retrieval or answers). A Japanese-aware splitter is a Phase 5 improvement.
-- The frontend has no automated tests yet (the backend has 74, mostly API-free fakes). A contract test between the hand-written TypeScript types and the OpenAPI schema, plus an end-to-end smoke test, are the next additions.
+- The E2E suite replays recorded backend responses, so it catches UI/BFF regressions but not changes in the backend's *answers* — those are the evaluation harness's job, and the Pydantic↔TypeScript contract test covers the shape.
 - Error handling is fail-fast (MVP); production hardening (retries, rate-limit handling, structured errors) is planned.
 
 ### Note on data
@@ -448,6 +463,19 @@ cd web && npm install && npm run dev
 
 </details>
 
+#### テスト
+
+```bash
+venv/bin/python -m pytest backend/tests -q     # バックエンド: 単体・契約・安全インバリアントのゲート
+cd web && npx playwright install chromium && npm run test:e2e   # ブラウザE2Eスモーク
+```
+
+E2Eは、レビュー担当者の操作経路（サンプル → ドラフト → 判定の上書き → 承認 → 監査証跡）を
+実ブラウザ・実Next.js BFFで通しますが、バックエンドは**本物から録画したJSONを再生する偽物**です。
+そのため無料・決定的で、IMEリストや判例ストアを書き換えません。BFFが転送した承認内容が、
+本物のバックエンドが受理したものと完全に一致することまで検証します。バックエンドの応答形状が
+変わったら `web/e2e/record_fixtures.py` で録り直します（実LLM呼び出しで数セント、書き込みは一時ディレクトリへ）。
+
 ### API
 
 | メソッド | エンドポイント       | 説明                                        |
@@ -526,7 +554,7 @@ IP単位と全体1日単位でレート制限をかけ、API は BFF からの�
 
 - 密ベクトル検索は、共通の書式・語彙を持つ文書間で混同しやすく、固有名詞（薬剤名・報告者名の区別等）に弱い傾向があります。ハイブリッド検索をロードマップに記載。
 - トークンベースのチャンク化は日本語で文字の途中で分割されうるため、チャンク単位の文字オフセットはベストエフォートです（メタデータのみで、検索・回答には影響しません）。日本語対応スプリッタはPhase 5の改善項目。
-- フロントエンドの自動テストは未整備（バックエンドは74件、大半がAPI非依存のフェイク）。手書きのTypeScript型とOpenAPIスキーマの契約テスト、およびE2Eスモークテストが次の追加候補。
+- E2Eは録画したバックエンド応答を再生するため、UI／BFFの退行は検出できますが、バックエンドの*判定内容*の変化は検出しません — それは評価ハーネスの役割で、応答の形状はPydantic↔TypeScriptの契約テストが担います。
 - エラー処理はMVPとしてfail-fast。本番向けの堅牢化（リトライ、レート制限対応、構造化エラー）は今後。
 
 ### データについて
