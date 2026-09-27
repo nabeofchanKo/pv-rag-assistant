@@ -59,8 +59,34 @@ COPY --from=builder /opt/tiktoken_cache /opt/tiktoken_cache
 COPY backend/app /app/backend/app
 COPY data /app/data
 
+# Bake the reference indexes (drug labels + MedDRA) into the image, so a restart
+# or deploy does not re-embed them (App Runner has no persistent disk). Needs the
+# embedding key, passed as a BuildKit secret: it is mounted for this one RUN only
+# and never written to a layer — the index itself holds only public reference
+# data. Opt-in: without BAKE_INDEXES=1 (e.g. `docker compose up --build`) this is
+# skipped and the startup lifespan indexes as before.
+#
+#   docker build --build-arg BAKE_INDEXES=1 \
+#     --secret id=openai_api_key,env=OPENAI_API_KEY -f backend/Dockerfile .
+#
+# Why a build arg and not just "is the secret there": secrets are not part of
+# BuildKit's cache key, so a build without the secret and one with it would
+# share this layer — a deploy build could silently reuse an un-baked layer from
+# an earlier local build. A build arg IS part of the key, and asking for a bake
+# without the secret fails the build instead of shipping an empty index.
+ARG BAKE_INDEXES=0
+RUN --mount=type=secret,id=openai_api_key,required=false \
+    if [ "$BAKE_INDEXES" = "1" ]; then \
+        [ -s /run/secrets/openai_api_key ] \
+            || { echo "BAKE_INDEXES=1 needs --secret id=openai_api_key" >&2; exit 1; }; \
+        cd /app/backend \
+        && OPENAI_API_KEY="$(cat /run/secrets/openai_api_key)" python -m app.bake_indexes; \
+    else \
+        echo "BAKE_INDEXES not set: reference indexes will be built at startup"; \
+    fi
+
 # Writable runtime state, owned by the runtime user:
-#   chroma_db    — vector index (rebuilt at startup if empty)
+#   chroma_db    — vector index (baked above, or built at startup if empty)
 #   checkpoints  — LangGraph HITL interrupt/resume SQLite store
 #   past_cases   — precedent records saved on approval
 RUN mkdir -p /app/backend/chroma_db /app/backend/checkpoints /app/backend/past_cases \
