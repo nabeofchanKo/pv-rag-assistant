@@ -20,6 +20,7 @@ from app.schemas import (
     ReviewDecision,
     TriageDraft,
     TriageResult,
+    TriageStartResponse,
 )
 from app.services.ime import ImeReference
 from app.services.ingestion import IngestionService
@@ -80,7 +81,7 @@ def _result(thread_id: str, values: dict) -> TriageResult:
     )
 
 
-@router.post("/cases/triage", response_model=None)
+@router.post("/cases/triage", response_model=TriageStartResponse)
 async def triage_endpoint(
     file: UploadFile = File(...),
     auto_approve: bool = False,
@@ -135,7 +136,7 @@ async def triage_endpoint(
     return _draft(thread_id, values)
 
 
-@router.get("/cases/{thread_id}", response_model=None)
+@router.get("/cases/{thread_id}", response_model=TriageStartResponse)
 async def get_case(
     thread_id: str,
     graph: CompiledStateGraph = Depends(get_triage_graph),
@@ -153,7 +154,7 @@ async def get_case(
     return _draft(thread_id, values)
 
 
-@router.post("/cases/{thread_id}/approve", response_model=None)
+@router.post("/cases/{thread_id}/approve", response_model=TriageResult)
 async def approve_case(
     thread_id: str,
     decision: ReviewDecision,

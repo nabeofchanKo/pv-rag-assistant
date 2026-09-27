@@ -7,11 +7,11 @@ choice is silent drift: rename a field in Python and the frontend keeps reading
 ``undefined`` with nothing failing until someone opens the page. This test is
 the mitigation named in that ADR.
 
-It compares the **Pydantic models** rather than the OpenAPI document on purpose.
-The triage routes declare ``response_model=None`` because they return a union
-(``TriageDraft | TriageResult | OutOfScopeResult``), so those response schemas
-never appear in OpenAPI at all — a contract test built on the spec would silently
-cover none of the models that matter most.
+It compares the **Pydantic models** rather than the OpenAPI document. When this
+was written the triage routes declared ``response_model=None`` (they return a
+union), so a spec-based test would have covered none of the models that matter
+most. The routes are now documented (see test_openapi.py), but the models remain
+the source of truth the spec is generated from, so they stay the thing compared.
 
 Runs offline: no server, no network, no LLM calls.
 """
