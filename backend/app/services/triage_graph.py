@@ -61,6 +61,7 @@ from app.schemas import (
     OverrideRecord,
     ProductMatchResult,
     ReviewOutcome,
+    RunTelemetry,
     SeriousnessAssessment,
 )
 from app.services.causality import CausalityService
@@ -107,6 +108,8 @@ class TriageState(TypedDict, total=False):
     review: dict  # the reviewer's ReviewDecision (dump), handed back via resume
     status: str  # "approved" | "rejected"
     review_outcome: ReviewOutcome  # audit trail attached to the final result
+    # --- Phase 6 ---
+    telemetry: RunTelemetry  # written by the router after the run (update_state)
 
 
 # --- pure helpers (unit-testable without the graph) ---

@@ -64,6 +64,8 @@ CONTRACT: dict[str, str] = {
     "ImePromotionRecord": "ImePromotionRecord",
     "ExtractionEditRecord": "ExtractionEditRecord",
     "ReviewOutcome": "ReviewOutcome",
+    "StepTelemetry": "StepTelemetry",
+    "RunTelemetry": "RunTelemetry",
 }
 
 _INTERFACE_RE = re.compile(

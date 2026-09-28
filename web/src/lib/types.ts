@@ -165,6 +165,32 @@ export interface Escalation {
   reason: string;
 }
 
+// ---- Phase 6: per-run cost / latency (backend: RunTelemetry) ----
+
+/** One graph step's share of a run. Deterministic steps have zero tokens. */
+export interface StepTelemetry {
+  step: string;
+  started_ms: number; // offset from run start — parallel steps overlap
+  latency_ms: number;
+  llm_calls: number;
+  models: string[];
+  input_tokens: number;
+  cached_input_tokens: number;
+  output_tokens: number;
+  cost_usd: number | null; // null = a model this step used has no price entry
+}
+
+/** Measured tokens / cost / time of one triage run (chat models only). */
+export interface RunTelemetry {
+  wall_ms: number;
+  steps: StepTelemetry[];
+  pricing_as_of: string;
+  total_input_tokens: number;
+  total_output_tokens: number;
+  total_cost_usd: number;
+  cost_complete: boolean;
+}
+
 /** Shared triage content — the fields common to TriageDraft and TriageResult. */
 export interface TriageContent {
   document_name: string;
@@ -178,6 +204,7 @@ export interface TriageContent {
   influence_mode: string;
   influence: InfluenceItem[];
   source_text: string;
+  telemetry: RunTelemetry | null;
 }
 
 /** Start response, paused for review (backend: TriageDraft). */
@@ -286,6 +313,7 @@ export interface OutOfScopeResult {
   product_match: ProductMatchResult;
   reason: string;
   source_text: string;
+  telemetry: RunTelemetry | null;
 }
 
 /** Discriminated union returned by POST /cases/triage. */
