@@ -102,7 +102,7 @@ const ja: CaseStudy = {
     { value: "0", label: "過小評価（重篤度・因果・既知性）", tone: "good" },
     { value: "100%", label: "MedDRA コード付与", tone: "good" },
     { value: "83–91%", label: "重篤度一致（不一致は安全側の過大評価）", tone: "muted" },
-    { value: "165", label: "自動テスト", tone: "muted" },
+    { value: "185", label: "自動テスト（バックエンド178・E2E 7）", tone: "muted" },
   ],
 
   limits: {
@@ -195,7 +195,7 @@ const en: CaseStudy = {
     { value: "0", label: "under-calls (seriousness / causality / expectedness)", tone: "good" },
     { value: "100%", label: "MedDRA coding", tone: "good" },
     { value: "83–91%", label: "seriousness agreement (misses are safe-side over-calls)", tone: "muted" },
-    { value: "165", label: "automated tests", tone: "muted" },
+    { value: "185", label: "automated tests (178 backend, 7 E2E)", tone: "muted" },
   ],
 
   limits: {
