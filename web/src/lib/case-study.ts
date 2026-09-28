@@ -5,7 +5,9 @@
 // demo and wants to know what problem it solves, what was decided and why, and
 // what the evidence actually supports. Kept tight; depth lives in the ADRs.
 
-export type Lang = "ja" | "en";
+// One source of truth for the supported languages.
+import type { Locale } from "@/i18n/config";
+export type Lang = Locale;
 
 export type Section = {
   heading: string;

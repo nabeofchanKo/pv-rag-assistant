@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { CASE_STUDY, type Lang } from "@/lib/case-study";
+import { CASE_STUDY } from "@/lib/case-study";
+import { useLocale, useLocalePath } from "@/i18n/LocaleProvider";
 
 // Renders **bold** spans without pulling in a markdown dependency for the one
 // emphasis style this content uses.
@@ -23,32 +23,14 @@ function Rich({ text }: { text: string }) {
 }
 
 export default function AboutPage() {
-  const [lang, setLang] = useState<Lang>("ja");
-  const c = CASE_STUDY[lang];
+  const c = CASE_STUDY[useLocale()];
+  const to = useLocalePath();
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
-      <div className="flex items-start justify-between gap-4">
-        <p className="font-mono text-xs uppercase tracking-widest text-accent">
-          {c.kicker}
-        </p>
-        <div className="inline-flex shrink-0 rounded-lg border border-border bg-surface-2 p-0.5">
-          {(["ja", "en"] as const).map((l) => (
-            <button
-              key={l}
-              type="button"
-              onClick={() => setLang(l)}
-              className={`rounded-md px-2.5 py-1 font-mono text-xs transition-colors ${
-                lang === l
-                  ? "bg-surface font-medium text-accent shadow-sm"
-                  : "text-muted hover:text-ink"
-              }`}
-            >
-              {l === "ja" ? "日本語" : "EN"}
-            </button>
-          ))}
-        </div>
-      </div>
+      <p className="font-mono text-xs uppercase tracking-widest text-accent">
+        {c.kicker}
+      </p>
 
       <h1 className="mt-2 text-2xl font-bold leading-tight tracking-tight text-ink sm:text-3xl">
         {c.title}
@@ -56,7 +38,7 @@ export default function AboutPage() {
       <p className="mt-4 text-base leading-relaxed text-text">{c.lede}</p>
 
       <Link
-        href="/triage"
+        href={to("/triage")}
         className="mt-5 inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
       >
         {c.ctaLabel} →
