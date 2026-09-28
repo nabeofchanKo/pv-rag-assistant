@@ -93,6 +93,7 @@ class MeddraCodingService:
             term=term,
             pt_code=pt.pt_code,
             pt_name_ja=pt.pt_name_ja,
+            pt_name_en=pt.pt_name_en,
             soc_name_ja=pt.soc_name_ja,
             coded_by=coded_by,
             rationale=rationale,

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Spinner from "@/components/Spinner";
 import { CAU_OPTIONS, EXP_OPTIONS, SER_OPTIONS, verdictTone } from "@/lib/labels";
-import { useDict, useTerm } from "@/i18n/LocaleProvider";
+import { useDict, usePtName, useTerm } from "@/i18n/LocaleProvider";
 import type {
   AddedEvent,
   RecodedEvent,
@@ -68,6 +68,7 @@ function ReviewForm({
   const t = dict.review;
   const axisLabel = dict.vocab.axis;
   const term = useTerm();
+  const ptName = usePtName();
   const [reviewer, setReviewer] = useState("");
   const [note, setNote] = useState("");
   const [ovVerdict, setOvVerdict] = useState<Record<string, string>>({});
@@ -88,14 +89,20 @@ function ReviewForm({
   // Unique coded PTs — the only events that can be promoted to the IME list.
   const imeRows = useMemo(() => {
     const seen = new Set<string>();
-    const rows: { term: string; pt_name: string; pt_code: string }[] = [];
+    // pt_name (Japanese) is what gets SENT; label is only what is shown.
+    const rows: { term: string; pt_name: string; pt_code: string; label: string }[] = [];
     for (const m of draft.meddra) {
       if (!m.pt_code || seen.has(m.pt_code)) continue;
       seen.add(m.pt_code);
-      rows.push({ term: m.term, pt_name: m.pt_name_ja ?? "—", pt_code: m.pt_code });
+      rows.push({
+        term: m.term,
+        pt_name: m.pt_name_ja ?? "—",
+        pt_code: m.pt_code,
+        label: ptName(m) ?? "—",
+      });
     }
     return rows;
-  }, [draft.meddra]);
+  }, [draft.meddra, ptName]);
 
   function verdictOf(axis: string, term: string, original: string, drug?: string | null) {
     return ovVerdict[ovKey(axis, term, drug)] ?? original;
@@ -380,7 +387,7 @@ function ReviewForm({
                   <td className={TD}>
                     <input
                       type="checkbox"
-                      aria-label={t.imeAddLabel(r.pt_name)}
+                      aria-label={t.imeAddLabel(r.label)}
                       className="h-4 w-4 accent-[var(--accent)]"
                       checked={!!imeChecked[r.pt_code]}
                       onChange={(e) =>
@@ -389,11 +396,11 @@ function ReviewForm({
                     />
                   </td>
                   <td className={`${TD} font-medium text-ink`}>{r.term}</td>
-                  <td className={TD}>{r.pt_name}</td>
+                  <td className={TD}>{r.label}</td>
                   <td className={`${TD} font-mono text-xs`}>{r.pt_code}</td>
                   <td className={TD}>
                     <input
-                      aria-label={t.imeRationaleLabel(r.pt_name)}
+                      aria-label={t.imeRationaleLabel(r.label)}
                       className={INPUT_CLASS}
                       placeholder={t.imeRationalePlaceholder}
                       value={imeRationale[r.pt_code] ?? ""}
