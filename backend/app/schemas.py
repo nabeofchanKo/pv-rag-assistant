@@ -1,7 +1,7 @@
 """Define domain models for the PDF processing service."""
 
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
@@ -234,6 +234,9 @@ class MeddraCoding(BaseModel):
     term: str
     pt_code: str | None = None
     pt_name_ja: str | None = None
+    # English PT name from the same dictionary row — display only (the English
+    # UI). None for a PT typed in by a reviewer (no dictionary lookup).
+    pt_name_en: str | None = None
     soc_name_ja: str | None = None
     coded_by: Literal["完全一致", "検索+LLM", "該当なし", "手動"] = Field(
         description="由来。完全一致＝辞書と一致し決定的、検索+LLM＝候補からLLMが選択、該当なし＝適合PTなし、手動＝レビュアーが付与/修正。",
@@ -316,6 +319,57 @@ class CausalityAssessment(BaseModel):
         return self.verdict == "否定できる"
 
 
+# --- Phase 6: per-run cost / latency telemetry ---
+# Measured on every triage run by services/telemetry.UsageCollector (a LangChain
+# callback), so the numbers are this case's actual tokens and time — not an
+# estimate. Chat-model calls only: embedding calls (label / MedDRA retrieval) are
+# not counted, which at this corpus size is well under a cent.
+
+
+class StepTelemetry(BaseModel):
+    """One graph node's share of a run. Steps with no LLM (product_match,
+    precedent, influence) still appear, with their time and zero tokens."""
+
+    step: str
+    started_ms: int  # offset from the start of the run — parallel steps overlap
+    latency_ms: int
+    llm_calls: int = 0
+    models: list[str] = []
+    input_tokens: int = 0
+    cached_input_tokens: int = 0  # part of input_tokens, billed at the cached rate
+    output_tokens: int = 0
+    # None when a model used by this step has no entry in the price table.
+    cost_usd: float | None = 0.0
+
+
+class RunTelemetry(BaseModel):
+    wall_ms: int  # what the reviewer waited; less than the sum of steps (parallelism)
+    steps: list[StepTelemetry] = []
+    pricing_as_of: str  # the price table's date — prices change, so say which
+
+    @computed_field
+    @property
+    def total_input_tokens(self) -> int:
+        return sum(s.input_tokens for s in self.steps)
+
+    @computed_field
+    @property
+    def total_output_tokens(self) -> int:
+        return sum(s.output_tokens for s in self.steps)
+
+    @computed_field
+    @property
+    def total_cost_usd(self) -> float:
+        """Sum over the steps that could be priced (see ``cost_complete``)."""
+        return sum(s.cost_usd for s in self.steps if s.cost_usd is not None)
+
+    @computed_field
+    @property
+    def cost_complete(self) -> bool:
+        """False if any step used a model missing from the price table."""
+        return all(s.cost_usd is not None for s in self.steps)
+
+
 # --- Phase 2 (slice 2c) / Phase 3: combined triage output ---
 
 
@@ -339,6 +393,9 @@ class TriageResponse(BaseModel):
     influence_mode: str = "applied"
     influence: list["InfluenceItem"] = []
     source_text: str
+    # Phase 6: what this run cost and how long it took. Optional: runs from
+    # before telemetry existed (old checkpoints) have none.
+    telemetry: RunTelemetry | None = None
 
 
 # --- Phase 4d: past-case precedent (structured per-(drug, PT) lookup) ---
@@ -566,3 +623,14 @@ class OutOfScopeResult(BaseModel):
     product_match: ProductMatchResult
     reason: str = "自社品が使用されていないため評価対象外（自社品判定でヒットなし）"
     source_text: str
+    telemetry: RunTelemetry | None = None
+
+
+# What POST /cases/triage and GET /cases/{thread_id} return. `status` tells the
+# three apart, so it is declared as the discriminator: the OpenAPI document then
+# carries all three models plus the status → model mapping, instead of nothing
+# (these routes used to declare response_model=None and were absent from /docs).
+TriageStartResponse = Annotated[
+    TriageDraft | TriageResult | OutOfScopeResult,
+    Field(discriminator="status"),
+]

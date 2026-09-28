@@ -2,14 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Spinner from "@/components/Spinner";
-import {
-  AXIS_LABELS,
-  CAU_OPTIONS,
-  EXP_OPTIONS,
-  EXTRACTION_EDIT_KIND_LABELS,
-  SER_OPTIONS,
-  verdictTone,
-} from "@/lib/labels";
+import { CAU_OPTIONS, EXP_OPTIONS, SER_OPTIONS, verdictTone } from "@/lib/labels";
+import { useDict, usePtName, useTerm } from "@/i18n/LocaleProvider";
 import type {
   AddedEvent,
   RecodedEvent,
@@ -33,7 +27,7 @@ const ovKey = (axis: string, term: string, drug?: string | null) =>
   `${axis}::${term}::${drug ?? ""}`;
 
 /** FastAPI `detail` is a string for our HTTPExceptions, an array for body-validation errors. */
-function errText(data: unknown, status: number): string {
+function errText(data: unknown, fallback: string): string {
   const d = (data as { detail?: unknown } | null)?.detail;
   if (typeof d === "string") return d;
   if (Array.isArray(d))
@@ -42,7 +36,7 @@ function errText(data: unknown, status: number): string {
         typeof x === "string" ? x : ((x as { msg?: string })?.msg ?? JSON.stringify(x)),
       )
       .join(" / ");
-  return `確定に失敗しました (HTTP ${status})`;
+  return fallback;
 }
 
 type AddedDraft = {
@@ -70,6 +64,11 @@ function ReviewForm({
   draft: TriageDraft;
   onFinalized: (r: TriageResult) => void;
 }) {
+  const dict = useDict();
+  const t = dict.review;
+  const axisLabel = dict.vocab.axis;
+  const term = useTerm();
+  const ptName = usePtName();
   const [reviewer, setReviewer] = useState("");
   const [note, setNote] = useState("");
   const [ovVerdict, setOvVerdict] = useState<Record<string, string>>({});
@@ -90,14 +89,20 @@ function ReviewForm({
   // Unique coded PTs — the only events that can be promoted to the IME list.
   const imeRows = useMemo(() => {
     const seen = new Set<string>();
-    const rows: { term: string; pt_name: string; pt_code: string }[] = [];
+    // pt_name (Japanese) is what gets SENT; label is only what is shown.
+    const rows: { term: string; pt_name: string; pt_code: string; label: string }[] = [];
     for (const m of draft.meddra) {
       if (!m.pt_code || seen.has(m.pt_code)) continue;
       seen.add(m.pt_code);
-      rows.push({ term: m.term, pt_name: m.pt_name_ja ?? "—", pt_code: m.pt_code });
+      rows.push({
+        term: m.term,
+        pt_name: m.pt_name_ja ?? "—",
+        pt_code: m.pt_code,
+        label: ptName(m) ?? "—",
+      });
     }
     return rows;
-  }, [draft.meddra]);
+  }, [draft.meddra, ptName]);
 
   function verdictOf(axis: string, term: string, original: string, drug?: string | null) {
     return ovVerdict[ovKey(axis, term, drug)] ?? original;
@@ -188,7 +193,7 @@ function ReviewForm({
 
   async function submit(action: "approve" | "reject") {
     if (!reviewer.trim()) {
-      setError("レビュー担当者名は必須です。");
+      setError(t.reviewerRequired);
       return;
     }
     setSubmitting(action);
@@ -214,7 +219,7 @@ function ReviewForm({
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(errText(data, res.status));
+      if (!res.ok) throw new Error(errText(data, t.errFallback(res.status)));
       onFinalized(data as TriageResult);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -226,12 +231,12 @@ function ReviewForm({
   const overrideTable = (
     axis: "seriousness" | "causality",
     items: { term: string; verdict: string }[],
-    options: string[],
+    options: readonly string[],
   ) =>
     items.length === 0 ? null : (
       <div className="mt-3">
-        <p className="mb-1 text-xs font-medium text-muted">{AXIS_LABELS[axis]}</p>
-        <Table head={["事象", "現在", "変更後", "変更理由"]}>
+        <p className="mb-1 text-xs font-medium text-muted">{axisLabel[axis]}</p>
+        <Table head={t.overrideHead}>
           {items.map((x) => {
             const k = ovKey(axis, x.term);
             const cur = verdictOf(axis, x.term, x.verdict);
@@ -240,27 +245,27 @@ function ReviewForm({
               <tr key={k}>
                 <td className={`${TD} font-medium text-ink`}>{x.term}</td>
                 <td className={TD}>
-                  <Badge tone={verdictTone(axis, x.verdict)}>{x.verdict}</Badge>
+                  <Badge tone={verdictTone(axis, x.verdict)}>{term(x.verdict)}</Badge>
                 </td>
                 <td className={TD}>
                   <select
-                    aria-label={`${AXIS_LABELS[axis]} ${x.term} の変更後`}
+                    aria-label={t.newVerdictLabel(axisLabel[axis], x.term)}
                     className={`${INPUT_CLASS} ${changed ? "border-accent" : ""}`}
                     value={cur}
                     onChange={(e) => setVerdict(axis, x.term, e.target.value)}
                   >
                     {options.map((o) => (
                       <option key={o} value={o}>
-                        {o}
+                        {term(o)}
                       </option>
                     ))}
                   </select>
                 </td>
                 <td className={TD}>
                   <input
-                    aria-label={`${AXIS_LABELS[axis]} ${x.term} の変更理由`}
+                    aria-label={t.rationaleLabel(axisLabel[axis], x.term)}
                     className={INPUT_CLASS}
-                    placeholder={changed ? "変更理由（任意）" : "—"}
+                    placeholder={changed ? t.rationalePlaceholder : "—"}
                     value={ovRationale[k] ?? ""}
                     onChange={(e) =>
                       setOvRationale((p) => ({ ...p, [k]: e.target.value }))
@@ -275,14 +280,14 @@ function ReviewForm({
     );
 
   return (
-    <Section num="⑧" title="レビュー・承認（HITL）">
+    <Section num="⑧" title={t.title}>
       {draft.escalations.length > 0 ? (
         <p className="rounded-lg border border-warn/40 bg-warn-weak px-3 py-2 text-sm text-warn">
-          安全側で『要確認 / 評価不能』の項目が {draft.escalations.length} 件あります。判断のうえ承認してください。
+          {t.escalationsNote(draft.escalations.length)}
         </p>
       ) : (
         <p className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-muted">
-          安全側の要確認項目はありません。内容を確認して承認してください。
+          {t.noEscalations}
         </p>
       )}
 
@@ -290,40 +295,39 @@ function ReviewForm({
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <label className="block">
           <span className="text-xs font-medium text-muted">
-            レビュー担当者名 <span className="text-danger">*必須</span>
+            {t.reviewerLabel} <span className="text-danger">{t.required}</span>
           </span>
           <input
             className={`${INPUT_CLASS} mt-1`}
             value={reviewer}
             onChange={(e) => setReviewer(e.target.value)}
-            placeholder="例：田中PV担当"
+            placeholder={t.reviewerPlaceholder}
           />
         </label>
         <label className="block">
-          <span className="text-xs font-medium text-muted">全体所見（任意）</span>
+          <span className="text-xs font-medium text-muted">{t.noteLabel}</span>
           <input
             className={`${INPUT_CLASS} mt-1`}
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="所見があれば記入"
+            placeholder={t.notePlaceholder}
           />
         </label>
       </div>
 
       {/* verdict overrides */}
       <div className="mt-6 border-t border-border pt-4">
-        <p className="text-sm font-bold text-ink">判定の上書き（任意）</p>
-        <p className="mt-1 text-xs text-muted">
-          「変更後」を変えた項目だけが上書きされます。元の判定は監査証跡として保持されます。
-        </p>
+        <p className="text-sm font-bold text-ink">{t.overrideTitle}</p>
+        <p className="mt-1 text-xs text-muted">{t.overrideNote}</p>
         {overrideTable("seriousness", draft.seriousness, SER_OPTIONS)}
         {overrideTable("causality", draft.causality, CAU_OPTIONS)}
         {draft.expectedness.map((d) => (
           <div key={d.drug_name} className="mt-3">
             <p className="mb-1 text-xs font-medium text-muted">
-              {AXIS_LABELS.expectedness}（{d.drug_name}）
+              {axisLabel.expectedness}
+              {dict.vocab.paren(d.drug_name)}
             </p>
-            <Table head={["事象", "現在", "変更後", "変更理由"]}>
+            <Table head={t.overrideHead}>
               {d.assessments.map((a) => {
                 const k = ovKey("expectedness", a.term, d.drug_name);
                 const cur = verdictOf("expectedness", a.term, a.verdict, d.drug_name);
@@ -333,12 +337,12 @@ function ReviewForm({
                     <td className={`${TD} font-medium text-ink`}>{a.term}</td>
                     <td className={TD}>
                       <Badge tone={verdictTone("expectedness", a.verdict)}>
-                        {a.verdict}
+                        {term(a.verdict)}
                       </Badge>
                     </td>
                     <td className={TD}>
                       <select
-                        aria-label={`既知/未知 ${a.term} の変更後`}
+                        aria-label={t.newVerdictLabel(axisLabel.expectedness, a.term)}
                         className={`${INPUT_CLASS} ${changed ? "border-accent" : ""}`}
                         value={cur}
                         onChange={(e) =>
@@ -347,16 +351,16 @@ function ReviewForm({
                       >
                         {EXP_OPTIONS.map((o) => (
                           <option key={o} value={o}>
-                            {o}
+                            {term(o)}
                           </option>
                         ))}
                       </select>
                     </td>
                     <td className={TD}>
                       <input
-                        aria-label={`既知/未知 ${a.term} の変更理由`}
+                        aria-label={t.rationaleLabel(axisLabel.expectedness, a.term)}
                         className={INPUT_CLASS}
-                        placeholder={changed ? "変更理由（任意）" : "—"}
+                        placeholder={changed ? t.rationalePlaceholder : "—"}
                         value={ovRationale[k] ?? ""}
                         onChange={(e) =>
                           setOvRationale((p) => ({ ...p, [k]: e.target.value }))
@@ -374,18 +378,16 @@ function ReviewForm({
       {/* IME promotion */}
       {imeRows.length > 0 && (
         <div className="mt-6 border-t border-border pt-4">
-          <p className="text-sm font-bold text-ink">IMEリストへの昇格（任意）</p>
-          <p className="mt-1 text-xs text-muted">
-            「医学的に重要」と判断したPTを追加すると、今後の症例で同じPTの事象が自動的に重篤（criterion 6）になります。
-          </p>
+          <p className="text-sm font-bold text-ink">{t.imeTitle}</p>
+          <p className="mt-1 text-xs text-muted">{t.imeNote}</p>
           <div className="mt-3">
-            <Table head={["IMEに追加", "事象", "PT名", "PTコード", "昇格理由"]}>
+            <Table head={t.imeHead}>
               {imeRows.map((r) => (
                 <tr key={r.pt_code}>
                   <td className={TD}>
                     <input
                       type="checkbox"
-                      aria-label={`${r.pt_name} をIMEに追加`}
+                      aria-label={t.imeAddLabel(r.label)}
                       className="h-4 w-4 accent-[var(--accent)]"
                       checked={!!imeChecked[r.pt_code]}
                       onChange={(e) =>
@@ -394,13 +396,13 @@ function ReviewForm({
                     />
                   </td>
                   <td className={`${TD} font-medium text-ink`}>{r.term}</td>
-                  <td className={TD}>{r.pt_name}</td>
+                  <td className={TD}>{r.label}</td>
                   <td className={`${TD} font-mono text-xs`}>{r.pt_code}</td>
                   <td className={TD}>
                     <input
-                      aria-label={`${r.pt_name} の昇格理由`}
+                      aria-label={t.imeRationaleLabel(r.label)}
                       className={INPUT_CLASS}
-                      placeholder="昇格理由（任意）"
+                      placeholder={t.imeRationalePlaceholder}
                       value={imeRationale[r.pt_code] ?? ""}
                       onChange={(e) =>
                         setImeRationale((p) => ({ ...p, [r.pt_code]: e.target.value }))
@@ -416,12 +418,10 @@ function ReviewForm({
 
       {/* extraction edits */}
       <div className="mt-6 border-t border-border pt-4">
-        <p className="text-sm font-bold text-ink">抽出の修正（任意）</p>
-        <p className="mt-1 text-xs text-muted">
-          誤抽出は「削除」にチェック。MedDRAが違う場合は PTコード / PT名 を直接修正。
-        </p>
+        <p className="text-sm font-bold text-ink">{t.editTitle}</p>
+        <p className="mt-1 text-xs text-muted">{t.editNote}</p>
         <div className="mt-3">
-          <Table head={["削除", "事象", "PTコード", "PT名"]}>
+          <Table head={t.editHead}>
             {draft.extraction.adverse_events.map((ae, i) => {
               const m = medByTerm[ae.term];
               const cur = recode[ae.term] ?? {
@@ -434,7 +434,7 @@ function ReviewForm({
                   <td className={TD}>
                     <input
                       type="checkbox"
-                      aria-label={`${ae.term} を削除`}
+                      aria-label={t.removeLabel(ae.term)}
                       className="h-4 w-4 accent-[var(--danger)]"
                       checked={isRemoved}
                       onChange={(e) =>
@@ -445,7 +445,7 @@ function ReviewForm({
                   <td className={`${TD} font-medium text-ink`}>{ae.term}</td>
                   <td className={TD}>
                     <input
-                      aria-label={`${ae.term} のPTコード`}
+                      aria-label={t.ptCodeLabel(ae.term)}
                       className={`${INPUT_CLASS} font-mono`}
                       disabled={isRemoved}
                       value={cur.code}
@@ -459,7 +459,7 @@ function ReviewForm({
                   </td>
                   <td className={TD}>
                     <input
-                      aria-label={`${ae.term} のPT名`}
+                      aria-label={t.ptNameLabel(ae.term)}
                       className={INPUT_CLASS}
                       disabled={isRemoved}
                       value={cur.name}
@@ -478,11 +478,11 @@ function ReviewForm({
         </div>
 
         <p className="mt-4 text-xs text-muted">
-          見落とし事象を追加（判定は手入力。安全側の既定値が入っています）。
+          {t.addNote}
         </p>
         {added.length > 0 && (
           <div className="mt-2">
-            <Table head={["事象", "PTコード", "PT名", "重篤度", "因果", ""]}>
+            <Table head={t.addHead}>
               {added.map((row, i) => {
                 const upd = (patch: Partial<AddedDraft>) =>
                   setAdded((p) => p.map((r, j) => (j === i ? { ...r, ...patch } : r)));
@@ -490,16 +490,16 @@ function ReviewForm({
                   <tr key={i}>
                     <td className={TD}>
                       <input
-                        aria-label={`追加事象 ${i + 1} の名称`}
+                        aria-label={t.addedLabel(i + 1, t.addedFields.name)}
                         className={INPUT_CLASS}
-                        placeholder="事象名"
+                        placeholder={t.termPlaceholder}
                         value={row.term}
                         onChange={(e) => upd({ term: e.target.value })}
                       />
                     </td>
                     <td className={TD}>
                       <input
-                        aria-label={`追加事象 ${i + 1} のPTコード`}
+                        aria-label={t.addedLabel(i + 1, t.addedFields.ptCode)}
                         className={`${INPUT_CLASS} font-mono`}
                         value={row.pt_code}
                         onChange={(e) => upd({ pt_code: e.target.value })}
@@ -507,7 +507,7 @@ function ReviewForm({
                     </td>
                     <td className={TD}>
                       <input
-                        aria-label={`追加事象 ${i + 1} のPT名`}
+                        aria-label={t.addedLabel(i + 1, t.addedFields.ptName)}
                         className={INPUT_CLASS}
                         value={row.pt_name}
                         onChange={(e) => upd({ pt_name: e.target.value })}
@@ -515,28 +515,28 @@ function ReviewForm({
                     </td>
                     <td className={TD}>
                       <select
-                        aria-label={`追加事象 ${i + 1} の重篤度`}
+                        aria-label={t.addedLabel(i + 1, t.addedFields.ser)}
                         className={INPUT_CLASS}
                         value={row.seriousness}
                         onChange={(e) => upd({ seriousness: e.target.value })}
                       >
                         {SER_OPTIONS.map((o) => (
                           <option key={o} value={o}>
-                            {o}
+                            {term(o)}
                           </option>
                         ))}
                       </select>
                     </td>
                     <td className={TD}>
                       <select
-                        aria-label={`追加事象 ${i + 1} の因果`}
+                        aria-label={t.addedLabel(i + 1, t.addedFields.cau)}
                         className={INPUT_CLASS}
                         value={row.causality}
                         onChange={(e) => upd({ causality: e.target.value })}
                       >
                         {CAU_OPTIONS.map((o) => (
                           <option key={o} value={o}>
-                            {o}
+                            {term(o)}
                           </option>
                         ))}
                       </select>
@@ -544,7 +544,7 @@ function ReviewForm({
                     <td className={TD}>
                       <button
                         type="button"
-                        aria-label={`追加事象 ${i + 1} を削除`}
+                        aria-label={t.addedRemove(i + 1)}
                         className="rounded px-2 py-1 text-sm text-muted hover:text-danger"
                         onClick={() => setAdded((p) => p.filter((_, j) => j !== i))}
                       >
@@ -562,7 +562,7 @@ function ReviewForm({
           className={`${BTN_SECONDARY} mt-2 px-3 py-1.5 text-xs`}
           onClick={() => setAdded((p) => [...p, { ...NEW_ROW }])}
         >
-          ＋ 事象を追加
+          {t.addButton}
         </button>
       </div>
 
@@ -580,7 +580,7 @@ function ReviewForm({
           onClick={() => submit("approve")}
         >
           {submitting === "approve" && <Spinner />}
-          承認する
+          {t.approve}
         </button>
         <button
           type="button"
@@ -589,7 +589,7 @@ function ReviewForm({
           onClick={() => submit("reject")}
         >
           {submitting === "reject" && <Spinner />}
-          却下する
+          {t.reject}
         </button>
       </div>
     </Section>
@@ -605,17 +605,21 @@ function ReviewAudit({
   result: TriageResult;
   onReset: () => void;
 }) {
+  const dict = useDict();
+  const t = dict.review;
+  const v = dict.vocab;
+  const term = useTerm();
   const r = result.review;
   const approved = result.status === "approved";
   let when = r.reviewed_at;
   try {
-    when = new Date(r.reviewed_at).toLocaleString("ja-JP");
+    when = new Date(r.reviewed_at).toLocaleString(v.dateLocale);
   } catch {
     /* keep the raw value */
   }
 
   return (
-    <Section num="⑧" title="レビュー・承認（HITL）">
+    <Section num="⑧" title={t.title}>
       <p
         className={`rounded-lg border px-3 py-2 text-sm ${
           approved
@@ -623,28 +627,29 @@ function ReviewAudit({
             : "border-danger/40 bg-danger-weak text-danger"
         }`}
       >
-        {approved ? "✅ 承認済み" : "⛔ 却下"} — 担当: {r.reviewer} / {when}
+        {approved ? t.approvedBanner : t.rejectedBanner}
+        {t.by(r.reviewer, when)}
       </p>
-      {r.note && <p className="mt-2 text-xs text-muted">所見: {r.note}</p>}
+      {r.note && <p className="mt-2 text-xs text-muted">{t.note(r.note)}</p>}
 
       <div className="mt-4">
-        <p className="text-sm font-bold text-ink">人手による上書き（監査証跡）</p>
+        <p className="text-sm font-bold text-ink">{t.overridesTitle}</p>
         {r.overrides.length === 0 ? (
-          <p className="mt-1 text-xs text-muted">上書きなし（ドラフトのまま確定）。</p>
+          <p className="mt-1 text-xs text-muted">{t.noOverrides}</p>
         ) : (
           <div className="mt-2">
-            <Table head={["軸", "事象", "製品", "元の判定", "変更後", "理由"]}>
+            <Table head={t.overridesHead}>
               {r.overrides.map((o, i) => (
                 <tr key={`${o.axis}-${o.term}-${i}`}>
-                  <td className={`${TD} text-xs`}>{AXIS_LABELS[o.axis] ?? o.axis}</td>
+                  <td className={`${TD} text-xs`}>{v.axis[o.axis] ?? o.axis}</td>
                   <td className={`${TD} font-medium text-ink`}>{o.term}</td>
                   <td className={`${TD} text-xs`}>{dash(o.drug_name)}</td>
                   <td className={TD}>
-                    <Badge tone="muted">{o.original_verdict}</Badge>
+                    <Badge tone="muted">{term(o.original_verdict)}</Badge>
                   </td>
                   <td className={TD}>
                     <Badge tone={verdictTone(o.axis, o.new_verdict)}>
-                      {o.new_verdict}
+                      {term(o.new_verdict)}
                     </Badge>
                   </td>
                   <td className={`${TD} text-xs text-muted`}>{dash(o.rationale)}</td>
@@ -657,13 +662,13 @@ function ReviewAudit({
 
       {r.extraction_edits.length > 0 && (
         <div className="mt-5">
-          <p className="text-sm font-bold text-ink">抽出の修正（監査証跡）</p>
+          <p className="text-sm font-bold text-ink">{t.editsTitle}</p>
           <div className="mt-2">
-            <Table head={["種別", "事象", "詳細"]}>
+            <Table head={t.editsHead}>
               {r.extraction_edits.map((e, i) => (
                 <tr key={`${e.kind}-${e.term}-${i}`}>
                   <td className={`${TD} text-xs`}>
-                    {EXTRACTION_EDIT_KIND_LABELS[e.kind] ?? e.kind}
+                    {v.editKind[e.kind] ?? e.kind}
                   </td>
                   <td className={`${TD} font-medium text-ink`}>{e.term}</td>
                   <td className={`${TD} text-xs text-muted`}>{dash(e.detail)}</td>
@@ -676,18 +681,16 @@ function ReviewAudit({
 
       {r.ime_promotions.length > 0 && (
         <div className="mt-5">
-          <p className="text-sm font-bold text-ink">
-            IMEリストへ昇格したPT（今後の症例に反映）
-          </p>
+          <p className="text-sm font-bold text-ink">{t.imePromotedTitle}</p>
           <div className="mt-2">
-            <Table head={["PT名", "PTコード", "状態", "理由"]}>
+            <Table head={t.imePromotedHead}>
               {r.ime_promotions.map((p, i) => (
                 <tr key={`${p.pt_code}-${i}`}>
                   <td className={`${TD} font-medium text-ink`}>{p.pt_name}</td>
                   <td className={`${TD} font-mono text-xs`}>{p.pt_code}</td>
                   <td className={TD}>
                     <Badge tone={p.status === "追加" ? "good" : "muted"}>
-                      {p.status}
+                      {term(p.status)}
                     </Badge>
                   </td>
                   <td className={`${TD} text-xs text-muted`}>{dash(p.rationale)}</td>
@@ -699,7 +702,7 @@ function ReviewAudit({
       )}
 
       <button type="button" className={`${BTN_SECONDARY} mt-6`} onClick={onReset}>
-        別の症例をレビューする
+        {t.reset}
       </button>
     </Section>
   );

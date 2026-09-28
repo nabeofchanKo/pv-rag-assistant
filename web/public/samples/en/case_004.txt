@@ -1,0 +1,90 @@
+[Reference translation — the pipeline reads the Japanese original, not this text]
+
+Individual Case Safety Report
+
+Report ID: ICSR-2025-004
+Report type: Spontaneous, consumer report (family member)
+Report date: 2025-12-10
+Reporter: The patient's husband (spouse)
+Reporter qualification: Non-healthcare professional
+Country of occurrence: Japan
+MedDRA version: 27.0
+Note: Received through the marketing authorization holder's consumer hotline. The reporter is the patient's spouse. The reporter's wording has been kept as spoken; the company safety physician assigned MedDRA Preferred Terms (PT) based on it.
+
+Patient
+Initials: Y.K.
+Age: 42 years
+Sex: Female
+Weight: Not reported
+Medical history (as reported by the spouse):
+- Depression, diagnosed about 6 years ago
+- "She sometimes has trouble falling asleep, but it's nothing much"
+- No known allergies, as far as the spouse knows
+
+Suspect drug
+Drug: DrugA
+Indication: Major depressive disorder
+Regimen: 25 mg once daily for 1 week, then increased to 50 mg once daily by the prescribing psychiatrist
+Route: Oral
+Start date: 2025-10-20
+Stop date: Ongoing at the time of the report
+Action taken: None (the patient continues treatment under the psychiatrist's care)
+
+Concomitant medication
+- A previously prescribed sleeping medicine, taken "only now and then, when she really can't sleep" (name unknown to the reporter)
+- Multivitamin, daily
+
+Adverse events as described by the reporter
+The following were described by the reporter in lay language. MedDRA PTs were assigned on company safety review.
+
+Reporter: "She's just tired all the time. It doesn't go away however much she sleeps. She used to get tired from the depression before, but this seems different. She says it's not the tired you get from feeling low — it's more like her whole body feels heavy."
+Assigned MedDRA PT: Fatigue
+  Onset: about 5 days after starting DrugA
+  Outcome: Ongoing
+  Seriousness: Non-serious
+
+Reporter: "She can't get to sleep at all. She's exhausted but just lies there. And when she finally does fall asleep, she wakes up at 3 or 4 in the morning and can't get back to sleep. Every night — really, every single night."
+Assigned MedDRA PT: Insomnia
+  Onset: about 1 week after starting DrugA
+  Outcome: Ongoing
+  Seriousness: Non-serious
+
+Reporter: "Her stomach's up and down too. Some days she's running to the toilet again and again, other days she feels sick and doesn't want to eat anything. It's not all the time, but it's really getting to her."
+Assigned MedDRA PT (event A): Diarrhoea
+Assigned MedDRA PT (event B): Nausea
+  Onset: about 10 days after starting DrugA
+  Outcome: Intermittent, ongoing
+  Seriousness: Non-serious
+
+Reporter: "This is what worries me most — she gets a strange feeling in her hands and feet. Kind of prickly, like little insects crawling on her skin. Sometimes it's a tingling, buzzing numbness, sometimes it just feels dull. It comes and goes. It doesn't hurt, but she says it's horrible, it makes her restless."
+Assigned MedDRA PT: Paraesthesia
+  Onset: about 2 weeks after starting DrugA; more marked after the increase to 50 mg
+  Outcome: Ongoing
+  Seriousness: Non-serious
+
+Reporter: "She's lost interest in everything she used to enjoy. She loved gardening, and now she doesn't even want to go outside. I know that's part of the depression, but the doctor said the medicine should make that better, and it feels like it's making it worse. That's what worries me — that the medicine is doing the opposite of what it should."
+Assigned MedDRA PT: Anhedonia
+Assigned MedDRA PT (related): Depression worsened
+  Onset: about 3 weeks after starting DrugA
+  Outcome: Ongoing
+  Seriousness: Non-serious (under observation by the treating psychiatrist)
+
+Causality assessment
+Reporter: Not assessed (consumer report)
+Company (company safety physician): Possible, for all events.
+WHO-UMC: Possible. The temporal relationship is plausible, but the patient remains on treatment and no dechallenge has occurred. Some events (insomnia, paraesthesia, gastrointestinal symptoms) are known adverse reactions of this drug class. Whether the worsening of the underlying depression reflects insufficient treatment effect or a drug-induced effect cannot yet be distinguished with confidence.
+
+Narrative
+The patient is a 42-year-old woman with a 6-year history of major depressive disorder. On 2025-10-20 her treating psychiatrist prescribed DrugA, starting at 25 mg once daily and planning to increase to 50 mg once daily after one week if tolerated. The increase to 50 mg was made on or around 2025-10-27.
+
+Her husband called the marketing authorization holder's hotline on 2025-12-10. He said his wife had "not been herself" since starting the new medicine and described a set of symptoms that had come on gradually and that he was concerned were related to the drug. He acknowledged that some of what he described might be part of her underlying depression, but said he called because of the timing relative to starting the medicine, and because she herself said the symptoms felt different from her previous experience of depression.
+
+The patient was not interviewed directly for this report. With the patient's verbal consent, the company safety physician contacted the treating psychiatrist on 2025-12-12. The psychiatrist confirmed that the patient had reported similar symptoms at her most recent visit on 2025-12-05, and that treatment was being continued under close observation with a follow-up visit in two weeks. The psychiatrist agreed that the timing and symptom profile were consistent with possible adverse effects of DrugA, but stressed that stopping antidepressant therapy early carries clinical risks of its own.
+
+At the time of this report the patient continues to take DrugA. Follow-up is planned.
+
+Reporter's verbatim quotes kept in the attached note
+The full record of the consumer hotline call is kept in the case file. The reporter's key quotes are reproduced above to preserve the original character of the account and to support the subsequent MedDRA coding review.
+
+Follow-up
+Follow-up with the treating psychiatrist is planned after the patient's next visit, scheduled for 2025-12-19.

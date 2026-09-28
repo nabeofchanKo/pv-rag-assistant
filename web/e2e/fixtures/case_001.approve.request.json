@@ -1,0 +1,17 @@
+{
+  "action": "approve",
+  "reviewer": "E2Eテスト担当",
+  "note": "E2E 録画用の承認",
+  "overrides": [
+    {
+      "axis": "seriousness",
+      "term": "頭痛(重度)",
+      "new_verdict": "要確認",
+      "rationale": "E2E: 上書きの監査証跡を確認"
+    }
+  ],
+  "ime_promotions": [],
+  "removed_terms": [],
+  "added_events": [],
+  "recoded": []
+}

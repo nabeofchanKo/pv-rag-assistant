@@ -14,6 +14,7 @@ import {
   REPORTED_SERIOUSNESS_OPTIONS,
   SEX_OPTIONS,
 } from "@/lib/case-builder";
+import { useDict, useTerm } from "@/i18n/LocaleProvider";
 import { BTN_PRIMARY, BTN_SECONDARY, INPUT_CLASS } from "./ui";
 
 // Compose a case by hand to probe a specific behaviour. Only the fields travel
@@ -41,6 +42,8 @@ export default function CaseBuilder({
   loading: boolean;
   onRun: (draft: CaseDraft) => void;
 }) {
+  const t = useDict().builder;
+  const term = useTerm();
   const [draft, setDraft] = useState<CaseDraft>(EMPTY_DRAFT);
 
   const set = (patch: Partial<CaseDraft>) => setDraft((d) => ({ ...d, ...patch }));
@@ -56,23 +59,24 @@ export default function CaseBuilder({
   return (
     <div>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <p className="max-w-xl text-xs leading-relaxed text-muted">
-          報告内容と経過を組み立てて、評価がどう動くかを確かめられます。
-          たとえば「報告は非重篤のめまい、ただし経過に転倒・骨折・入院の記載」とすると、
-          企業評価が入院を根拠に重篤へ引き上げられるかを試せます。
-        </p>
+        <p className="max-w-xl text-xs leading-relaxed text-muted">{t.intro}</p>
         <button
           type="button"
           className={`${BTN_SECONDARY} px-3 py-1.5 text-xs`}
           onClick={() => setDraft(PRESET_DRAFT)}
           disabled={loading}
         >
-          この例を読み込む
+          {t.loadExample}
         </button>
       </div>
+      {t.inputNote && (
+        <p className="mt-3 rounded-lg border border-border bg-surface-2 px-3 py-2 text-xs leading-relaxed text-muted">
+          {t.inputNote}
+        </p>
+      )}
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <Field label="被疑薬">
+        <Field label={t.drug}>
           <select
             className={INPUT_CLASS}
             value={draft.drug}
@@ -81,31 +85,33 @@ export default function CaseBuilder({
             {BUILDER_DRUGS.map((d) => (
               <option key={d.name} value={d.name}>
                 {d.name}
-                {d.ownCompany ? "" : "（自社品ではない）"}
+                {d.ownCompany ? "" : t.notOwn}
               </option>
             ))}
           </select>
         </Field>
-        <Field label="年齢">
+        <Field label={t.age}>
           <input
             className={INPUT_CLASS}
-            placeholder="例：78歳"
+            placeholder={t.agePlaceholder}
             value={draft.age}
             onChange={(e) => set({ age: e.target.value })}
           />
         </Field>
-        <Field label="性別">
+        <Field label={t.sex}>
           <select
             className={INPUT_CLASS}
             value={draft.sex}
             onChange={(e) => set({ sex: e.target.value })}
           >
             {SEX_OPTIONS.map((o) => (
-              <option key={o}>{o}</option>
+              <option key={o} value={o}>
+                {term(o)}
+              </option>
             ))}
           </select>
         </Field>
-        <Field label="投与開始日">
+        <Field label={t.startDate}>
           <input
             className={INPUT_CLASS}
             placeholder="2026-01-10"
@@ -113,7 +119,7 @@ export default function CaseBuilder({
             onChange={(e) => set({ startDate: e.target.value })}
           />
         </Field>
-        <Field label="投与終了日">
+        <Field label={t.endDate}>
           <input
             className={INPUT_CLASS}
             placeholder="2026-02-02"
@@ -121,14 +127,16 @@ export default function CaseBuilder({
             onChange={(e) => set({ endDate: e.target.value })}
           />
         </Field>
-        <Field label="報告者による因果関係">
+        <Field label={t.reportedCausality}>
           <select
             className={INPUT_CLASS}
             value={draft.reportedCausality}
             onChange={(e) => set({ reportedCausality: e.target.value })}
           >
             {REPORTED_CAUSALITY_OPTIONS.map((o) => (
-              <option key={o}>{o}</option>
+              <option key={o} value={o}>
+                {term(o)}
+              </option>
             ))}
           </select>
         </Field>
@@ -136,56 +144,58 @@ export default function CaseBuilder({
 
       {!drug?.ownCompany && (
         <p className="mt-3 rounded-lg border border-warn/40 bg-warn-weak px-3 py-2 text-xs text-warn">
-          この薬剤は自社製品マスタに存在しないため、評価は実行されず「対象外」で終了します（ハードゲートの確認用）。
+          {t.notOwnWarning}
         </p>
       )}
 
       {/* events */}
       <div className="mt-5 border-t border-border pt-4">
-        <p className="text-sm font-bold text-ink">報告された有害事象</p>
-        <p className="mt-1 text-xs text-muted">
-          ここは「報告どおり」の転記です。企業評価（重篤度・因果・既知/未知）は経過文とあわせてシステムが判定します。
-        </p>
+        <p className="text-sm font-bold text-ink">{t.eventsTitle}</p>
+        <p className="mt-1 text-xs text-muted">{t.eventsNote}</p>
         <div className="mt-3 space-y-2">
           {draft.events.map((ev, i) => (
             <div key={i} className="grid gap-2 sm:grid-cols-[1fr_9rem_8rem_8rem_2rem]">
               <input
-                aria-label={`事象${i + 1} の名称`}
+                aria-label={t.eventLabel(i + 1, t.eventFields.name)}
                 className={INPUT_CLASS}
-                placeholder="事象名（例：浮動性めまい）"
+                placeholder={t.termPlaceholder}
                 value={ev.term}
                 onChange={(e) => setEvent(i, { term: e.target.value })}
               />
               <input
-                aria-label={`事象${i + 1} の発現日`}
+                aria-label={t.eventLabel(i + 1, t.eventFields.onset)}
                 className={INPUT_CLASS}
-                placeholder="発現日"
+                placeholder={t.onsetPlaceholder}
                 value={ev.onset}
                 onChange={(e) => setEvent(i, { onset: e.target.value })}
               />
               <select
-                aria-label={`事象${i + 1} の転帰`}
+                aria-label={t.eventLabel(i + 1, t.eventFields.outcome)}
                 className={INPUT_CLASS}
                 value={ev.outcome}
                 onChange={(e) => setEvent(i, { outcome: e.target.value })}
               >
                 {OUTCOME_OPTIONS.map((o) => (
-                  <option key={o}>{o}</option>
+                  <option key={o} value={o}>
+                    {term(o)}
+                  </option>
                 ))}
               </select>
               <select
-                aria-label={`事象${i + 1} の報告重篤度`}
+                aria-label={t.eventLabel(i + 1, t.eventFields.ser)}
                 className={INPUT_CLASS}
                 value={ev.seriousness}
                 onChange={(e) => setEvent(i, { seriousness: e.target.value })}
               >
                 {REPORTED_SERIOUSNESS_OPTIONS.map((o) => (
-                  <option key={o}>{o}</option>
+                  <option key={o} value={o}>
+                    {term(o)}
+                  </option>
                 ))}
               </select>
               <button
                 type="button"
-                aria-label={`事象${i + 1} を削除`}
+                aria-label={t.eventRemove(i + 1)}
                 className="rounded px-2 text-sm text-muted hover:text-danger disabled:opacity-30"
                 disabled={draft.events.length === 1}
                 onClick={() =>
@@ -208,22 +218,19 @@ export default function CaseBuilder({
             setDraft((d) => ({ ...d, events: [...d.events, { ...EMPTY_EVENT }] }))
           }
         >
-          ＋ 事象を追加
+          {t.addEvent}
         </button>
       </div>
 
       {/* narrative */}
       <div className="mt-5 border-t border-border pt-4">
         <label className="block">
-          <span className="text-sm font-bold text-ink">症例経過</span>
-          <p className="mt-1 text-xs text-muted">
-            ここが判定の勝負どころです。報告欄に書かれていない事実（転倒、骨折、入院、処置など）を経過に書くと、
-            企業評価がそれを拾えるかどうかを確認できます。
-          </p>
+          <span className="text-sm font-bold text-ink">{t.narrativeTitle}</span>
+          <p className="mt-1 text-xs text-muted">{t.narrativeNote}</p>
           <textarea
             className={`${INPUT_CLASS} mt-2 min-h-40 resize-y`}
             maxLength={BUILDER_LIMITS.maxNarrative}
-            placeholder="時系列で経過を記載してください。"
+            placeholder={t.narrativePlaceholder}
             value={draft.narrative}
             onChange={(e) => set({ narrative: e.target.value })}
           />
@@ -231,6 +238,16 @@ export default function CaseBuilder({
         <p className="mt-1 text-right font-mono text-xs text-muted">
           {draft.narrative.length} / {BUILDER_LIMITS.maxNarrative}
         </p>
+        {t.exampleTranslation && draft.narrative === PRESET_DRAFT.narrative && (
+          <details className="mt-2 rounded-lg border border-border bg-surface-2" open>
+            <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-ink">
+              {t.exampleTranslationTitle}
+            </summary>
+            <p className="border-t border-border px-3 py-2 text-xs leading-relaxed whitespace-pre-line text-muted">
+              {t.exampleTranslation}
+            </p>
+          </details>
+        )}
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -241,7 +258,7 @@ export default function CaseBuilder({
           onClick={() => onRun(draft)}
         >
           {loading && <Spinner />}
-          この症例をトリアージ
+          {t.run}
         </button>
         <button
           type="button"
@@ -249,7 +266,7 @@ export default function CaseBuilder({
           disabled={loading}
           onClick={() => setDraft(EMPTY_DRAFT)}
         >
-          クリア
+          {t.clear}
         </button>
       </div>
     </div>

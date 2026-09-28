@@ -18,3 +18,9 @@ Dockerfile
 .git
 .DS_Store
 *.log
+
+# E2E suite runs on the host, never in the image
+e2e
+playwright.config.ts
+test-results
+playwright-report

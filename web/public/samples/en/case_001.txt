@@ -1,0 +1,66 @@
+[Reference translation — the pipeline reads the Japanese original, not this text]
+
+Individual Case Safety Report
+
+Report ID: ICSR-2025-001
+Report type: Spontaneous
+Report date: 2025-11-15
+Reporter: Dr. Tanaka (Tokyo General Hospital)
+Reporter qualification: Physician
+Country of occurrence: Japan
+MedDRA version: 27.0
+
+Patient
+Initials: K.T.
+Age: 65 years
+Sex: Female
+Weight: 58 kg
+Race: Asian
+Medical history / comorbidities: Essential hypertension (diagnosed 10 years ago; well controlled before these events). No known drug allergies.
+
+Suspect drug
+Drug: DrugX
+Active ingredient: Compound-X 10 mg
+Marketing authorization holder: Pharma Sample Co., Ltd.
+Dosage form: Film-coated tablet
+Regimen: Once daily, morning, oral
+Dose: 10 mg
+Route: Oral
+Indication: Essential hypertension
+Start date: 2025-11-01
+Stop date: 2025-11-14 (discontinued due to adverse events)
+Action taken: Drug withdrawn
+
+Concomitant medication
+None reported at the time of the events.
+
+Adverse events
+Event 1: Headache (severe)
+  Onset: 2025-11-04
+  Outcome: Improving
+  Seriousness: Non-serious
+
+Event 2: Dizziness
+  Onset: 2025-11-04
+  Outcome: Improving
+  Seriousness: Non-serious
+
+Event 3: Nausea
+  Onset: 2025-11-05
+  Outcome: Improving
+  Seriousness: Non-serious
+
+Causality assessment
+Reporter: Possible
+Company: Possible
+WHO-UMC: Possible
+
+Narrative
+A 65-year-old Asian woman with a 10-year history of essential hypertension, well controlled until these events. Her primary care physician started DrugX 10 mg once daily on 2025-11-01. She had previously been managed with lifestyle changes alone and had never taken antihypertensive medication. Baseline blood pressure at prescription was 152/94 mmHg.
+
+Three days after the first dose (2025-11-04) she developed a severe, throbbing frontal headache with dizziness on standing. The next day she also had an episode of nausea without vomiting. She did not seek care immediately; she contacted the prescriber on 2025-11-14, and DrugX was stopped the same day. No symptomatic treatment was needed. At the time of this report, all three symptoms had been gradually improving over about 3 days after discontinuation.
+
+No other cause was identified. The patient reported no recent change in diet, no new medicines and no intercurrent illness. The temporal relationship between starting the drug and the onset of symptoms supports a causal relationship with DrugX assessed as possible.
+
+Follow-up
+Follow-up is planned at the next scheduled visit on 2025-12-01 to confirm full recovery.

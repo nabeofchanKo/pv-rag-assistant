@@ -8,22 +8,12 @@ import type {
   ReviewOutcome,
   TriageContent,
 } from "@/lib/types";
-import {
-  AXIS_LABELS,
-  INFLUENCE_SOURCE_LABELS,
-  SOURCE_LABELS,
-  counts,
-  reportedIsSerious,
-  verdictTone,
-} from "@/lib/labels";
+import { counts, reportedIsSerious, verdictTone } from "@/lib/labels";
+import { useDict, usePtName, useTerm } from "@/i18n/LocaleProvider";
+import ReferenceTranslation from "./ReferenceTranslation";
+import TelemetryPanel from "./TelemetryPanel";
 import { Badge, TD, Table, dash } from "./ui";
-import {
-  SOURCE_LABEL,
-  type VerdictChange,
-  buildChanges,
-  changeKey,
-  indexChanges,
-} from "./changes";
+import { type VerdictChange, buildChanges, changeKey, indexChanges } from "./changes";
 
 // The triage view is scanned under time pressure, not read top to bottom, so it
 // is ordered by what a reviewer needs first: the headline counts, then one row
@@ -31,6 +21,12 @@ import {
 // disclosure rather than beside the verdicts — the earlier layout repeated the
 // same event list across four tables, which made the page long and gave "what
 // was decided" and "why" equal visual weight.
+//
+// Language: every fixed value (verdict, criterion, coding route, ...) is shown
+// through useTerm(); free text from the case or the model (terms, quotes,
+// rationales, notes) is shown as it came.
+
+type Axis = "seriousness" | "causality" | "expectedness";
 
 type EventRow = {
   term: string;
@@ -100,19 +96,21 @@ function VerdictCell({
   verdict,
   change,
 }: {
-  axis: "seriousness" | "causality" | "expectedness";
+  axis: Axis;
   verdict?: string;
   change?: VerdictChange;
 }) {
+  const t = useDict().sections;
+  const term = useTerm();
   if (!verdict) return <span className="text-xs text-muted">—</span>;
   return (
     <div>
-      <Badge tone={verdictTone(axis, verdict)}>{verdict}</Badge>
+      <Badge tone={verdictTone(axis, verdict)}>{term(verdict)}</Badge>
       {change && (
         <div className="mt-0.5 text-[10px] leading-tight text-muted">
-          <span className="line-through">{change.from}</span> から
+          <span className="line-through">{term(change.from)}</span> {t.changedVia}{" "}
           <span className={change.source === "reviewer" ? "text-accent" : "text-warn"}>
-            {change.source === "reviewer" ? "人手" : "過去データ"}
+            {change.source === "reviewer" ? t.byReviewer : t.byPastData}
           </span>
         </div>
       )}
@@ -131,6 +129,15 @@ export default function TriageSections({
   data: TriageContent;
   review?: ReviewOutcome | null;
 }) {
+  const d = useDict();
+  const t = d.sections;
+  const v = d.vocab;
+  const term = useTerm();
+  const ptName = usePtName();
+  const axisLabel = (a: string) => v.axis[a as Axis] ?? a;
+  const count = (x: Record<string, number> | undefined) =>
+    counts(x, (k, n) => v.countItem(term(k), n), v.countSep);
+
   const rows = buildRows(data);
   const pm = data.product_match;
   const changes = buildChanges(data, review);
@@ -152,35 +159,31 @@ export default function TriageSections({
       {/* ---- headline ---- */}
       <section className="rounded-xl border border-border bg-surface p-5 shadow-sm">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h3 className="text-sm font-bold text-ink">判定サマリー</h3>
+          <h3 className="text-sm font-bold text-ink">{t.summary}</h3>
           {pm.is_company_product_present ? (
             <Badge tone="good">
-              自社品 {pm.matched_products.map((p) => p.name).join("、")}
+              {t.companyProduct(pm.matched_products.map((p) => p.name).join(v.listSep))}
             </Badge>
           ) : (
-            <Badge tone="warn">自社品なし</Badge>
+            <Badge tone="warn">{t.noCompanyProduct}</Badge>
           )}
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-5">
-          <Stat value={rows.length} label="有害事象" tone="muted" />
-          <Stat value={nSerious} label="重篤" tone="danger" />
-          <Stat value={nCheck} label="要確認" tone="warn" />
-          <Stat value={nUnexpected} label="未知" tone="danger" />
-          <Stat value={nNotExcludable} label="因果 否定できない" tone="muted" />
+          <Stat value={rows.length} label={t.stats.events} tone="muted" />
+          <Stat value={nSerious} label={t.stats.serious} tone="danger" />
+          <Stat value={nCheck} label={t.stats.check} tone="warn" />
+          <Stat value={nUnexpected} label={t.stats.unexpected} tone="danger" />
+          <Stat value={nNotExcludable} label={t.stats.notExcludable} tone="muted" />
         </div>
 
         {flagged.length > 0 && (
           <div className="mt-4 rounded-lg border border-danger/40 bg-danger-weak px-4 py-3">
-            <p className="text-sm font-bold text-danger">
-              重篤かつ既知でない事象が {flagged.length} 件 — 迅速報告の検討対象
-            </p>
+            <p className="text-sm font-bold text-danger">{t.flagged(flagged.length)}</p>
             <p className="mt-1 text-sm text-text">
-              {flagged.map((r) => r.term).join("、")}
+              {flagged.map((r) => r.term).join(v.listSep)}
             </p>
-            <p className="mt-1 text-xs text-muted">
-              ドラフト作成の補助であり、報告要否の判断そのものではありません。
-            </p>
+            <p className="mt-1 text-xs text-muted">{t.flaggedNote}</p>
           </div>
         )}
       </section>
@@ -189,37 +192,25 @@ export default function TriageSections({
       {changes.length > 0 && (
         <section className="rounded-xl border border-accent/40 bg-surface shadow-sm">
           <div className="border-b border-border p-5 pb-3">
-            <h3 className="text-sm font-bold text-ink">
-              人手・過去データによる調整 — {changes.length} 件
-            </h3>
-            <p className="mt-1 text-xs leading-relaxed text-muted">
-              モデルが最初に出した判定と、そこから変わった判定を並べています。過去データ由来の変化は
-              1 回の実行結果から復元しているため、モデルの実行ごとのばらつきは混ざりません。
-            </p>
+            <h3 className="text-sm font-bold text-ink">{t.changesTitle(changes.length)}</h3>
+            <p className="mt-1 text-xs leading-relaxed text-muted">{t.changesNote}</p>
           </div>
           <div className="p-5 pt-3">
-            <Table head={["事象", "軸", "モデルの判定", "調整後", "由来", "理由"]}>
+            <Table head={t.changesHead}>
               {changes.map((c, i) => (
                 <tr key={`${c.axis}-${c.term}-${i}`}>
                   <td className={`${TD} font-medium text-ink`}>
                     {c.term}
                     {c.drug && (
-                      <span className="ml-1 text-xs text-muted">（{c.drug}）</span>
+                      <span className="ml-1 text-xs text-muted">{v.paren(c.drug)}</span>
                     )}
                   </td>
-                  <td className={`${TD} text-xs`}>{AXIS_LABELS[c.axis] ?? c.axis}</td>
+                  <td className={`${TD} text-xs`}>{axisLabel(c.axis)}</td>
                   <td className={TD}>
-                    <span className="text-xs text-muted line-through">{c.from}</span>
+                    <span className="text-xs text-muted line-through">{term(c.from)}</span>
                   </td>
                   <td className={TD}>
-                    <Badge
-                      tone={verdictTone(
-                        c.axis as "seriousness" | "causality" | "expectedness",
-                        c.to,
-                      )}
-                    >
-                      {c.to}
-                    </Badge>
+                    <Badge tone={verdictTone(c.axis as Axis, c.to)}>{term(c.to)}</Badge>
                   </td>
                   <td className={`${TD} text-xs`}>
                     <span
@@ -227,7 +218,7 @@ export default function TriageSections({
                         c.source === "reviewer" ? "text-accent" : "text-warn"
                       }
                     >
-                      {SOURCE_LABEL[c.source]}
+                      {v.changeSource[c.source]}
                     </span>
                   </td>
                   <td className={`${TD} text-xs text-muted`}>{dash(c.reason)}</td>
@@ -241,18 +232,18 @@ export default function TriageSections({
       {/* ---- one row per event ---- */}
       <section className="rounded-xl border border-border bg-surface shadow-sm">
         <div className="flex items-baseline justify-between gap-2 border-b border-border p-5 pb-3">
-          <h3 className="text-sm font-bold text-ink">事象一覧</h3>
-          <p className="text-xs text-muted">行を開くと根拠が表示されます</p>
+          <h3 className="text-sm font-bold text-ink">{t.eventsTitle}</h3>
+          <p className="text-xs text-muted">{t.eventsHint}</p>
         </div>
 
         <div
           className={`${ROW_GRID} hidden border-b border-border px-5 py-2 text-xs font-medium text-muted sm:grid`}
         >
-          <div>事象</div>
-          <div>MedDRA PT</div>
-          <div>重篤度</div>
-          <div>因果</div>
-          <div>既知/未知</div>
+          <div>{t.cols.event}</div>
+          <div>{t.cols.pt}</div>
+          <div>{t.cols.seriousness}</div>
+          <div>{t.cols.causality}</div>
+          <div>{t.cols.expectedness}</div>
         </div>
 
         {rows.map((r, i) => (
@@ -271,7 +262,7 @@ export default function TriageSections({
                 <div className="text-sm text-text sm:truncate">
                   {r.meddra?.pt_name_ja ? (
                     <>
-                      {r.meddra.pt_name_ja}{" "}
+                      {ptName(r.meddra)}{" "}
                       <span className="font-mono text-xs text-muted">
                         {r.meddra.pt_code}
                       </span>
@@ -313,24 +304,24 @@ export default function TriageSections({
             <div className="space-y-3 border-t border-border bg-surface-2 px-5 py-4 text-sm">
               <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted">
                 <span>
-                  出典:{" "}
+                  {t.source}:{" "}
                   <span className="text-text">
-                    {r.ae ? (SOURCE_LABELS[r.ae.source] ?? r.ae.source) : "レビュアー追加"}
+                    {r.ae ? (v.aeSource[r.ae.source] ?? r.ae.source) : t.reviewerAdded}
                   </span>
                 </span>
                 <span>
-                  発現日: <span className="text-text">{dash(r.ae?.onset_date)}</span>
+                  {t.onset}: <span className="text-text">{dash(r.ae?.onset_date)}</span>
                 </span>
                 <span>
-                  転帰: <span className="text-text">{dash(r.ae?.outcome)}</span>
+                  {t.outcome}: <span className="text-text">{dash(term(r.ae?.outcome))}</span>
                 </span>
                 <span>
-                  報告重篤度:{" "}
-                  <span className="text-text">{dash(r.ae?.seriousness_reported)}</span>
+                  {t.reportedSeriousness}:{" "}
+                  <span className="text-text">{dash(term(r.ae?.seriousness_reported))}</span>
                 </span>
                 {r.meddra?.coded_by && (
                   <span>
-                    コード由来: <span className="text-text">{r.meddra.coded_by}</span>
+                    {t.codedBy}: <span className="text-text">{term(r.meddra.coded_by)}</span>
                   </span>
                 )}
               </div>
@@ -338,19 +329,19 @@ export default function TriageSections({
               {r.ser && (
                 <div>
                   <p className="text-xs font-bold text-ink">
-                    重篤度（企業評価 / ICH E2A）
+                    {t.serTitle}
                     {(() => {
                       const rep = reportedIsSerious(r.ser.reported);
                       return rep !== null && rep !== r.ser.is_serious ? (
                         <span className="ml-2 font-normal text-warn">
-                          ⚠️ 報告（{r.ser.reported}）と差異
+                          {t.reportedDiffers(term(r.ser.reported))}
                         </span>
                       ) : null;
                     })()}
                   </p>
                   {r.ser.hits.length > 0 && (
                     <p className="mt-0.5 text-xs text-text">
-                      該当基準: {r.ser.hits.map((h) => h.criterion).join("、")}
+                      {t.criteria}: {r.ser.hits.map((h) => term(h.criterion)).join(v.listSep)}
                     </p>
                   )}
                   <p className="mt-0.5 text-xs leading-relaxed text-muted">
@@ -365,10 +356,10 @@ export default function TriageSections({
               {r.cau && (
                 <div>
                   <p className="text-xs font-bold text-ink">
-                    因果関係（時間的・保守的）
+                    {t.cauTitle}
                     {r.cau.onset_relation && (
                       <span className="ml-2 font-normal text-muted">
-                        {r.cau.onset_relation}
+                        {term(r.cau.onset_relation)}
                       </span>
                     )}
                   </p>
@@ -381,10 +372,10 @@ export default function TriageSections({
               {r.exp.map((e) => (
                 <div key={e.drug}>
                   <p className="text-xs font-bold text-ink">
-                    既知/未知 — {e.drug}
+                    {t.expTitle(e.drug)}
                     {e.a.match_type && (
                       <span className="ml-2 font-normal text-muted">
-                        一致: {e.a.match_type}
+                        {t.match}: {term(e.a.match_type)}
                       </span>
                     )}
                     {e.a.evidence_section && (
@@ -402,19 +393,22 @@ export default function TriageSections({
               {r.precedent && (
                 <div>
                   <p className="text-xs font-bold text-ink">
-                    過去症例（同一PT {r.precedent.n_cases} 件）
+                    {t.precedentTitle(r.precedent.n_cases)}
                     {r.precedent.conflicts.length > 0 && (
                       <span className="ml-2 font-normal text-warn">
-                        ⚠️ 不一致:{" "}
-                        {r.precedent.conflicts.map((a) => AXIS_LABELS[a] ?? a).join("・")}
+                        {t.conflicts}: {r.precedent.conflicts.map(axisLabel).join(v.listSep)}
                       </span>
                     )}
                   </p>
                   <p className="mt-0.5 text-xs text-muted">
-                    重篤度 {counts(r.precedent.seriousness)} ／ 因果{" "}
-                    {counts(r.precedent.causality)}
+                    {v.axis.seriousness} {count(r.precedent.seriousness)}
+                    {v.countSep}
+                    {v.axis.causality} {count(r.precedent.causality)}
                     {r.precedent.case_ids.length > 0 && (
-                      <> ／ 参照: {r.precedent.case_ids.join("、")}</>
+                      <>
+                        {v.countSep}
+                        {t.refs}: {r.precedent.case_ids.join(v.listSep)}
+                      </>
                     )}
                   </p>
                 </div>
@@ -427,20 +421,20 @@ export default function TriageSections({
       {/* ---- supporting detail, collapsed by default ---- */}
       <details className="rounded-xl border border-border bg-surface shadow-sm">
         <summary className="cursor-pointer p-5 text-sm font-bold text-ink">
-          患者・自社品の詳細
+          {t.patientTitle}
         </summary>
         <div className="space-y-4 border-t border-border p-5">
           <div className="flex gap-8">
             <div>
-              <div className="text-xs text-muted">年齢</div>
+              <div className="text-xs text-muted">{t.age}</div>
               <div className="mt-0.5 text-lg font-bold text-ink">
                 {dash(data.extraction.patient.age)}
               </div>
             </div>
             <div>
-              <div className="text-xs text-muted">性別</div>
+              <div className="text-xs text-muted">{t.sex}</div>
               <div className="mt-0.5 text-lg font-bold text-ink">
-                {dash(data.extraction.patient.sex)}
+                {dash(term(data.extraction.patient.sex))}
               </div>
             </div>
           </div>
@@ -451,52 +445,51 @@ export default function TriageSections({
                   <span className="font-medium text-ink">{p.name}</span>
                   <span className="text-muted">
                     {" "}
-                    （ヒット語:{" "}
+                    ({t.hitTerm}:{" "}
                     <code className="rounded bg-surface-2 px-1 font-mono text-xs">
                       {p.matched_via}
                     </code>
-                    ）
+                    )
                   </span>
                   {p.notes && <span className="block text-xs text-muted">{p.notes}</span>}
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted">自社品の該当なし。</p>
+            <p className="text-sm text-muted">{t.noProduct}</p>
           )}
         </div>
       </details>
 
       <details className="rounded-xl border border-border bg-surface shadow-sm">
         <summary className="cursor-pointer p-5 text-sm font-bold text-ink">
-          過去データの扱い
+          {t.influenceTitle}
           <span className="ml-2 font-mono text-xs font-normal text-muted">
-            {data.influence_mode === "applied" ? "反映" : "参考"}
+            {data.influence_mode === "applied"
+              ? t.influenceMode.applied
+              : t.influenceMode.advisory}
           </span>
         </summary>
         <div className="border-t border-border p-5">
           {data.influence.length === 0 ? (
-            <p className="text-sm text-muted">
-              今回、過去データ（IME・過去症例）による調整や参考情報はありませんでした。
-            </p>
+            <p className="text-sm text-muted">{t.influenceNone}</p>
           ) : (
             <Table
               head={[
-                "事象",
-                "軸",
-                "由来",
-                data.influence_mode === "applied" ? "変更" : "メモ",
+                ...t.influenceHead,
+                data.influence_mode === "applied" ? t.influenceChange : t.influenceMemo,
               ]}
             >
               {data.influence.map((it, i) => (
                 <tr key={`${it.term}-${i}`}>
                   <td className={`${TD} font-medium text-ink`}>{it.term}</td>
-                  <td className={`${TD} text-xs`}>{AXIS_LABELS[it.axis] ?? it.axis}</td>
+                  <td className={`${TD} text-xs`}>{axisLabel(it.axis)}</td>
                   <td className={`${TD} text-xs`}>
-                    {INFLUENCE_SOURCE_LABELS[it.source] ?? it.source}
+                    {v.influenceSource[it.source as keyof typeof v.influenceSource] ??
+                      it.source}
                   </td>
                   <td className={`${TD} text-xs text-muted`}>
-                    {it.applied ? `${it.from_verdict}→${it.to_verdict}` : it.note}
+                    {it.applied ? `${term(it.from_verdict)}→${term(it.to_verdict)}` : it.note}
                   </td>
                 </tr>
               ))}
@@ -505,14 +498,18 @@ export default function TriageSections({
         </div>
       </details>
 
+      <TelemetryPanel telemetry={data.telemetry} />
+
       <details className="rounded-xl border border-border bg-surface shadow-sm">
         <summary className="cursor-pointer p-5 text-sm font-bold text-ink">
-          読み取ったテキスト（出典）
+          {d.triage.sourceText}
         </summary>
         <pre className="max-h-96 overflow-auto border-t border-border p-5 text-xs leading-relaxed whitespace-pre-wrap text-text">
           {data.source_text}
         </pre>
       </details>
+
+      <ReferenceTranslation documentName={data.document_name} />
     </div>
   );
 }

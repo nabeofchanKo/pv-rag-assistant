@@ -20,10 +20,12 @@ from app.schemas import (
     ReviewDecision,
     TriageDraft,
     TriageResult,
+    TriageStartResponse,
 )
 from app.services.ime import ImeReference
 from app.services.ingestion import IngestionService
 from app.services.precedent import PrecedentService, record_from_result
+from app.services.telemetry import UsageCollector
 from app.services.triage_graph import ALLOWED_VERDICTS, compute_escalations
 
 router = APIRouter()
@@ -47,6 +49,7 @@ def _content_fields(values: dict) -> dict:
         influence_mode=values.get("influence_mode", "applied"),
         influence=values.get("influence", []),
         source_text=values.get("text", ""),
+        telemetry=values.get("telemetry"),
     )
 
 
@@ -55,6 +58,7 @@ def _out_of_scope(thread_id: str, values: dict) -> OutOfScopeResult:
         thread_id=thread_id,
         product_match=values["product_match"],
         source_text=values.get("text", ""),
+        telemetry=values.get("telemetry"),
     )
 
 
@@ -80,7 +84,7 @@ def _result(thread_id: str, values: dict) -> TriageResult:
     )
 
 
-@router.post("/cases/triage", response_model=None)
+@router.post("/cases/triage", response_model=TriageStartResponse)
 async def triage_endpoint(
     file: UploadFile = File(...),
     auto_approve: bool = False,
@@ -117,6 +121,9 @@ async def triage_endpoint(
         tmp_dir.rmdir()        # remove the temp directory
 
     thread_id = str(uuid.uuid4())
+    # Measure this run's tokens / cost / time per step (Phase 6), then keep the
+    # result in the thread's state so a reload or the approved result still has it.
+    usage = UsageCollector()
     graph.invoke(
         {
             "text": text,
@@ -124,8 +131,9 @@ async def triage_endpoint(
             "auto_approve": auto_approve,
             "influence_mode": "advisory" if influence == "advisory" else "applied",
         },
-        _config(thread_id),
+        {**_config(thread_id), "callbacks": [usage]},
     )
+    graph.update_state(_config(thread_id), {"telemetry": usage.summary()})
     values = graph.get_state(_config(thread_id)).values
 
     if values.get("status") == "out_of_scope":  # no own-company product → hard-gated
@@ -135,7 +143,7 @@ async def triage_endpoint(
     return _draft(thread_id, values)
 
 
-@router.get("/cases/{thread_id}", response_model=None)
+@router.get("/cases/{thread_id}", response_model=TriageStartResponse)
 async def get_case(
     thread_id: str,
     graph: CompiledStateGraph = Depends(get_triage_graph),
@@ -153,7 +161,7 @@ async def get_case(
     return _draft(thread_id, values)
 
 
-@router.post("/cases/{thread_id}/approve", response_model=None)
+@router.post("/cases/{thread_id}/approve", response_model=TriageResult)
 async def approve_case(
     thread_id: str,
     decision: ReviewDecision,

@@ -101,8 +101,12 @@ removed now that the Next.js UI reaches feature parity.
   host, so the cloud demo runs the **OpenAI tier**; the local and hybrid tiers
   (ADR 0011, 0012) remain a validated, documented flag flip rather than something
   the public demo exercises.
-- **State in the cloud:** reference indexes rebuild at startup
-  (`ensure_indexed()` is idempotent, so no persistent disk is required), while
+- **State in the cloud:** reference indexes are baked into the image at build
+  time (`python -m app.bake_indexes`, key passed as a BuildKit secret), with
+  startup indexing as the fallback (`ensure_indexed()` is idempotent, so no
+  persistent disk is required either way). Baking was worth it for boot time
+  (~12 s saved per restart) and for not needing the embedding API to boot — the
+  embedding cost it saves is negligible (8 label chunks + 56 PTs). Meanwhile
   mutable state (HITL thread checkpoints, precedent, IME promotions) is
   **ephemeral for the demo**, with the upgrade path (LangGraph Postgres
   checkpointer + RDS) documented rather than built.
