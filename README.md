@@ -288,6 +288,14 @@ file picker), requests are rate limited per IP and capped globally per day, and 
 requires a shared secret from the BFF so it cannot be called directly. A hard spending
 cap at the LLM provider sits behind all of it as the only real guarantee.
 
+**What a case costs, measured.** Every triage run reports its own tokens, USD cost and
+time per graph step — measured by a LangChain callback on the run, not estimated (the
+six services do not know they are being measured; LangGraph routes the callback into
+every model call, parallel branches included). Sample 001 comes to **~$0.026 and ~16 s**,
+with the two gpt-4o judgment steps ~85% of the cost; an out-of-scope case stops at the
+gate for $0. The panel shows the parallel steps as overlapping bars, notes how much of
+the input hit OpenAI's prompt cache, and stamps the date of its price table.
+
 ### Known limitations (current MVP)
 
 - Dense-vector retrieval can be confused by documents that share a common format/vocabulary, and is weaker on proper nouns (e.g. distinguishing one drug or reporter name from another). Hybrid retrieval is on the roadmap.
@@ -549,6 +557,13 @@ App Runner 2サービスで動きます。フロントをマネージドホス�
 （**サーバー側で強制**。ファイル選択UIを隠すだけでは API を直接叩かれて突破されます）、
 IP単位と全体1日単位でレート制限をかけ、API は BFF からの共有シークレットを要求します。
 その背後に、LLM プロバイダ側のハードな支出上限を置いています —— 絶対的な保証はこれだけです。
+
+**1症例のコストを実測で見せる。** トリアージの実行ごとに、グラフの各ステップのトークン数・費用（USD）・
+処理時間を返します。推定ではなく、LangChain のコールバックで実行そのものを計測しています（6つの
+サービスは計測されていることを知りません。LangGraph が並列ブランチも含めて全モデル呼び出しに
+コールバックを届けます）。サンプル001は **約$0.026・約16秒** で、費用の約85%は gpt-4o を使う2つの判定
+ステップです。評価対象外の症例はゲートで止まるため $0 です。パネルでは並列ステップを重なるバーで
+示し、入力のうちプロンプトキャッシュに一致した割合と、価格表の日付を明記しています。
 
 ### 既知の制約（現MVP）
 

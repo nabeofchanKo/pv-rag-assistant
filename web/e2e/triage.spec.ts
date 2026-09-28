@@ -40,6 +40,21 @@ test("a sample case renders as a draft awaiting review", async ({ page }) => {
     await expect(page.locator("summary", { hasText: ae.term })).toBeVisible();
 });
 
+test("the run's measured cost and time are shown, one row per step", async ({ page }) => {
+  const t = draft.telemetry;
+  await runSample(page, "症例001");
+
+  // Headline numbers are readable without expanding the panel.
+  const summary = page.locator("summary", { hasText: "コスト・処理時間" });
+  await expect(summary).toContainText(`$${t.total_cost_usd.toFixed(4)}`);
+  await expect(summary).toContainText(`${(t.wall_ms / 1000).toFixed(1)}秒`);
+
+  await summary.click();
+  const panel = page.locator("details", { has: summary });
+  await expect(panel.locator("tbody tr")).toHaveCount(t.steps.length + 1); // + total row
+  await expect(panel.getByText(`${t.pricing_as_of} 時点`)).toBeVisible();
+});
+
 test("approving without a reviewer name is refused before anything is sent", async ({ page }) => {
   const before = await lastApprove(page);
   await runSample(page, "症例001");
