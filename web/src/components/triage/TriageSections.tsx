@@ -10,6 +10,7 @@ import type {
 } from "@/lib/types";
 import { counts, reportedIsSerious, verdictTone } from "@/lib/labels";
 import { useDict, usePtName, useTerm } from "@/i18n/LocaleProvider";
+import ReferenceTranslation from "./ReferenceTranslation";
 import TelemetryPanel from "./TelemetryPanel";
 import { Badge, TD, Table, dash } from "./ui";
 import { type VerdictChange, buildChanges, changeKey, indexChanges } from "./changes";
@@ -507,6 +508,8 @@ export default function TriageSections({
           {data.source_text}
         </pre>
       </details>
+
+      <ReferenceTranslation documentName={data.document_name} />
     </div>
   );
 }
