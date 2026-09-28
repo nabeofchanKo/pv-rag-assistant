@@ -296,6 +296,16 @@ with the two gpt-4o judgment steps ~85% of the cost; an out-of-scope case stops 
 gate for $0. The panel shows the parallel steps as overlapping bars, notes how much of
 the input hit OpenAI's prompt cache, and stamps the date of its price table.
 
+**Language.** The app is bilingual (`/ja/...`, `/en/...`; a bare link follows the browser
+language) so an English-speaking reader can follow a case end to end. The line is drawn
+at the model: the UI, every fixed vocabulary (verdicts, ICH E2A criteria, coding routes)
+and MedDRA PT names are English; the case reports, the package-insert passages and the
+model's free-text rationales stay Japanese, because the pipeline and its evaluation are
+built for Japanese PV — translating the rationales would add a model call and rewrite the
+audit evidence. English reference translations of the sample cases are provided for
+reading. Values and labels are kept apart: the review form shows "Needs review" but sends
+`要確認`, and an E2E test proves it (it fails if an option's value is ever translated).
+
 ### Known limitations (current MVP)
 
 - Dense-vector retrieval can be confused by documents that share a common format/vocabulary, and is weaker on proper nouns (e.g. distinguishing one drug or reporter name from another). Hybrid retrieval is on the roadmap.
@@ -564,6 +574,14 @@ IP単位と全体1日単位でレート制限をかけ、API は BFF からの�
 コールバックを届けます）。サンプル001は **約$0.026・約16秒** で、費用の約85%は gpt-4o を使う2つの判定
 ステップです。評価対象外の症例はゲートで止まるため $0 です。パネルでは並列ステップを重なるバーで
 示し、入力のうちプロンプトキャッシュに一致した割合と、価格表の日付を明記しています。
+
+**言語。** アプリは日英対応です（`/ja/...`・`/en/...`、言語なしのリンクはブラウザの言語に従う）。英語話者も
+1症例を最初から最後まで追えるようにしています。線引きはモデルの手前です：UI、決まった語彙（判定・
+ICH E2A基準・コード化経路）とMedDRAのPT名は英語化し、症例本文・添付文書の引用・モデルの判定根拠
+（自由記述）は日本語のままです。パイプラインと評価が日本語のPV業務向けに作られているためで、根拠を
+翻訳すればモデル呼び出しが増え、監査の証拠そのものを書き換えることになります。サンプル症例には
+読むための英語の参考訳を付けています。値と表示名は分けており、レビューフォームは「Needs review」と
+表示しつつ `要確認` を送ります。これはE2Eテストで保証しています（選択肢の値が翻訳されると失敗する）。
 
 ### 既知の制約（現MVP）
 

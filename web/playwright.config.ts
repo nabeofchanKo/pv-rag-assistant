@@ -22,6 +22,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: [["list"]],
+  // The app runs under `next dev`, which compiles each route on its FIRST
+  // request — whichever test hits a route first pays several seconds for it.
+  expect: { timeout: 20_000 },
   use: {
     baseURL: `http://127.0.0.1:${WEB_PORT}`,
     // Pin the browser language: the proxy redirects locale-less paths by it.
