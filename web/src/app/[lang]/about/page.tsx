@@ -84,7 +84,7 @@ export default function AboutPage() {
       <section className="mt-12">
         <h2 className="text-lg font-bold text-ink">{c.evidenceHeading}</h2>
         <p className="mt-2 text-sm leading-relaxed text-muted">{c.evidenceIntro}</p>
-        <div className="mt-5 grid grid-cols-2 gap-4 rounded-xl border border-border bg-surface p-5 shadow-sm sm:grid-cols-4">
+        <div className="mt-5 grid grid-cols-2 gap-4 rounded-xl border border-border bg-surface p-5 shadow-sm sm:grid-cols-3">
           {c.metrics.map((m) => (
             <div key={m.label}>
               <div
