@@ -1,0 +1,142 @@
+[Reference translation — the pipeline reads the Japanese original, not this text]
+
+Individual Case Safety Report
+
+Report ID: ICSR-2025-003
+Report type: Spontaneous, healthcare professional
+Report date: 2026-01-20
+Reporter: Dr. Suzuki, Yokohama Cardiovascular Institute
+Reporter qualification: Physician (cardiologist)
+Country of occurrence: Japan
+MedDRA version: 27.0
+
+Patient
+Initials: H.N.
+Age: 74 years
+Sex: Male
+Weight: 68 kg
+Height: 165 cm
+Race: Asian
+
+Medical history / comorbidities
+- Persistent atrial fibrillation (diagnosed 2022, CHA2DS2-VASc score 4)
+- Coronary artery disease (2021, after PCI with a drug-eluting stent to the left anterior descending artery)
+- Heart failure with preserved ejection fraction (HFpEF, EF 55%)
+- Essential hypertension (long-standing)
+- Chronic kidney disease stage 3a (baseline eGFR 52 mL/min/1.73 m2)
+- Type 2 diabetes (well controlled)
+- Mild cognitive impairment (noted in 2024)
+
+Suspect drugs
+Drug 1 (primary suspect): DrugZ
+Active ingredient: Compound-Z 200 mg
+Marketing authorization holder: Pharma Sample Co., Ltd.
+Dosage form: Tablet
+Regimen: 200 mg twice daily for 7 days, then 200 mg once daily maintenance
+Route: Oral
+Indication: Maintenance of sinus rhythm in atrial fibrillation
+Start date: 2025-09-10
+Stop date: 2025-12-28
+Action taken: Drug withdrawn
+
+Drug 2 (co-suspect): Warfarin
+Regimen: 3 mg once daily (adjusted to INR; variable)
+Route: Oral
+Indication: Stroke prevention in atrial fibrillation
+Start date: 2022-06-01
+Stop date: Ongoing (dose adjusted)
+Action taken: Dose reduced
+
+Concomitant medication (ongoing)
+- Carvedilol 6.25 mg twice daily (since 2022)
+- Aspirin 100 mg once daily (since 2021)
+- Atorvastatin 40 mg once daily at bedtime (since 2021)
+- Furosemide 20 mg once daily (since 2024)
+- Empagliflozin 10 mg once daily (since 2023)
+- Donepezil 5 mg once daily (since 2024)
+
+Adverse events
+
+Event 1: INR increased (International normalised ratio increased)
+  Onset: 2025-10-12
+  Peak: INR 5.8 (target range 2.0-3.0)
+  Outcome: Recovered after dose adjustment
+  Seriousness: Non-serious
+
+Event 2: Epistaxis (recurrent)
+  Onset: 2025-10-14
+  Outcome: Recovered
+  Seriousness: Non-serious
+
+Event 3: Ecchymosis (extensive subcutaneous bleeding, both upper limbs)
+  Onset: 2025-10-15
+  Outcome: Recovered
+  Seriousness: Non-serious
+
+Event 4: Bradycardia (symptomatic)
+  Onset: 2025-11-22
+  Lowest recorded heart rate: 38 bpm
+  Outcome: Recovered after discontinuation
+  Seriousness criterion: Hospitalization
+  Seriousness: Serious
+
+Event 5: Syncope
+  Onset: 2025-11-22
+  Outcome: Recovered
+  Seriousness criterion: Hospitalization
+  Seriousness: Serious
+
+Event 6: Orthostatic hypotension
+  Onset: 2025-11-23
+  Outcome: Recovered
+  Seriousness: Non-serious
+
+Event 7: Confusional state
+  Onset: 2025-12-15
+  Outcome: Recovered
+  Seriousness: Non-serious
+
+Event 8: Dizziness
+  Onset: 2025-12-15
+  Outcome: Recovered
+  Seriousness: Non-serious
+
+Causality assessment
+Events 1-3 (bleeding-related):
+  Reporter (DrugZ): Probable
+  Reporter (warfarin): Possible (interaction with DrugZ suspected)
+  WHO-UMC: Probable, for the drug-drug interaction
+
+Events 4-6 (cardiac / haemodynamic):
+  Reporter (DrugZ): Probable
+  WHO-UMC: Probable
+
+Events 7-8 (neurological):
+  Reporter (DrugZ): Possible
+  WHO-UMC: Possible
+
+Narrative
+
+A 74-year-old man with long-standing persistent atrial fibrillation, coronary artery disease, HFpEF, hypertension, CKD stage 3a, type 2 diabetes and mild cognitive impairment, under cardiovascular care at our institution. Since 2022 his atrial fibrillation had been managed with rate control (carvedilol) and anticoagulation with warfarin to a target INR of 2.0-3.0. On warfarin 3 mg/day his INR had been stable for the last 18 months.
+
+In September 2025, because of worsening symptomatic palpitations and reduced exercise tolerance, a rhythm-control strategy was tried: DrugZ 200 mg twice daily was added as a 7-day loading regimen, then moved to 200 mg once daily for maintenance. The baseline ECG showed atrial fibrillation with a controlled ventricular response (78 bpm) and a QTc interval of 432 ms. Liver function, thyroid function and renal function were all within recent baseline ranges.
+
+About one month after starting DrugZ (2025-10-12), routine INR monitoring showed an unexpected rise to 5.8, with no change in the warfarin dose, diet or other medication. The patient denied any new over-the-counter medicines, supplements or health foods, and had no febrile illness. Two days later (2025-10-14) he developed recurrent epistaxis requiring local compression and an outpatient visit. By 2025-10-15 he had extensive ecchymoses on both forearms after minor trauma. Warfarin was withheld for 2 days and then reduced from 3 mg to 1.5 mg/day, and the INR returned to range within a week. An interaction between DrugZ and warfarin through cytochrome P450 inhibition (particularly CYP2C9 and CYP3A4) was suspected.
+
+The patient continued DrugZ at the 200 mg once-daily maintenance dose with closer warfarin monitoring. On 2025-11-22, about 10 weeks after starting DrugZ, he had a syncopal episode while walking from the bathroom and was brought to the emergency department by his daughter. On arrival his heart rate was 38 bpm and blood pressure 92/58 mmHg. The ECG showed atrial fibrillation with a markedly slowed ventricular response and a prolonged QTc interval (498 ms; baseline 432 ms). No proarrhythmia (torsade de pointes) was seen.
+
+He was admitted for telemetry monitoring. Carvedilol and DrugZ were both withheld on admission. Over the next 48 hours the ventricular rate gradually recovered to 60-70 bpm and the QTc shortened to 460 ms, and he remained haemodynamically stable thereafter. Carvedilol was restarted at a reduced 3.125 mg twice daily without recurrence of bradycardia. The combination of DrugZ with existing beta-blocker therapy was thought to have caused excessive negative chronotropy, compounded by his age, reduced renal clearance and a possible interaction affecting carvedilol metabolism. Mild orthostatic hypotension was noted during the admission and had resolved by discharge.
+
+After discharge on 2025-11-27, DrugZ remained stopped. Alternative antiarrhythmics and a return to pure rate control were discussed with the patient and his daughter; given his age, cognitive comorbidity and evident sensitivity to DrugZ, rate control was chosen.
+
+On 2025-12-15, three weeks after DrugZ was stopped, his daughter reported new episodes of confusion, particularly from late afternoon into the evening; at times he did not recognize family members or know the date. He also complained of persistent mild dizziness. Although a temporal link with stopping rather than starting DrugZ is atypical, DrugZ has a long elimination half-life (estimated at several weeks for the active metabolite), and a delayed central nervous system effect could not be ruled out. His pre-existing mild cognitive impairment may also have been worsened by the recent admission and medication changes. Donepezil was continued unchanged.
+
+By the date of this report (2026-01-20) the confusional episodes had gradually resolved over about 3 weeks, and the dizziness had also resolved. DrugZ remained stopped. INR was stable on warfarin 3 mg/day (the original dose, resumed after DrugZ washout). Heart rate was 68 bpm on carvedilol 3.125 mg twice daily. There was no recurrence of syncope or bleeding.
+
+Drug-drug interaction discussion
+The DrugZ-warfarin interaction seen here is consistent with the previously reported pharmacokinetic interaction mediated by cytochrome P450 inhibition. DrugZ is known to inhibit CYP2C9, the main enzyme metabolizing S-warfarin, increasing warfarin exposure and INR. Co-administration calls for close INR monitoring and a warfarin dose reduction, typically of 30-50%.
+
+The bradycardia reflects additive negative chronotropy when DrugZ is combined with a beta-blocker in an elderly patient with reduced renal clearance.
+
+Follow-up
+A cardiology follow-up on 2026-02-15 is planned, with a repeat ECG and clinical assessment. DrugZ will not be re-administered. Alternative antiarrhythmics will be considered only if symptomatic palpitations recur.

@@ -3,7 +3,7 @@
 //
 // Scope, deliberately: the UI is bilingual; the case material and the model's
 // free-text rationales stay in Japanese (the pipeline, the reference data and
-// the evaluation are all Japanese — see README "Language").
+// the evaluation are all Japanese — see README, "Language").
 
 export const LOCALES = ["ja", "en"] as const;
 export type Locale = (typeof LOCALES)[number];

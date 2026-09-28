@@ -5,8 +5,10 @@ import Spinner from "@/components/Spinner";
 import CaseBuilder from "@/components/triage/CaseBuilder";
 import ReviewPanel from "@/components/triage/ReviewPanel";
 import TelemetryPanel from "@/components/triage/TelemetryPanel";
+import ReferenceTranslation from "@/components/triage/ReferenceTranslation";
 import TriageSections from "@/components/triage/TriageSections";
-import { useDict, useTerm } from "@/i18n/LocaleProvider";
+import { useDict, useLocale, useTerm } from "@/i18n/LocaleProvider";
+import { sampleText } from "@/lib/samples-meta";
 import type { CaseDraft } from "@/lib/case-builder";
 import type { TriageStartResponse } from "@/lib/types";
 
@@ -16,10 +18,14 @@ export default function TriagePage() {
   const dict = useDict();
   const t = dict.triage;
   const term = useTerm();
+  const locale = useLocale();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<TriageStartResponse | null>(null);
+  // Which sample produced the result — the out-of-scope response carries no
+  // document name, and the reference translation is looked up by it.
+  const [ranSample, setRanSample] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Default to demo mode until the server says otherwise, so the upload control
@@ -56,6 +62,7 @@ export default function TriagePage() {
   }
 
   function startTriage(f: File) {
+    setRanSample(null);
     const fd = new FormData();
     fd.append("file", f);
     return run({ method: "POST", body: fd });
@@ -64,6 +71,7 @@ export default function TriagePage() {
   // The BFF reads the bundled sample itself — we only send its name, so no file
   // content is uploaded and the demo cannot be pointed at arbitrary input.
   function startSample(name: string) {
+    setRanSample(name);
     return run({
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -74,6 +82,7 @@ export default function TriagePage() {
   // Likewise the builder sends fields, not a document — the BFF renders the
   // report text server-side after validating them.
   function startBuilt(draft: CaseDraft) {
+    setRanSample(null);
     return run({
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -163,7 +172,11 @@ export default function TriagePage() {
             </p>
           )}
           <div className="mt-2 flex flex-wrap gap-2">
-            {samples.map((s) => (
+            {samples.map((s) => {
+              // The server's list is the allowlist; the words come from the
+              // catalogue in the reader's language.
+              const st = sampleText(s.file, locale);
+              return (
               <button
                 key={s.file}
                 type="button"
@@ -171,10 +184,11 @@ export default function TriagePage() {
                 disabled={loading}
                 className="rounded-lg border border-border bg-surface-2 px-3 py-1.5 text-left text-sm text-ink transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <span className="font-medium">{s.label}</span>
-                <span className="ml-1.5 text-xs text-muted">{s.hint}</span>
+                <span className="font-medium">{st?.label ?? s.label}</span>
+                <span className="ml-1.5 text-xs text-muted">{st?.hint ?? s.hint}</span>
               </button>
-            ))}
+              );
+            })}
           </div>
           </>
           )}
@@ -221,6 +235,11 @@ export default function TriagePage() {
                   {result.source_text}
                 </pre>
               </details>
+              {ranSample && (
+                <div className="mt-4">
+                  <ReferenceTranslation documentName={ranSample} />
+                </div>
+              )}
             </section>
           ) : (
             <>

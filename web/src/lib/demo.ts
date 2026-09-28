@@ -15,10 +15,12 @@ export const DEMO_MODE = process.env.DEMO_MODE !== "0";
 
 /** The only cases the demo will run — derived from the sample catalogue, so the
  * allowlist and the documented cases cannot drift apart. */
+// label/hint are the Japanese defaults; the UI shows the text for its own
+// locale by looking the file up in SAMPLE_META.
 export const SAMPLES = SAMPLE_META.map((s) => ({
   file: s.file,
-  label: s.label,
-  hint: s.hint,
+  label: s.text.ja.label,
+  hint: s.text.ja.hint,
 }));
 
 const ALLOWED = new Set(SAMPLE_META.map((s) => s.file));

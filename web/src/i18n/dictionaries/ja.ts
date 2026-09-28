@@ -68,6 +68,8 @@ export const ja = {
     oosGate:
       "自社品判定を前提条件とするハードゲート（Phase 4g）により、抽出・MedDRA・4判定は実行されていません。",
     sourceText: "読み取ったテキスト（出典）",
+    referenceTranslation: "英語の参考訳",
+    referenceTranslationNote: "参考訳です。パイプラインが読むのは日本語の原文です。",
     status: {
       awaiting_review: "awaiting_review · レビュー待ち",
       approved: "approved · 承認済み",
@@ -187,6 +189,88 @@ export const ja = {
     imePromotedTitle: "IMEリストへ昇格したPT（今後の症例に反映）",
     imePromotedHead: ["PT名", "PTコード", "状態", "理由"],
     reset: "別の症例をレビューする",
+  },
+
+  builder: {
+    intro:
+      "報告内容と経過を組み立てて、評価がどう動くかを確かめられます。たとえば「報告は非重篤のめまい、ただし経過に転倒・骨折・入院の記載」とすると、企業評価が入院を根拠に重篤へ引き上げられるかを試せます。",
+    // Shown only in English: entries must be Japanese, and why.
+    inputNote: "",
+    loadExample: "この例を読み込む",
+    drug: "被疑薬",
+    notOwn: "（自社品ではない）",
+    age: "年齢",
+    agePlaceholder: "例：78歳",
+    sex: "性別",
+    startDate: "投与開始日",
+    endDate: "投与終了日",
+    reportedCausality: "報告者による因果関係",
+    notOwnWarning:
+      "この薬剤は自社製品マスタに存在しないため、評価は実行されず「対象外」で終了します（ハードゲートの確認用）。",
+    eventsTitle: "報告された有害事象",
+    eventsNote:
+      "ここは「報告どおり」の転記です。企業評価（重篤度・因果・既知/未知）は経過文とあわせてシステムが判定します。",
+    eventLabel: (i: number, field: string) => `事象${i} の${field}`,
+    eventFields: { name: "名称", onset: "発現日", outcome: "転帰", ser: "報告重篤度" },
+    eventRemove: (i: number) => `事象${i} を削除`,
+    termPlaceholder: "事象名（例：浮動性めまい）",
+    onsetPlaceholder: "発現日",
+    addEvent: "＋ 事象を追加",
+    narrativeTitle: "症例経過",
+    narrativeNote:
+      "ここが判定の勝負どころです。報告欄に書かれていない事実（転倒、骨折、入院、処置など）を経過に書くと、企業評価がそれを拾えるかどうかを確認できます。",
+    narrativePlaceholder: "時系列で経過を記載してください。",
+    exampleTranslationTitle: "",
+    exampleTranslation: "",
+    run: "この症例をトリアージ",
+    clear: "クリア",
+  },
+
+  rag: {
+    title: "報告書に、出典付きで質問する",
+    intro:
+      "PV 報告書（PDF / テキスト / メール）をアップロードして索引化し、内容について質問します。回答は検索された文脈のみに基づき、出典（文書名・ページ）付きで返ります。",
+    languageNote: "",
+    indexTitle: "① 文書を索引化",
+    demoNote: "公開デモのためアップロードは無効です。同梱のサンプル症例を索引化してお試しください。",
+    indexSample: (label: string) => `${label} を索引化`,
+    chooseFile: "ファイルを選択",
+    fileHint: "PDF / .txt / .eml / .png",
+    indexing: "索引化中…",
+    upload: "アップロード＆索引化",
+    indexFailed: (status: number) => `索引化に失敗しました (HTTP ${status})`,
+    uploadFailed: (status: number) => `アップロード失敗 (HTTP ${status})`,
+    indexedMsg: (name: string, n: number) => `${name}：${n} チャンクを索引に追加しました。`,
+    indexedTitle: "索引済み",
+    chunks: (n: number) => `${n} チャンク`,
+    askTitle: "② 質問する",
+    uploadFirst: "※ まず文書をアップロードしてください（質問はアップロード済みの文書に対して検索されます）。",
+    placeholder: "例：報告された有害事象と、その転帰を教えてください。",
+    shortcut: "⌘/Ctrl + Enter で送信",
+    searching: "検索中…",
+    ask: "質問する",
+    queryFailed: (status: number) => `検索失敗 (HTTP ${status})`,
+    answer: "回答",
+    sources: (n: number) => `出典 ${n} 件`,
+    clickToOpen: "（クリックで本文）",
+  },
+
+  samples: {
+    kicker: "サンプル症例",
+    title: "何を検証するための症例か",
+    introBefore:
+      "デモで実行できる症例は、それぞれ特定の挙動を検証するために書き起こした合成症例です（実患者データは含みません）。期待される判定は",
+    introAfter: "に正解として固定してあり、評価ハーネスがこれに対して採点します。",
+    inScope: "評価対象",
+    outOfScope: "評価対象外",
+    suspectDrug: "被疑薬",
+    probesTitle: "この症例で検証したいこと",
+    expectedTitle: "期待される判定（gold）",
+    fullText: "症例の全文を見る",
+    fullTextOriginal: "症例の全文を見る",
+    readError: "（症例ファイルを読み込めませんでした）",
+    footer:
+      "すべて本プロジェクト用に作成した合成症例で、実際の患者データは含まれません。添付文書も同様に、実在の製品を模した架空のものです。",
   },
 
   telemetry: {

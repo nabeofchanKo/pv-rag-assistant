@@ -120,6 +120,9 @@ export const en: Dictionary = {
     oosGate:
       "A hard gate makes the own-product check a precondition (Phase 4g): extraction, MedDRA coding and the four judgments were not run.",
     sourceText: "Text as read (source)",
+    referenceTranslation: "English reference translation",
+    referenceTranslationNote:
+      "For reading only — the pipeline reads the Japanese original above, not this text.",
     status: {
       awaiting_review: "awaiting_review · Awaiting review",
       approved: "approved · Approved",
@@ -240,6 +243,90 @@ export const en: Dictionary = {
     imePromotedTitle: "PTs promoted to the IME list (applies to future cases)",
     imePromotedHead: ["PT name", "PT code", "Status", "Reason"],
     reset: "Review another case",
+  },
+
+  builder: {
+    intro:
+      "Compose a report and narrative to see how the assessment responds. For example: dizziness reported as non-serious, but the narrative describes a fall, a fracture and admission — does the company assessment upgrade it to serious on the hospitalization criterion?",
+    inputNote:
+      "Enter event terms and the narrative in Japanese: the pipeline (extraction, MedDRA retrieval, package-insert matching) is built and evaluated for Japanese reports. “Load the example” fills in the case described above; its English rendering is shown under the narrative.",
+    loadExample: "Load the example",
+    drug: "Suspect drug",
+    notOwn: " (not an own product)",
+    age: "Age",
+    agePlaceholder: "e.g. 78歳",
+    sex: "Sex",
+    startDate: "Start date",
+    endDate: "Stop date",
+    reportedCausality: "Reporter's causality",
+    notOwnWarning:
+      "This drug is not in the company product master, so no assessment runs and the case ends as out of scope (to check the hard gate).",
+    eventsTitle: "Reported adverse events",
+    eventsNote:
+      "Transcribed as reported. The company assessment (seriousness, causality, expectedness) is made by the system from these together with the narrative.",
+    eventLabel: (i: number, field: string) => `Event ${i}: ${field}`,
+    eventFields: { name: "term", onset: "onset", outcome: "outcome", ser: "reported seriousness" },
+    eventRemove: (i: number) => `Remove event ${i}`,
+    termPlaceholder: "Event term (e.g. 浮動性めまい)",
+    onsetPlaceholder: "Onset",
+    addEvent: "+ Add event",
+    narrativeTitle: "Narrative",
+    narrativeNote:
+      "This is where the judgment is won or lost. Put facts in the narrative that the event fields do not mention (a fall, a fracture, admission, a procedure) and see whether the company assessment picks them up.",
+    narrativePlaceholder: "Describe the course chronologically (in Japanese).",
+    exampleTranslationTitle: "The example narrative, in English (reference)",
+    exampleTranslation:
+      "DrugX 10 mg once daily was started on 2026-01-10 for essential hypertension. Four days later (2026-01-14) the patient felt dizzy on standing up. The reporter considered this minor and reported it as non-serious.\n\nThat evening, however, she fell in the hallway at home because of the dizziness and sustained a right femoral neck fracture. She was taken to hospital by ambulance, admitted the same day, and underwent open reduction and internal fixation the next day. The admission lasted 18 days; she was discharged on 2026-02-02. DrugX was stopped on admission.",
+    run: "Triage this case",
+    clear: "Clear",
+  },
+
+  rag: {
+    title: "Ask a report questions, with sources",
+    intro:
+      "Index a PV report (PDF / text / email) and ask about its contents. Answers are grounded only in the retrieved passages and come back with their sources (document and page).",
+    languageNote:
+      "The reports are in Japanese, but you can ask in English — the answer follows the language of your question. Source passages are quoted as they appear, in Japanese.",
+    indexTitle: "① Index a document",
+    demoNote: "Uploads are off in the public demo. Index one of the bundled sample cases instead.",
+    indexSample: (label: string) => `Index ${label}`,
+    chooseFile: "Choose file",
+    fileHint: "PDF / .txt / .eml / .png",
+    indexing: "Indexing…",
+    upload: "Upload and index",
+    indexFailed: (status: number) => `Indexing failed (HTTP ${status})`,
+    uploadFailed: (status: number) => `Upload failed (HTTP ${status})`,
+    indexedMsg: (name: string, n: number) => `${name}: added ${n} chunks to the index.`,
+    indexedTitle: "Indexed",
+    chunks: (n: number) => `${n} chunks`,
+    askTitle: "② Ask",
+    uploadFirst: "Index a document first — questions are answered from indexed documents only.",
+    placeholder: "e.g. What adverse events were reported, and what were their outcomes?",
+    shortcut: "⌘/Ctrl + Enter to send",
+    searching: "Searching…",
+    ask: "Ask",
+    queryFailed: (status: number) => `Search failed (HTTP ${status})`,
+    answer: "Answer",
+    sources: (n: number) => `${n} source${n === 1 ? "" : "s"}`,
+    clickToOpen: "(click for the passage)",
+  },
+
+  samples: {
+    kicker: "Sample cases",
+    title: "What each case is designed to test",
+    introBefore:
+      "Each case the demo can run is a synthetic report written to probe one specific behaviour (no real patient data). The expected verdicts are fixed as ground truth in",
+    introAfter: ", and the evaluation harness scores against them.",
+    inScope: "In scope",
+    outOfScope: "Out of scope",
+    suspectDrug: "Suspect drug",
+    probesTitle: "What this case tests",
+    expectedTitle: "Expected verdicts (gold)",
+    fullText: "Read the case (English reference translation)",
+    fullTextOriginal: "Original (Japanese) — what the pipeline reads",
+    readError: "(could not read the case file)",
+    footer:
+      "All cases are synthetic, written for this project; no real patient data. The package inserts are likewise fictional, modelled on real products.",
   },
 
   telemetry: {
