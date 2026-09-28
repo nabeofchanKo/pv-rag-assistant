@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Spinner from "@/components/Spinner";
 import CaseBuilder from "@/components/triage/CaseBuilder";
 import ReviewPanel from "@/components/triage/ReviewPanel";
+import TelemetryPanel from "@/components/triage/TelemetryPanel";
 import TriageSections from "@/components/triage/TriageSections";
 import { AXIS_LABELS } from "@/lib/labels";
 import type { CaseDraft } from "@/lib/case-builder";
@@ -202,6 +203,9 @@ export default function TriagePage() {
               <p className="mt-3 text-xs text-muted">
                 自社品判定を前提条件とするハードゲート（Phase 4g）により、抽出・MedDRA・4判定は実行されていません。
               </p>
+              <div className="mt-4">
+                <TelemetryPanel telemetry={result.telemetry} />
+              </div>
               <details className="mt-4 rounded-lg border border-border bg-surface p-4">
                 <summary className="cursor-pointer text-sm font-bold text-ink">
                   読み取ったテキスト（出典）

@@ -16,6 +16,7 @@ import {
   reportedIsSerious,
   verdictTone,
 } from "@/lib/labels";
+import TelemetryPanel from "./TelemetryPanel";
 import { Badge, TD, Table, dash } from "./ui";
 import {
   SOURCE_LABEL,
@@ -504,6 +505,8 @@ export default function TriageSections({
           )}
         </div>
       </details>
+
+      <TelemetryPanel telemetry={data.telemetry} />
 
       <details className="rounded-xl border border-border bg-surface shadow-sm">
         <summary className="cursor-pointer p-5 text-sm font-bold text-ink">

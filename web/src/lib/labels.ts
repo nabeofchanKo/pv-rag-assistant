@@ -78,3 +78,16 @@ export function counts(d: Record<string, number> | undefined): string {
     .map(([k, v]) => `${k}${v}`)
     .join("／");
 }
+
+// Triage graph node → display name (cost / latency panel).
+export const STEP_LABELS: Record<string, string> = {
+  product_match: "自社品判定",
+  out_of_scope: "評価対象外ゲート",
+  extraction: "有害事象の抽出",
+  meddra: "MedDRAコード化",
+  seriousness: "重篤度",
+  causality: "因果関係",
+  expectedness: "既知/未知",
+  precedent: "過去症例の参照",
+  influence: "過去データの反映",
+};
