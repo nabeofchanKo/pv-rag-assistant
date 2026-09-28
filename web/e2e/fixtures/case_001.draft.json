@@ -48,7 +48,7 @@
       "pt_name_ja": "頭痛",
       "soc_name_ja": "神経系",
       "coded_by": "検索+LLM",
-      "rationale": "頭痛に最も適合する用語は「頭痛（神経系）」であり、重度の頭痛もこのカテゴリに含まれるため選択しました。",
+      "rationale": "頭痛に最も適合する基本語は「頭痛（神経系）」であり、他の候補は関連性がないため。",
       "candidates": [
         {
           "pt_code": "DEMO-0001",
@@ -129,7 +129,7 @@
       "verdict": "非重篤",
       "hits": [],
       "reported": "非重篤",
-      "rationale": "浮動性めまいは、入院や生命の危険、障害、医学的に重要な処置を要する事象ではなく、症例テキストにもそのような記述はないため、重篤性基準には該当しない。",
+      "rationale": "浮動性めまいは、入院や生命の危険、障害などの重篤性基準に該当する記述がないため、重篤とは判定されない。",
       "is_serious": false
     },
     {
@@ -137,7 +137,7 @@
       "verdict": "非重篤",
       "hits": [],
       "reported": "非重篤",
-      "rationale": "悪心は軽快し、対症療法を要することもなく、入院や生命の危険、障害などの重篤性基準に該当する事実はない。",
+      "rationale": "悪心は軽快し、対症療法を要することもなく、入院や生命の危険などの重篤性基準に該当する事実はない。",
       "is_serious": false
     }
   ],
@@ -176,7 +176,7 @@
           "term": "頭痛(重度)",
           "verdict": "既知",
           "match_type": "直接一致",
-          "rationale": "添付文書の副作用欄に「頭痛」と明記されているため、直接一致と判断。",
+          "rationale": "添付文書の副作用欄に「頭痛」が明記されているため、直接一致と判断。",
           "evidence_quote": "- 精神神経系: **頭痛**、**浮動性めまい**、立ちくらみ",
           "evidence_section": "11.2 その他の副作用",
           "is_expected": true
@@ -185,8 +185,8 @@
           "term": "浮動性めまい",
           "verdict": "既知",
           "match_type": "直接一致",
-          "rationale": "添付文書の副作用欄に「浮動性めまい」と明記されているため、直接一致と判断。",
-          "evidence_quote": "- 精神神経系: **頭痛**、**浮動性めまい**、立ちくらみ",
+          "rationale": "添付文書の副作用欄に「浮動性めまい」という記載があり、判定対象の有害事象と直接一致しているため。",
+          "evidence_quote": "- 精神神経系: **浮動性めまい**、立ちくらみ",
           "evidence_section": "11.2 その他の副作用",
           "is_expected": true
         },
@@ -237,7 +237,116 @@
   "influence_mode": "applied",
   "influence": [],
   "source_text": "個別症例安全性報告\n\n報告ID:ICSR-2025-001\n報告種別:自発報告\n報告日:2025-11-15\n報告者:田中医師(東京総合病院)\n報告者資格:医師\n発生国:日本\nMedDRAバージョン:27.0\n\n患者情報\n患者イニシャル:K.T.\n年齢:65歳\n性別:女性\n体重:58 kg\n人種:アジア人\n既往歴・合併症:本態性高血圧(10年前に診断、本事象発現前は良好にコントロールされていた)。既知の薬剤アレルギーなし。\n\n被疑薬\n薬剤名:DrugX\n有効成分:Compound-X 10 mg\n製造販売業者:Pharma Sample Co., Ltd.\n剤形:フィルムコーティング錠\n用法:1日1回、朝、経口投与\n用量:10 mg\n投与経路:経口\n効能・効果:本態性高血圧\n投与開始日:2025-11-01\n投与終了日:2025-11-14(有害事象のため投与中止)\n薬剤に対する処置:投与中止\n\n併用薬\n本事象発現時、報告された併用薬はなし。\n\n有害事象\n事象1:頭痛(重度)\n 発現日:2025-11-04\n 転帰:軽快\n 重篤度:非重篤\n\n事象2:浮動性めまい\n 発現日:2025-11-04\n 転帰:軽快\n 重篤度:非重篤\n\n事象3:悪心\n 発現日:2025-11-05\n 転帰:軽快\n 重篤度:非重篤\n\n因果関係評価\n報告者による因果関係:可能性あり(Possible)\n企業による因果関係:可能性あり(Possible)\nWHO-UMC判定:可能性あり(Possible)\n\n症例経過\n本態性高血圧の10年の既往を有し、本事象発現前まで良好にコントロールされていた65歳のアジア人女性。かかりつけ医により、2025-11-01よりDrugX 10 mgの1日1回投与が開始された。それまでは生活習慣の改善のみで管理されており、降圧薬による薬物療法の既往はなかった。処方時のベースライン血圧は152/94 mmHgであった。\n\n初回投与から3日後(2025-11-04)、患者は重度の拍動性の前頭部頭痛を発現し、起立時のめまいを伴った。翌日にはさらに、嘔吐を伴わない悪心のエピソードを認めた。患者は直ちに医療機関を受診せず、2025-11-14に処方医へ連絡し、同日DrugXの投与が中止された。対症療法を要することはなかった。本報告時点で、3症状はいずれも投与中止後約3日間かけて徐々に軽快していた。\n\n他の原因は特定されなかった。患者からは、最近の食事内容の変更、新規薬剤の使用、併発疾患のいずれもないとの報告があった。薬剤の投与開始と症状発現との時間的関係は、DrugXとの因果関係が可能性あり(Possible)であることを支持するものである。\n\n追跡調査\n完全な回復を確認するため、次回予定受診日である2025-12-01に追跡調査を予定している。",
-  "thread_id": "931be213-e6b7-4e5a-a964-f2a532faf6d3",
+  "telemetry": {
+    "wall_ms": 15855,
+    "steps": [
+      {
+        "step": "product_match",
+        "started_ms": 8,
+        "latency_ms": 1,
+        "llm_calls": 0,
+        "models": [],
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "cost_usd": 0.0
+      },
+      {
+        "step": "extraction",
+        "started_ms": 10,
+        "latency_ms": 4295,
+        "llm_calls": 2,
+        "models": [
+          "gpt-4o",
+          "gpt-4o-mini"
+        ],
+        "input_tokens": 4669,
+        "cached_input_tokens": 4480,
+        "output_tokens": 193,
+        "cost_usd": 0.00347875
+      },
+      {
+        "step": "expectedness",
+        "started_ms": 4307,
+        "latency_ms": 6595,
+        "llm_calls": 3,
+        "models": [
+          "gpt-4o-mini"
+        ],
+        "input_tokens": 5662,
+        "cached_input_tokens": 5376,
+        "output_tokens": 217,
+        "cost_usd": 0.0005763000000000001
+      },
+      {
+        "step": "causality",
+        "started_ms": 4307,
+        "latency_ms": 6264,
+        "llm_calls": 3,
+        "models": [
+          "gpt-4o"
+        ],
+        "input_tokens": 5552,
+        "cached_input_tokens": 4992,
+        "output_tokens": 346,
+        "cost_usd": 0.011099999999999999
+      },
+      {
+        "step": "meddra",
+        "started_ms": 4316,
+        "latency_ms": 2986,
+        "llm_calls": 1,
+        "models": [
+          "gpt-4o-mini"
+        ],
+        "input_tokens": 521,
+        "cached_input_tokens": 0,
+        "output_tokens": 47,
+        "cost_usd": 0.00010635
+      },
+      {
+        "step": "seriousness",
+        "started_ms": 10903,
+        "latency_ms": 4939,
+        "llm_calls": 3,
+        "models": [
+          "gpt-4o"
+        ],
+        "input_tokens": 6968,
+        "cached_input_tokens": 6528,
+        "output_tokens": 164,
+        "cost_usd": 0.0109
+      },
+      {
+        "step": "precedent",
+        "started_ms": 15842,
+        "latency_ms": 0,
+        "llm_calls": 0,
+        "models": [],
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "cost_usd": 0.0
+      },
+      {
+        "step": "influence",
+        "started_ms": 15843,
+        "latency_ms": 0,
+        "llm_calls": 0,
+        "models": [],
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+        "cost_usd": 0.0
+      }
+    ],
+    "pricing_as_of": "2026-09-28",
+    "total_input_tokens": 23372,
+    "total_output_tokens": 967,
+    "total_cost_usd": 0.026161399999999998,
+    "cost_complete": true
+  },
+  "thread_id": "f63d1e9b-3be6-488c-99a8-a1bce4b2abb7",
   "status": "awaiting_review",
   "escalations": []
 }
