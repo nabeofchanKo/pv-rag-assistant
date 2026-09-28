@@ -23,12 +23,6 @@ export type VerdictChange = {
   reason: string | null;
 };
 
-export const SOURCE_LABEL: Record<ChangeSource, string> = {
-  reviewer: "人手レビュー",
-  IME: "以前のFB(IME)",
-  precedent: "過去症例",
-};
-
 export const changeKey = (axis: string, term: string, drug?: string | null) =>
   `${axis}::${term}::${drug ?? ""}`;
 

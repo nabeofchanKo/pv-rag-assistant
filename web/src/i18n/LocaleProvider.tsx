@@ -22,6 +22,16 @@ export function useDict(): Dictionary {
   return getDictionary(useContext(LocaleContext));
 }
 
+/**
+ * Display an API value (重篤, 否定できない, ...) in the current language. The
+ * value itself never changes — only how it is shown. Unknown values (a model
+ * answer outside the known list) are shown as-is rather than hidden.
+ */
+export function useTerm(): (value: string | null | undefined) => string {
+  const values: Record<string, string | undefined> = useDict().vocab.values;
+  return (value) => (value ? (values[value] ?? value) : "");
+}
+
 /** "/triage" → "/en/triage" for the current locale. */
 export function useLocalePath(): (path: string) => string {
   const locale = useContext(LocaleContext);
