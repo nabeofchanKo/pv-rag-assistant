@@ -1,4 +1,4 @@
-import { STEP_LABELS } from "@/lib/labels";
+import { useDict } from "@/i18n/LocaleProvider";
 import type { RunTelemetry } from "@/lib/types";
 import { TD, TH } from "./ui";
 
@@ -6,18 +6,20 @@ import { TD, TH } from "./ui";
 // (backend services/telemetry.py), not estimated. Collapsed by default: the
 // headline numbers sit in the summary line, the breakdown is one click away.
 
-function usd(v: number | null): string {
-  if (v === null) return "価格未登録";
+function usd(v: number | null, unpriced: string): string {
+  if (v === null) return unpriced;
   if (v === 0) return "$0";
   if (v < 0.0001) return "<$0.0001";
   return `$${v.toFixed(4)}`;
 }
 
-const sec = (ms: number) => `${(ms / 1000).toFixed(1)}秒`;
 const n = (v: number) => v.toLocaleString("en-US");
 
 export default function TelemetryPanel({ telemetry: t }: { telemetry: RunTelemetry | null }) {
+  const dict = useDict();
   if (!t) return null;
+  const d = dict.telemetry;
+  const sec = d.sec;
 
   const cached = t.steps.reduce((a, s) => a + s.cached_input_tokens, 0);
   const cachedPct = t.total_input_tokens ? Math.round((cached / t.total_input_tokens) * 100) : 0;
@@ -28,10 +30,10 @@ export default function TelemetryPanel({ telemetry: t }: { telemetry: RunTelemet
   return (
     <details className="rounded-xl border border-border bg-surface shadow-sm">
       <summary className="cursor-pointer p-5 text-sm font-bold text-ink">
-        コスト・処理時間
+        {d.title}
         <span className="ml-2 font-mono text-xs font-normal text-muted">
-          {usd(t.total_cost_usd)}
-          {!t.cost_complete && "＋未登録分"} · {sec(t.wall_ms)} ·{" "}
+          {usd(t.total_cost_usd, d.unpriced)}
+          {!t.cost_complete && d.unpricedSuffix} · {sec(t.wall_ms)} ·{" "}
           {n(t.total_input_tokens + t.total_output_tokens)} tokens
         </span>
       </summary>
@@ -41,8 +43,9 @@ export default function TelemetryPanel({ telemetry: t }: { telemetry: RunTelemet
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
-                {["ステップ", "モデル", "タイムライン", "時間", "入力 / 出力", "費用"].map((h) => (
-                  <th key={h} className={h === "タイムライン" ? `${TH} w-1/3 min-w-32` : TH}>
+                {d.head.map((h, i) => (
+                  // column 2 is the timeline
+                  <th key={h} className={i === 2 ? `${TH} w-1/3 min-w-32` : TH}>
                     {h}
                   </th>
                 ))}
@@ -52,10 +55,10 @@ export default function TelemetryPanel({ telemetry: t }: { telemetry: RunTelemet
               {t.steps.map((s) => (
                 <tr key={s.step}>
                   <td className={`${TD} whitespace-nowrap font-medium text-ink`}>
-                    {STEP_LABELS[s.step] ?? s.step}
+                    {dict.vocab.step[s.step as keyof typeof dict.vocab.step] ?? s.step}
                   </td>
                   <td className={`${TD} whitespace-nowrap font-mono text-xs text-muted`}>
-                    {s.models.length ? s.models.join(", ") : "—（LLMなし）"}
+                    {s.models.length ? s.models.join(", ") : d.noLlm}
                   </td>
                   <td className={`${TD} align-middle`}>
                     {/* start offset → left, duration → width, both as a share
@@ -67,7 +70,7 @@ export default function TelemetryPanel({ telemetry: t }: { telemetry: RunTelemet
                           left: `${(s.started_ms / span) * 100}%`,
                           width: `${(s.latency_ms / span) * 100}%`,
                         }}
-                        title={`開始 +${sec(s.started_ms)} ／ ${sec(s.latency_ms)}`}
+                        title={d.barTitle(sec(s.started_ms), sec(s.latency_ms))}
                       />
                     </div>
                   </td>
@@ -78,45 +81,32 @@ export default function TelemetryPanel({ telemetry: t }: { telemetry: RunTelemet
                     {s.llm_calls ? `${n(s.input_tokens)} / ${n(s.output_tokens)}` : "—"}
                   </td>
                   <td className={`${TD} whitespace-nowrap text-right tabular-nums`}>
-                    {usd(s.cost_usd)}
+                    {usd(s.cost_usd, d.unpriced)}
                   </td>
                 </tr>
               ))}
               <tr className="font-bold text-ink">
                 <td className={TD} colSpan={3}>
-                  合計（待ち時間）
+                  {d.total}
                 </td>
                 <td className={`${TD} text-right tabular-nums`}>{sec(t.wall_ms)}</td>
                 <td className={`${TD} whitespace-nowrap text-right tabular-nums text-xs`}>
                   {n(t.total_input_tokens)} / {n(t.total_output_tokens)}
                 </td>
-                <td className={`${TD} text-right tabular-nums`}>{usd(t.total_cost_usd)}</td>
+                <td className={`${TD} text-right tabular-nums`}>
+                  {usd(t.total_cost_usd, d.unpriced)}
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
 
         <ul className="mt-3 list-disc space-y-1 pl-5 text-xs leading-relaxed text-muted">
-          <li>
-            この実行で実測した値です（推定ではありません）。価格は {t.pricing_as_of} 時点の OpenAI
-            標準料金で計算しています。
-          </li>
-          {stepSum > t.wall_ms && (
-            <li>
-              既知/未知・因果関係・MedDRA は並列に実行されるため、各ステップの時間の合計（
-              {sec(stepSum)}）は実際の待ち時間（{sec(t.wall_ms)}）より長くなります。
-            </li>
-          )}
-          {cachedPct > 0 && (
-            <li>
-              入力の {cachedPct}% はプロンプトキャッシュに一致し、割引単価で課金されています。
-              同じ症例を初めて実行するときは、この割合が下がり費用は上がります。
-            </li>
-          )}
-          {!t.cost_complete && (
-            <li>価格表にないモデル（ローカルモデル等）の分は合計に含まれていません。</li>
-          )}
-          <li>検索用の埋め込み（添付文書・MedDRA）は含みません。この規模では 1 セント未満です。</li>
+          <li>{d.measured(t.pricing_as_of)}</li>
+          {stepSum > t.wall_ms && <li>{d.parallel(sec(stepSum), sec(t.wall_ms))}</li>}
+          {cachedPct > 0 && <li>{d.cached(cachedPct)}</li>}
+          {!t.cost_complete && <li>{d.unpricedNote}</li>}
+          <li>{d.embeddings}</li>
         </ul>
       </div>
     </details>

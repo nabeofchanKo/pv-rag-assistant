@@ -6,13 +6,16 @@ import CaseBuilder from "@/components/triage/CaseBuilder";
 import ReviewPanel from "@/components/triage/ReviewPanel";
 import TelemetryPanel from "@/components/triage/TelemetryPanel";
 import TriageSections from "@/components/triage/TriageSections";
-import { AXIS_LABELS } from "@/lib/labels";
+import { useDict, useTerm } from "@/i18n/LocaleProvider";
 import type { CaseDraft } from "@/lib/case-builder";
 import type { TriageStartResponse } from "@/lib/types";
 
 type Sample = { file: string; label: string; hint: string };
 
 export default function TriagePage() {
+  const dict = useDict();
+  const t = dict.triage;
+  const term = useTerm();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +46,7 @@ export default function TriagePage() {
       const res = await fetch("/api/cases/triage", init);
       const data = await res.json();
       if (!res.ok)
-        throw new Error(data?.detail ?? `トリアージ失敗 (HTTP ${res.status})`);
+        throw new Error(data?.detail ?? t.failed(res.status));
       setResult(data as TriageStartResponse);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -81,15 +84,19 @@ export default function TriagePage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">
       <p className="font-mono text-xs uppercase tracking-widest text-accent">
-        症例トリアージ
+        {t.kicker}
       </p>
       <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink">
-        症例を一次評価する
+        {t.title}
       </h1>
       <p className="mt-2 text-sm leading-relaxed text-muted">
-        症例報告（PDF / テキスト / メール / 画像）を投入すると、自社品判定 → 有害事象抽出 →
-        MedDRAコード → 重篤度・既知/未知・因果 → 過去判例の順に、出典付きの評価ドラフトを生成します。
+        {t.intro}
       </p>
+      {t.languageNote && (
+        <p className="mt-3 rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-xs leading-relaxed text-muted">
+          {t.languageNote}
+        </p>
+      )}
 
       {/* ---- start controls ---- */}
       <section className="mt-8 rounded-xl border border-border bg-surface p-6 shadow-sm">
@@ -103,10 +110,10 @@ export default function TriagePage() {
               className="hidden"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             />
-            ファイルを選択
+            {t.chooseFile}
           </label>
           <span className="min-w-0 flex-1 truncate text-sm text-muted">
-            {file ? file.name : "PDF / .txt / .eml / 画像"}
+            {file ? file.name : t.fileHint}
           </span>
           <button
             type="button"
@@ -115,7 +122,7 @@ export default function TriagePage() {
             className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
           >
             {loading && <Spinner />}
-            トリアージ実行
+            {t.run}
           </button>
         </div>
         )}
@@ -124,8 +131,8 @@ export default function TriagePage() {
           <div className="mb-3 inline-flex rounded-lg border border-border bg-surface-2 p-0.5">
             {(
               [
-                ["sample", "サンプル症例"],
-                ["build", "症例を作る"],
+                ["sample", t.modeSample],
+                ["build", t.modeBuild],
               ] as const
             ).map(([m, label]) => (
               <button
@@ -148,11 +155,11 @@ export default function TriagePage() {
           ) : (
           <>
           <p className="font-mono text-xs uppercase tracking-wider text-muted">
-            サンプル症例で試す
+            {t.trySample}
           </p>
           {demoMode && (
             <p className="mt-1 text-xs text-muted">
-              公開デモのため、実行は同梱のサンプル症例に限定し、回数にも制限を設けています。
+              {t.demoNote}
             </p>
           )}
           <div className="mt-2 flex flex-wrap gap-2">
@@ -177,7 +184,7 @@ export default function TriagePage() {
       {loading && (
         <div className="mt-6 flex items-center gap-3 rounded-xl border border-border bg-surface p-6 text-sm text-muted shadow-sm">
           <Spinner className="h-5 w-5 text-accent" />
-          解析中… 6ステップ評価（抽出 → MedDRA → 重篤度 → 既知/未知 → 因果 → 判例）
+          {t.running}
         </div>
       )}
 
@@ -192,23 +199,23 @@ export default function TriagePage() {
           {result.status === "out_of_scope" ? (
             <section className="rounded-xl border border-warn/40 bg-warn-weak p-6">
               <p className="font-mono text-xs uppercase tracking-widest text-warn">
-                out of scope · 評価対象外
+                {t.oosKicker}
               </p>
               <h2 className="mt-2 text-lg font-bold text-ink">
-                自社品が使用されていないため、評価は実行されません
+                {t.oosTitle}
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-text">
                 {result.reason}
               </p>
               <p className="mt-3 text-xs text-muted">
-                自社品判定を前提条件とするハードゲート（Phase 4g）により、抽出・MedDRA・4判定は実行されていません。
+                {t.oosGate}
               </p>
               <div className="mt-4">
                 <TelemetryPanel telemetry={result.telemetry} />
               </div>
               <details className="mt-4 rounded-lg border border-border bg-surface p-4">
                 <summary className="cursor-pointer text-sm font-bold text-ink">
-                  読み取ったテキスト（出典）
+                  {t.sourceText}
                 </summary>
                 <pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap rounded-lg bg-surface-2 p-3 text-xs leading-relaxed text-text">
                   {result.source_text}
@@ -227,11 +234,7 @@ export default function TriagePage() {
                         : "bg-danger-weak text-danger"
                   }`}
                 >
-                  {result.status === "awaiting_review"
-                    ? "awaiting_review · レビュー待ち"
-                    : result.status === "approved"
-                      ? "approved · 承認済み"
-                      : "rejected · 却下"}
+                  {t.status[result.status]}
                 </span>
                 <span className="text-sm text-muted">{result.document_name}</span>
               </div>
@@ -239,16 +242,16 @@ export default function TriagePage() {
               {"escalations" in result && result.escalations.length > 0 && (
                 <div className="mb-4 rounded-xl border border-warn/40 bg-warn-weak p-5">
                   <p className="text-sm font-bold text-ink">
-                    ⚠️ レビュー要注意（安全側の不確実バンド）— {result.escalations.length}件
+                    {t.escalations(result.escalations.length)}
                   </p>
                   <ul className="mt-2 space-y-1 text-sm text-text">
                     {result.escalations.map((e, i) => (
                       <li key={`${e.term}-${e.axis}-${i}`}>
                         <span className="font-mono text-xs text-warn">
-                          {AXIS_LABELS[e.axis] ?? e.axis}
+                          {dict.vocab.axis[e.axis] ?? e.axis}
                         </span>{" "}
-                        <span className="font-medium text-ink">{e.term}</span>：
-                        {e.verdict} — <span className="text-muted">{e.reason}</span>
+                        <span className="font-medium text-ink">{e.term}</span>:{" "}
+                        {term(e.verdict)} — <span className="text-muted">{e.reason}</span>
                       </li>
                     ))}
                   </ul>
