@@ -13,7 +13,7 @@ import draft from "./fixtures/case_001.draft.json";
 const FAKE_BACKEND = "http://127.0.0.1:8765";
 
 async function runSample(page: Page, label: string) {
-  await page.goto("/triage");
+  await page.goto("/ja/triage");
   await page.getByRole("button", { name: new RegExp(label) }).click();
 }
 
