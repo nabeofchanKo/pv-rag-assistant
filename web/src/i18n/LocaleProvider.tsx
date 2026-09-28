@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useCallback, useContext, type ReactNode } from "react";
 import type { Locale } from "./config";
 import { getDictionary, type Dictionary } from "./index";
 
@@ -30,6 +30,14 @@ export function useDict(): Dictionary {
 export function useTerm(): (value: string | null | undefined) => string {
   const values: Record<string, string | undefined> = useDict().vocab.values;
   return (value) => (value ? (values[value] ?? value) : "");
+}
+
+/** A MedDRA PT name in the current language — English when the dictionary has
+ * it, otherwise the Japanese name (e.g. a PT a reviewer typed in by hand). */
+export function usePtName(): (pt: { pt_name_ja: string | null; pt_name_en?: string | null }) => string | null {
+  const locale = useContext(LocaleContext);
+  // Stable per locale, so callers can list it as a memo dependency.
+  return useCallback((pt) => (locale === "en" && pt.pt_name_en) || pt.pt_name_ja, [locale]);
 }
 
 /** "/triage" → "/en/triage" for the current locale. */

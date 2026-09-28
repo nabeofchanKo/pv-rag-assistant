@@ -81,6 +81,7 @@ export interface MeddraCoding {
   term: string;
   pt_code: string | null;
   pt_name_ja: string | null;
+  pt_name_en: string | null; // display only (English UI); null for a reviewer-typed PT
   soc_name_ja: string | null;
   coded_by: MeddraCodedBy;
   rationale: string | null;

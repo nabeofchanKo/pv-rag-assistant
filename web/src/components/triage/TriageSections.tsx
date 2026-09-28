@@ -9,7 +9,7 @@ import type {
   TriageContent,
 } from "@/lib/types";
 import { counts, reportedIsSerious, verdictTone } from "@/lib/labels";
-import { useDict, useTerm } from "@/i18n/LocaleProvider";
+import { useDict, usePtName, useTerm } from "@/i18n/LocaleProvider";
 import TelemetryPanel from "./TelemetryPanel";
 import { Badge, TD, Table, dash } from "./ui";
 import { type VerdictChange, buildChanges, changeKey, indexChanges } from "./changes";
@@ -132,6 +132,7 @@ export default function TriageSections({
   const t = d.sections;
   const v = d.vocab;
   const term = useTerm();
+  const ptName = usePtName();
   const axisLabel = (a: string) => v.axis[a as Axis] ?? a;
   const count = (x: Record<string, number> | undefined) =>
     counts(x, (k, n) => v.countItem(term(k), n), v.countSep);
@@ -260,7 +261,7 @@ export default function TriageSections({
                 <div className="text-sm text-text sm:truncate">
                   {r.meddra?.pt_name_ja ? (
                     <>
-                      {r.meddra.pt_name_ja}{" "}
+                      {ptName(r.meddra)}{" "}
                       <span className="font-mono text-xs text-muted">
                         {r.meddra.pt_code}
                       </span>

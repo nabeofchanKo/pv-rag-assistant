@@ -234,6 +234,9 @@ class MeddraCoding(BaseModel):
     term: str
     pt_code: str | None = None
     pt_name_ja: str | None = None
+    # English PT name from the same dictionary row — display only (the English
+    # UI). None for a PT typed in by a reviewer (no dictionary lookup).
+    pt_name_en: str | None = None
     soc_name_ja: str | None = None
     coded_by: Literal["完全一致", "検索+LLM", "該当なし", "手動"] = Field(
         description="由来。完全一致＝辞書と一致し決定的、検索+LLM＝候補からLLMが選択、該当なし＝適合PTなし、手動＝レビュアーが付与/修正。",
