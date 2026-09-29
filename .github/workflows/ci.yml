@@ -10,11 +10,16 @@
 
 name: CI
 
+# Work branches are tested through their pull request, not on push: with both,
+# every push to a branch with an open PR ran the whole suite twice on the same
+# commit. `main` still runs on push (the post-merge state), and a branch with
+# no PR open yet can be run by hand from the Actions tab (workflow_dispatch).
 on:
   push:
-    branches: [main, feature/mvp]
+    branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 # A newer push to the same branch makes the older run pointless.
 concurrency:
