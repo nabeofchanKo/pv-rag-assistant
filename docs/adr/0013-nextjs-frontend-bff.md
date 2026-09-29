@@ -117,3 +117,20 @@ removed now that the Next.js UI reaches feature parity.
   `backend/past_cases/`. `ImeReference` and `PrecedentService` are in-memory
   `@lru_cache` singletons, so reverting the file is not enough; the backend must
   be restarted. HITL testing should use a temporary IME path, as Phase 4c did.
+
+## Update — 2026-09-29
+
+The drift mitigation described above as *planned* is in place, and more:
+
+- **Contract test** — `backend/tests/test_frontend_contract.py` compares every
+  Pydantic response model with its hand-written TypeScript interface, field by
+  field in both directions, and the review form's verdict options with the
+  backend's allowed values.
+- **Documented API** — the triage routes now declare a status-discriminated
+  union, so `/docs` covers them (they were absent under `response_model=None`).
+- **E2E** — a Playwright suite drives the real browser and the real BFF
+  against responses recorded from the real backend (`web/e2e/`).
+- **CI + branch protection** — backend tests, web lint/build/E2E and both
+  Docker builds run on every pull request; `main` requires all three.
+
+The ephemeral-state trade-off above still stands.
