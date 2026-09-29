@@ -36,7 +36,7 @@ Scored against a hand-built gold set of synthetic cases, safety-weighted (under-
 | **Under-calls** (seriousness, causality, expectedness) | **0** — in the main run, across 3 repeated runs, on held-out cases and on the hard cases |
 | MedDRA PT coding | **100%** (23/23) — a single-LLM baseline scores 29% |
 | Expectedness | **100%** — the single-LLM baseline under-calls 3 times; the pipeline 0 |
-| Seriousness | **83–91%** — every miss is a safe-side over-call |
+| Seriousness | **83–91%** across the evaluation runs (main 83–87%, repeated 87–90%, baseline comparison 91%) — every miss is a safe-side over-call |
 | Own-product gate | 2/2 out-of-scope cases stopped before any assessment |
 
 **What this does not show:** the sample is small (7 synthetic cases; 5 in scope, 23 events), and the gold set was drafted with an LLM and corrected by a PV expert, not independently double-annotated. "Past-case feedback improves accuracy" was **not** demonstrated: on held-out cases precedent changed nothing, and the one earlier improvement was traced to seed data. A single LLM call is competitive on seriousness and causality; the pipeline's measured advantage is in MedDRA coding and expectedness, and in never under-calling.
