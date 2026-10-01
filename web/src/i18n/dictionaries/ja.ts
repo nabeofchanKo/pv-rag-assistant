@@ -53,6 +53,8 @@ export const ja = {
       "症例報告（PDF / テキスト / メール / 画像）を投入すると、自社品判定 → 有害事象抽出 → MedDRAコード → 重篤度・既知/未知・因果 → 過去判例の順に、出典付きの評価ドラフトを生成します。",
     // Shown only in English: what stays Japanese, and why.
     languageNote: "",
+    terminologyNote:
+      "MedDRAはライセンス製品のため、本デモのコード化は架空のデモ用語集（コード DEMO-xxxx）で行っています。MedDRAそのものではありません。",
     chooseFile: "ファイルを選択",
     fileHint: "PDF / .txt / .eml / 画像",
     run: "トリアージ実行",

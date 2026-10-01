@@ -270,3 +270,9 @@ backend/.tiktoken_cache/
 # The Python template's `lib/` rule above also matched the frontend's source
 # directory, so web/src/lib was silently never committed. Re-include it.
 !web/src/lib/
+
+# Licensed MedDRA / MedDRA/J distribution files (bring your own; never commit — ADR 0014)
+data/meddra/
+
+# Per-machine Claude Code settings (permission rules for this checkout)
+.claude/settings.local.json

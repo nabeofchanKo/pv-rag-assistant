@@ -104,6 +104,8 @@ export const en: Dictionary = {
       "Submit an adverse event report (PDF / text / email / image) and it drafts a sourced assessment in order: own-product check → event extraction → MedDRA coding → seriousness, expectedness and causality → past-case precedent.",
     languageNote:
       "The UI is in English; the case reports, the Japanese package inserts they are checked against, and the model's free-text rationales are in Japanese — the pipeline and its evaluation are built for Japanese PV. Verdicts, criteria and MedDRA terms are shown in English.",
+    terminologyNote:
+      "MedDRA is licensed, so this demo codes against a fictional demo terminology (codes DEMO-xxxx). It is not MedDRA itself.",
     chooseFile: "Choose file",
     fileHint: "PDF / .txt / .eml / image",
     run: "Run triage",

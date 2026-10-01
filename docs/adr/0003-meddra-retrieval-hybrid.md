@@ -46,3 +46,15 @@ BM25 + RRF are implemented **inline** (no new library) to stay light and auditab
   all-zero → CSV-order artifact, not a robust signal — recorded honestly.)
 - On this ~56-row sample the practical gain over "Level A + LLM" is modest; it grows
   with dictionary scale.
+
+## Update — 2026-10-01
+
+The dictionary this ADR describes, a 56-row sample with real MedDRA codes and
+MedDRA/J names, is no longer in the repository. It is now a fictional demo
+terminology with the same term names and `DEMO-xxxx` codes. A licensed MedDRA/J
+distribution can be plugged in through `MEDDRA_PATH`
+([ADR 0014](0014-meddra-not-bundled.md)). The decision and its evidence still
+hold: retrieval runs on the names, which did not change, and the retrieval bench
+reproduced every hit rate after the swap. The scale note above now has a concrete
+path to test it, because the hybrid retriever can be run against a full MedDRA
+(about 27k PTs).

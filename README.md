@@ -46,12 +46,14 @@ Scored against a hand-built gold set of synthetic cases, safety-weighted (under-
 | | Result |
 |---|---|
 | **Under-calls** (seriousness, causality, expectedness) | **0** — in the main run, across 3 repeated runs, on held-out cases and on the hard cases |
-| MedDRA PT coding | **100%** (23/23) — a single-LLM baseline scores 29% |
+| MedDRA PT coding | **100%** (23/23) on the 56-term demo terminology — a single-LLM baseline scored 29% (see below) |
 | Expectedness | **100%** — the single-LLM baseline under-calls 3 times; the pipeline 0 |
 | Seriousness | **83–91%** across the evaluation runs (main 83–87%, repeated 87–90%, baseline comparison 91%) — every miss is a safe-side over-call |
 | Own-product gate | 2/2 out-of-scope cases stopped before any assessment |
 
 **What this does not show:** the sample is small (7 synthetic cases; 5 in scope, 23 events), and the gold set was drafted with an LLM and corrected by a PV expert, not independently double-annotated. "Past-case feedback improves accuracy" was **not** demonstrated: on held-out cases precedent changed nothing, and the one earlier improvement was traced to seed data. A single LLM call is competitive on seriousness and causality; the pipeline's measured advantage is in MedDRA coding and expectedness, and in never under-calling.
+
+**About the MedDRA figures:** coding is measured against a 56-term demo terminology, not MedDRA. MedDRA has about 27,000 PTs and 80,000 LLTs. So 100% shows that retrieval plus selection works; it does not show that this accuracy holds at full scale. The 29% baseline asked a single LLM for MedDRA codes from memory, and it was scored against the real codes the gold set held at the time. Those codes have since been replaced by fictional ones ([ADR 0014](docs/adr/0014-meddra-not-bundled.md)), so that figure cannot be reproduced from this repository.
 
 ## Architecture
 
@@ -84,6 +86,7 @@ The depth lives in the [Architecture Decision Records](docs/adr/) (context, opti
 - **Human in the loop that changes later cases.** Promoting a PT to the IME list makes future events on it serious automatically; approved cases become precedent, which can only move a verdict to the safe side. [ADR 0007](docs/adr/0007-hitl-approval-interrupt.md)–[0010](docs/adr/0010-past-data-influence-mode.md)
 - **Cost / privacy ladder, measured.** Embeddings and generation are swappable per step. A per-step benchmark of five local models found none of the 7–8B models keeps under-calls at 0, so the local option is a hybrid: transcription and coding run locally, the clinical judgments stay on the frontier model. [ADR 0011](docs/adr/0011-local-embedding-provider.md), [0012](docs/adr/0012-local-generation-per-step.md)
 - **Backend-for-frontend.** Replacing the original Streamlit UI with Next.js needed no backend change, because the API split existed from the start. [ADR 0013](docs/adr/0013-nextjs-frontend-bff.md)
+- **MedDRA stays out of the repository.** MedDRA is licensed, so the repo ships a fictional demo terminology; a licensee points `MEDDRA_PATH` at their own MedDRA/J ASCII files, and the vector index rebuilds itself after the swap. [ADR 0014](docs/adr/0014-meddra-not-bundled.md)
 - **Demo protections enforced on the server.** Sample-only input is enforced in the BFF (the case builder sends fields; the server renders the report), with per-IP and daily caps and a hard spending cap at the provider.
 - **Cost measured, not estimated.** A LangChain callback on the graph run attributes tokens and time to each step, without the services knowing they are measured.
 - **Bilingual, with the line drawn at the model.** The UI, fixed vocabularies and MedDRA terms are English under `/en/`; case text and the model's rationales stay Japanese, because the pipeline and its evaluation are Japanese. The review form shows "Needs review" but sends `要確認`, and a test proves it.
@@ -124,7 +127,7 @@ cd web && npm install && npm run dev                        # terminal 2: UI
 ### Tests
 
 ```bash
-venv/bin/python -m pytest backend/tests -q                        # 178 tests
+venv/bin/python -m pytest backend/tests -q                        # 181 tests
 cd web && npx playwright install chromium && npm run test:e2e     # 7 browser tests
 ```
 
@@ -150,7 +153,7 @@ backend/app/        FastAPI app: routers/, services/ (one per triage step, triag
 backend/tests/      unit, contract and safety-invariant tests
 web/src/            Next.js: app/[lang]/ (pages), app/api/ (BFF), components/triage/, i18n/
 web/e2e/            Playwright suite, fake backend, fixture recorder
-data/               synthetic cases, gold set, package inserts, MedDRA sample, product master, IME list
+data/               synthetic cases, gold set, package inserts, demo terminology (not MedDRA), product master, IME list
 experiments/        evaluation write-ups + the scripts that reproduce them
 docs/adr/           architecture decision records
 ```
@@ -158,10 +161,13 @@ docs/adr/           architecture decision records
 ## Limitations
 
 - **Small evaluation** (see [Evaluation](#evaluation)); run-to-run variation is measured on 3 runs, not with confidence intervals.
+- **Demo terminology, not MedDRA.** Coding runs against 56 made-up terms with no LLT/HLT/HLGT hierarchy (see [Data](#data)). The licensed-MedDRA loader is tested only on hand-made files in the published format.
 - **Japanese only on the input side.** The pipeline, reference data and gold set are Japanese; the English UI translates the interface, not the model's output.
 - **Demo state is ephemeral.** Review threads, precedent and IME promotions live in the container and reset on deploy. The upgrade path (a Postgres checkpointer) is documented in ADR 0013, not built.
 - **E2E tests replay recorded responses**, so they catch UI/BFF regressions, not changes in the backend's answers (that is the evaluation harness's job).
 
 ## Data
 
-All cases are **synthetic**, written for this project; no real patient data. The package inserts are fictional, and the MedDRA file is a small illustrative subset (MedDRA is licensed).
+All cases are **synthetic**, written for this project; no real patient data. The package inserts are fictional.
+
+**This repository does not contain MedDRA.** MedDRA® is a registered trademark of ICH and is licensed through MSSO (MedDRA/J through JMO). The coding step runs on a fictional demo terminology ([data/terminology/demo_pt.csv](data/terminology/demo_pt.csv), 56 terms). Its codes (`DEMO-0001` …) and its body-system groupings are made up for this project. The term names are common clinical words, and some of them match MedDRA wording. To use the real dictionary, put your licensed MedDRA/J ASCII files (`pt.asc`, `pt_j.asc`, optionally `mdhier.asc` and `soc_j.asc`) in a folder such as `data/meddra/` (gitignored) and set `MEDDRA_PATH` to it. See [ADR 0014](docs/adr/0014-meddra-not-bundled.md).

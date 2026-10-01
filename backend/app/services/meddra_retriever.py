@@ -39,17 +39,30 @@ class HybridMeddraRetriever:
             collection_metadata={"hnsw:space": "cosine"},
         )
 
-    def ensure_indexed(self) -> int:
-        """Embed the PT names into the collection once (idempotent). Returns count added."""
-        if len(self.store.get(limit=1)["ids"]) > 0:
+    def ensure_indexed(self, batch_size: int = 1000) -> int:
+        """Embed the PT names into the collection (idempotent). Returns count added.
+
+        Skips only when the stored codes are exactly the dictionary's. Otherwise
+        (e.g. the dictionary was swapped from the demo terminology to a licensed
+        MedDRA) the stale collection is rebuilt — a stale one would silently drop
+        the vector signal, since its codes would no longer resolve to any PT.
+        """
+        stored = set(self.store.get(include=[])["ids"])
+        codes = {t.pt_code for t in self.dic.terms}
+        if stored == codes:
             return 0
-        docs = [
-            Document(page_content=t.pt_name_ja, metadata={"pt_code": t.pt_code})
-            for t in self.dic.terms
-        ]
-        self.store.add_documents(docs, ids=[t.pt_code for t in self.dic.terms])
-        logger.info("Indexed %d MedDRA PTs", len(docs))
-        return len(docs)
+        if stored:
+            logger.warning("PT index does not match the dictionary; rebuilding")
+            self.store.reset_collection()
+        terms = self.dic.terms
+        for start in range(0, len(terms), batch_size):
+            batch = terms[start : start + batch_size]
+            self.store.add_documents(
+                [Document(page_content=t.pt_name_ja, metadata={"pt_code": t.pt_code}) for t in batch],
+                ids=[t.pt_code for t in batch],
+            )
+        logger.info("Indexed %d PTs", len(terms))
+        return len(terms)
 
     def _vector_rank(self, term: str) -> list[int]:
         results = self.store.similarity_search(term, k=self.vector_pool)
