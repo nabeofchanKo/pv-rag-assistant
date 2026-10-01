@@ -73,7 +73,10 @@ class Settings(BaseSettings):
     openai_expectedness_model: str = "gpt-4o-mini"
 
     # MedDRA PT coding (hybrid retrieval: char-bigram BM25 + vector, RRF-fused).
-    meddra_path: str = str(PROJECT_ROOT / "data" / "meddra_sample" / "meddra_pt.csv")
+    # Default = the bundled fictional demo terminology (MedDRA is licensed and not
+    # bundled). Point MEDDRA_PATH at a folder of licensed MedDRA/J ASCII files
+    # (pt.asc, pt_j.asc, ...) to use the real dictionary — ADR 0014.
+    meddra_path: str = str(PROJECT_ROOT / "data" / "terminology" / "demo_pt.csv")
     meddra_collection_name: str = "meddra_pt"
     meddra_top_k: int = 5
     openai_meddra_model: str = "gpt-4o-mini"

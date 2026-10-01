@@ -78,6 +78,7 @@ precedent ──► influence（IMEリスト・過去症例）──► human_re
 - **以後の症例を変えるHITL。** PTをIMEリストに昇格すると、以後そのPTの事象は自動的に重篤になります。承認症例は判例になりますが、判定を動かせるのは安全側だけです。[ADR 0007](docs/adr/0007-hitl-approval-interrupt.md)〜[0010](docs/adr/0010-past-data-influence-mode.md)
 - **コスト／プライバシーを測って決める。** 埋め込みと生成はステップ単位で差し替えられます。ローカルモデル5種をステップ別に比較したところ、7〜8Bでは過小評価0を保てるものがなかったため、ローカル構成は「転記・コード化はローカル、臨床判断は高性能モデル」のハイブリッドにしています。[ADR 0011](docs/adr/0011-local-embedding-provider.md)、[0012](docs/adr/0012-local-generation-per-step.md)
 - **BFF構成。** 最初のStreamlit UIをNext.jsに置き換えましたが、APIが最初から分離していたので、バックエンドの変更は不要でした。[ADR 0013](docs/adr/0013-nextjs-frontend-bff.md)
+- **MedDRAはリポジトリに含めない。** MedDRAはライセンス製品のため、リポジトリには架空のデモ用語集だけを置いています。ライセンスを持つ組織は `MEDDRA_PATH` に自社のMedDRA/J ASCIIファイルを指定すれば使え、ベクトル索引も自動で作り直されます。[ADR 0014](docs/adr/0014-meddra-not-bundled.md)
 - **デモの保護はサーバー側で強制。** サンプル限定の入力はBFFで強制します（症例ビルダーは項目だけを送り、報告本文はサーバーが組み立てる）。IPごと・1日ごとの上限に加え、LLM事業者側に支出上限を設けています。
 - **コストは推定ではなく実測。** グラフの実行に付けたLangChainのコールバックが、トークンと時間をステップごとに集計します。各サービスは計測されていることを知りません。
 - **日英対応の線はモデルの手前で引く。** `/en/` ではUI・決まった語彙・MedDRAの用語を英語にし、症例本文とモデルの判定根拠は日本語のままです（パイプラインと評価が日本語のため）。レビューフォームは「Needs review」と表示しつつ `要確認` を送り、それをテストで保証しています。
@@ -118,7 +119,7 @@ cd web && npm install && npm run dev                        # ターミナル2: 
 ### テスト
 
 ```bash
-venv/bin/python -m pytest backend/tests -q                        # 178件
+venv/bin/python -m pytest backend/tests -q                        # 181件
 cd web && npx playwright install chromium && npm run test:e2e     # ブラウザテスト7件
 ```
 
@@ -144,7 +145,7 @@ backend/app/        FastAPI: routers/、services/（トリアージの各ステ�
 backend/tests/      単体・契約・安全性不変条件のテスト
 web/src/            Next.js: app/[lang]/（ページ）、app/api/（BFF）、components/triage/、i18n/
 web/e2e/            Playwrightのテスト、偽バックエンド、応答の録画スクリプト
-data/               合成症例、正解データ、添付文書、MedDRAサンプル、自社製品マスタ、IMEリスト
+data/               合成症例、正解データ、添付文書、デモ用語集（MedDRAではない）、自社製品マスタ、IMEリスト
 experiments/        評価の記録と、それを再現するスクリプト
 docs/adr/           設計判断記録
 ```
@@ -158,4 +159,6 @@ docs/adr/           設計判断記録
 
 ## データ
 
-症例はすべて本プロジェクト用に作った**合成データ**で、実際の患者データは含みません。添付文書は架空のもので、MedDRAのファイルは説明用の小さな一部です（MedDRAはライセンス製品のため）。
+症例はすべて本プロジェクト用に作った**合成データ**で、実際の患者データは含みません。添付文書は架空のものです。
+
+**このリポジトリにMedDRAは含まれていません。** MedDRA®はICHの登録商標で、利用にはMSSO（日本語版MedDRA/JはJMO）との契約が必要です。MedDRAコード化のステップは、架空のデモ用語集（[data/terminology/demo_pt.csv](data/terminology/demo_pt.csv)、56語）で動いています。コード（`DEMO-0001` …）と器官別の分類はこのプロジェクト用に作ったものです。用語名は一般的な臨床用語で、一部はMedDRAの表記と一致します。本物の辞書を使う場合は、契約して入手したMedDRA/J ASCIIファイル（`pt.asc`、`pt_j.asc`、任意で `mdhier.asc`・`soc_j.asc`）を `data/meddra/`（gitの管理対象外）などのフォルダに置き、`MEDDRA_PATH` にそのフォルダを指定してください。詳細は [ADR 0014](docs/adr/0014-meddra-not-bundled.md) にあります。

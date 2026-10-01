@@ -6,7 +6,7 @@ Term for a Japanese adverse-event term? This drove [ADR 0003](../docs/adr/0003-m
 - **Date:** 2026-08-22
 - **Reproduce:** `PYTHONPATH=backend python experiments/scripts/meddra_retrieval_compare.py`
   (needs `backend/.env` with `OPENAI_API_KEY`; makes live embedding calls)
-- **Dictionary:** `data/meddra_sample/meddra_pt.csv` (56 PTs, Japanese `pt_name_ja`).
+- **Dictionary:** `data/terminology/demo_pt.csv` (56 PTs, Japanese `pt_name_ja`).
 - **Strategies:** vector-only · Level A (normalized exact/substring + vector) ·
   Level B (BM25 char-bigram + vector, RRF-fused). Top-3 candidates each.
 

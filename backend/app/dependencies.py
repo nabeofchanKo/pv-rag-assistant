@@ -226,7 +226,7 @@ def get_expectedness_service() -> ExpectednessService:
 @lru_cache
 def get_meddra_dictionary() -> MeddraDictionary:
     """Load the MedDRA PT dictionary (+ build its char-bigram BM25 index)."""
-    return MeddraDictionary(csv_path=settings.meddra_path)
+    return MeddraDictionary(path=settings.meddra_path)
 
 
 @lru_cache

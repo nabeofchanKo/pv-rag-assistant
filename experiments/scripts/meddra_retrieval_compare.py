@@ -26,7 +26,7 @@ sys.path.insert(0, str(ROOT / "backend"))
 
 from app.dependencies import get_embeddings  # noqa: E402
 
-CSV = ROOT / "data" / "meddra_sample" / "meddra_pt.csv"
+CSV = ROOT / "data" / "terminology" / "demo_pt.csv"
 rows = list(csv.DictReader(open(CSV, encoding="utf-8")))
 ja = [r["pt_name_ja"] for r in rows]
 en = [r["pt_name_en"] for r in rows]

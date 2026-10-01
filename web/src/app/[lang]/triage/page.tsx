@@ -106,6 +106,7 @@ export default function TriagePage() {
           {t.languageNote}
         </p>
       )}
+      <p className="mt-2 text-xs text-muted">{t.terminologyNote}</p>
 
       {/* ---- start controls ---- */}
       <section className="mt-8 rounded-xl border border-border bg-surface p-6 shadow-sm">

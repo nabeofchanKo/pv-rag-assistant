@@ -84,6 +84,7 @@ The depth lives in the [Architecture Decision Records](docs/adr/) (context, opti
 - **Human in the loop that changes later cases.** Promoting a PT to the IME list makes future events on it serious automatically; approved cases become precedent, which can only move a verdict to the safe side. [ADR 0007](docs/adr/0007-hitl-approval-interrupt.md)–[0010](docs/adr/0010-past-data-influence-mode.md)
 - **Cost / privacy ladder, measured.** Embeddings and generation are swappable per step. A per-step benchmark of five local models found none of the 7–8B models keeps under-calls at 0, so the local option is a hybrid: transcription and coding run locally, the clinical judgments stay on the frontier model. [ADR 0011](docs/adr/0011-local-embedding-provider.md), [0012](docs/adr/0012-local-generation-per-step.md)
 - **Backend-for-frontend.** Replacing the original Streamlit UI with Next.js needed no backend change, because the API split existed from the start. [ADR 0013](docs/adr/0013-nextjs-frontend-bff.md)
+- **MedDRA stays out of the repository.** MedDRA is licensed, so the repo ships a fictional demo terminology; a licensee points `MEDDRA_PATH` at their own MedDRA/J ASCII files, and the vector index rebuilds itself after the swap. [ADR 0014](docs/adr/0014-meddra-not-bundled.md)
 - **Demo protections enforced on the server.** Sample-only input is enforced in the BFF (the case builder sends fields; the server renders the report), with per-IP and daily caps and a hard spending cap at the provider.
 - **Cost measured, not estimated.** A LangChain callback on the graph run attributes tokens and time to each step, without the services knowing they are measured.
 - **Bilingual, with the line drawn at the model.** The UI, fixed vocabularies and MedDRA terms are English under `/en/`; case text and the model's rationales stay Japanese, because the pipeline and its evaluation are Japanese. The review form shows "Needs review" but sends `要確認`, and a test proves it.
@@ -124,7 +125,7 @@ cd web && npm install && npm run dev                        # terminal 2: UI
 ### Tests
 
 ```bash
-venv/bin/python -m pytest backend/tests -q                        # 178 tests
+venv/bin/python -m pytest backend/tests -q                        # 181 tests
 cd web && npx playwright install chromium && npm run test:e2e     # 7 browser tests
 ```
 
@@ -150,7 +151,7 @@ backend/app/        FastAPI app: routers/, services/ (one per triage step, triag
 backend/tests/      unit, contract and safety-invariant tests
 web/src/            Next.js: app/[lang]/ (pages), app/api/ (BFF), components/triage/, i18n/
 web/e2e/            Playwright suite, fake backend, fixture recorder
-data/               synthetic cases, gold set, package inserts, MedDRA sample, product master, IME list
+data/               synthetic cases, gold set, package inserts, demo terminology (not MedDRA), product master, IME list
 experiments/        evaluation write-ups + the scripts that reproduce them
 docs/adr/           architecture decision records
 ```
@@ -164,4 +165,6 @@ docs/adr/           architecture decision records
 
 ## Data
 
-All cases are **synthetic**, written for this project; no real patient data. The package inserts are fictional, and the MedDRA file is a small illustrative subset (MedDRA is licensed).
+All cases are **synthetic**, written for this project; no real patient data. The package inserts are fictional.
+
+**This repository does not contain MedDRA.** MedDRA® is a registered trademark of ICH and is licensed through MSSO (MedDRA/J through JMO). The coding step runs on a fictional demo terminology ([data/terminology/demo_pt.csv](data/terminology/demo_pt.csv), 56 terms). Its codes (`DEMO-0001` …) and its body-system groupings are made up for this project. The term names are common clinical words, and some of them match MedDRA wording. To use the real dictionary, put your licensed MedDRA/J ASCII files (`pt.asc`, `pt_j.asc`, optionally `mdhier.asc` and `soc_j.asc`) in a folder such as `data/meddra/` (gitignored) and set `MEDDRA_PATH` to it. See [ADR 0014](docs/adr/0014-meddra-not-bundled.md).

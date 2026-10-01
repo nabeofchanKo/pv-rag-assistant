@@ -11,7 +11,7 @@
 4. 既知/未知の判断時のみ、対象薬の**架空添付文書**を参照：`data/drug_labels/drugx_label.md` / `drugy_label.md` / `drugz_label.md`。
 
 ## 各列の基準
-- **MedDRA PT**：割り当てるPT名（コードでも可）。辞書は `data/meddra_sample/meddra_pt.csv` を参照可。
+- **MedDRA PT**：割り当てるPT名（コードでも可）。辞書は `data/terminology/demo_pt.csv` を参照可。
 - **重篤度（企業・ICH E2A）**：`重篤` / `非重篤` / `要確認`。
   - 重篤＝死亡・生命を脅かす・入院/入院延長・障害・先天異常・医学的に重要 のいずれかに該当。
   - **重症度≠重篤性**（強い症状でも上記に当たらなければ非重篤）。

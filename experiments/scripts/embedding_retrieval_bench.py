@@ -144,7 +144,7 @@ def pct(n, d):
 
 
 def main():
-    dic = MeddraDictionary(csv_path=settings.meddra_path)
+    dic = MeddraDictionary(path=settings.meddra_path)
     terms = load_gold_terms()
     embs = build_embeddings()
 
