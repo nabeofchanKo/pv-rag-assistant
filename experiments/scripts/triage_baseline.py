@@ -6,6 +6,11 @@ retrieval (no drug label, no MedDRA dictionary), NO deterministic rules, NO
 IME/precedent. Scored against gold next to the multi-step pipeline (advisory), to
 show whether the pipeline's extra machinery earns its complexity.
 
+MedDRA axis caveat (2026-10-01): the committed 29% was scored against the real
+MedDRA codes the gold held at the time. The gold now holds fictional DEMO-xxxx
+codes (ADR 0014), which a model answering from memory cannot know, so re-running
+this gives the baseline ~0% on that axis. The other axes are unaffected.
+
 Uses gpt-4o for the baseline (the strongest model the pipeline also uses) so the
 comparison isolates ARCHITECTURE, not model size. Single-run snapshot; interim gold.
 

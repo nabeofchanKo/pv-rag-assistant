@@ -68,6 +68,13 @@ Adopt **option 3**.
   That run also exercised the rebuild path, since the old on-disk indexes held the
   old codes. The SOC label shown to the coding LLM is the one input that changed.
   The LLM-backed triage eval was not re-run.
+- (−) **One published number cannot be reproduced any more.** The single-LLM
+  baseline's MedDRA 29% ([triage_baseline](../../experiments/triage_baseline.md))
+  asked the model for real codes from memory and scored them against the gold's
+  real codes. Against `DEMO-xxxx` it would score ~0% by construction. The figure
+  is kept, labelled as measured before this change, in the README, the case
+  study and EVALUATION.md. The pipeline's 100% is now stated with its scale
+  (56 terms, against about 27k PTs in MedDRA).
 - (+) A licensee can run the real dictionary without code changes, and the index
   rebuilds itself after the swap (covered by a test).
 - (−) **Git history.** The removed files are still reachable in earlier commits on

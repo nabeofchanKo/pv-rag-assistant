@@ -105,11 +105,11 @@ const ja: CaseStudy = {
     "正解データ（gold）を用意し、評価ハーネスで採点しています。最重要指標は精度ではなく、過小評価がゼロであることです。3回の反復実行と、未知症例（ホールドアウト）でも確認しました。",
   metrics: [
     { value: "0", label: "過小評価（重篤度・因果・既知性）— 本評価・反復・ホールドアウトのすべてで", tone: "good" },
-    { value: "100%", label: "MedDRA コード付与（単一LLMでは29%）", tone: "good" },
+    { value: "100%", label: "MedDRA コード付与（56語のデモ用語集で測定。単一LLMでは29%）", tone: "good" },
     { value: "83–91%", label: "重篤度一致（複数回の評価の範囲。不一致は安全側の過大評価）", tone: "muted" },
     { value: "2/2", label: "評価対象外の症例を評価前に停止", tone: "good" },
     { value: "$0.03–0.04", label: "1症例あたりの実測費用（15〜18秒）", tone: "muted" },
-    { value: "185", label: "自動テスト（バックエンド178・E2E 7）", tone: "muted" },
+    { value: "188", label: "自動テスト（バックエンド181・E2E 7）", tone: "muted" },
   ],
 
   limits: {
@@ -117,6 +117,7 @@ const ja: CaseStudy = {
     body: [
       "症例数はごく少なく（合成7症例、評価対象は5症例・23事象）、正解データはLLMで起案したものを、システムを作った私自身がPV実務の観点で修正した形です。**自分で作った基準に自分のシステムが一致している**部分が残るため、外部の独立した評価とは言えません。",
       "症例は合成データで、実務の報告より整っています。実際の報告は記述が乱れ、情報が欠け、書式も揃いません。実行ごとのばらつきは3回の反復で測ったのみで、信頼区間は出していません。",
+      "MedDRAのコード化は、ライセンス製品であるMedDRAそのものではなく、**56語の架空のデモ用語集**で測っています。本物のMedDRAはPTだけで約2.7万語あり、100%は「検索して候補から選ぶ仕組みが動く」ことを示すにとどまります。単一LLMの29%は、正解データに本物のコードが入っていた時点の測定で、現在のリポジトリでは再現できません。",
       "「過去症例のフィードバックで精度が上がる」は**実証できませんでした**。未知症例では判例は何も変えず、以前見えた改善は初期データに依存したものだったと、ホールドアウトで分かりました。",
       "したがって、ここで示せているのは「精度が高い」ことではなく、**安全側の不変条件が保たれていること**と、それを測る手順があることです。",
     ],
@@ -142,7 +143,7 @@ const ja: CaseStudy = {
   },
 
   footer:
-    "本プロジェクトで使用している症例・添付文書はすべて本プロジェクト用に作成した架空のデータで、実際の患者情報は含みません。",
+    "本プロジェクトで使用している症例・添付文書はすべて本プロジェクト用に作成した架空のデータで、実際の患者情報は含みません。MedDRAは含まず、コード化には架空のデモ用語集（コード DEMO-xxxx）を使っています。MedDRA®はICHの登録商標です。",
 };
 
 const en: CaseStudy = {
@@ -207,11 +208,11 @@ const en: CaseStudy = {
     "Assessments are scored against a hand-built gold set. The headline number is not accuracy — it is that under-calls are zero, which also held across 3 repeated runs and on held-out cases.",
   metrics: [
     { value: "0", label: "under-calls (seriousness / causality / expectedness) — main run, repeats and held-out", tone: "good" },
-    { value: "100%", label: "MedDRA coding (a single LLM call: 29%)", tone: "good" },
+    { value: "100%", label: "MedDRA coding, on a 56-term demo terminology (a single LLM call: 29%)", tone: "good" },
     { value: "83–91%", label: "seriousness agreement across runs (misses are safe-side over-calls)", tone: "muted" },
     { value: "2/2", label: "out-of-scope cases stopped before assessment", tone: "good" },
     { value: "$0.03–0.04", label: "measured cost per case (15–18 s)", tone: "muted" },
-    { value: "185", label: "automated tests (178 backend, 7 E2E)", tone: "muted" },
+    { value: "188", label: "automated tests (181 backend, 7 E2E)", tone: "muted" },
   ],
 
   limits: {
@@ -219,6 +220,7 @@ const en: CaseStudy = {
     body: [
       "The sample is small (7 synthetic cases; 5 in scope, 23 events), and the gold set was drafted with an LLM and corrected, from a PV perspective, by me — the same person who built the system. Some of the agreement is therefore **the system agreeing with its own author** — this is not an independent evaluation.",
       "The cases are synthetic and tidier than real reports, which are messy, incomplete and inconsistently formatted. Run-to-run variation was measured on only 3 runs, with no confidence intervals.",
+      "MedDRA coding is measured on **a 56-term fictional demo terminology**, not on MedDRA itself, which is licensed. Real MedDRA has about 27,000 PTs, so 100% shows that retrieval plus selection works, not that this accuracy holds at full scale. The single-LLM 29% was measured while the gold set still held real codes, and it cannot be reproduced from the current repository.",
       "'Past-case feedback improves accuracy' was **not demonstrated**. On held-out cases precedent changed nothing, and the one earlier improvement turned out to depend on seed data.",
       "So the claim being supported is not 'this is accurate'. It is that **the safe-side invariant holds**, and that there is a repeatable procedure for measuring it.",
     ],
@@ -244,7 +246,7 @@ const en: CaseStudy = {
   },
 
   footer:
-    "All case reports and product labels used here are fictional data created for this project. No real patient information is involved.",
+    "All case reports and product labels used here are fictional data created for this project. No real patient information is involved. MedDRA is not included: coding uses a fictional demo terminology (codes DEMO-xxxx). MedDRA® is a registered trademark of ICH.",
 };
 
 export const CASE_STUDY: Record<Lang, CaseStudy> = { ja, en };
